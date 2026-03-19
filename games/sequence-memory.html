@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Sequence Memory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif;background:#0a0a1a;color:#e2e8f0}
+body{display:flex;flex-direction:column;align-items:center}
+
+.ad-placeholder{width:100%;max-width:480px;height:50px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);font-size:12px;letter-spacing:1px;flex-shrink:0}
+.ad-top{border-radius:0 0 8px 8px}
+.ad-bottom{border-radius:8px 8px 0 0;margin-top:auto}
+
+.header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;flex-shrink:0}
+.back-link{color:#94a3b8;text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;transition:color .2s}
+.back-link:hover{color:#e2e8f0}
+.title{font-size:18px;font-weight:800;background:linear-gradient(135deg,#ef4444,#22c55e,#3b82f6,#eab308);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.score-bar{width:100%;max-width:480px;display:flex;justify-content:space-around;padding:6px 16px;flex-shrink:0}
+.score-box{text-align:center}
+.score-label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.score-value{font-size:22px;font-weight:900;color:#f1f5f9;line-height:1.1}
+.score-value.best{color:#a855f7}
+
+.game-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:480px;padding:8px;position:relative;min-height:0;gap:16px}
+
+.message-area{height:36px;display:flex;align-items:center;justify-content:center}
+#statusMsg{font-size:16px;font-weight:700;color:#94a3b8;text-align:center;transition:all .3s}
+#statusMsg.watching{color:#fbbf24;animation:pulse 1s ease-in-out infinite}
+#statusMsg.your-turn{color:#22c55e}
+#statusMsg.error{color:#ef4444}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+
+.grid-wrapper{position:relative}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:min(70vw,300px);height:min(70vw,300px)}
+
+.panel{position:relative;border-radius:16px;cursor:pointer;transition:transform .1s,filter .1s;overflow:hidden;border:2px solid rgba(255,255,255,.08)}
+.panel:active:not(.disabled){transform:scale(.95)}
+.panel.disabled{cursor:default;pointer-events:none}
+
+.panel-red{background:radial-gradient(circle at 35% 35%,#ff6b6b,#dc2626)}
+.panel-green{background:radial-gradient(circle at 35% 35%,#6bff8b,#16a34a)}
+.panel-blue{background:radial-gradient(circle at 35% 35%,#6b8bff,#2563eb)}
+.panel-yellow{background:radial-gradient(circle at 35% 35%,#ffe66b,#ca8a04)}
+
+.panel.dim{filter:brightness(.35)}
+.panel.lit{filter:brightness(1.6) saturate(1.4);transform:scale(1.06);box-shadow:0 0 40px rgba(255,255,255,.35)}
+
+.panel .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.4);transform:scale(0);animation:rippleAnim .6s ease-out forwards;pointer-events:none}
+@keyframes rippleAnim{0%{transform:scale(0);opacity:1}100%{transform:scale(4);opacity:0}}
+
+.panel .glow-ring{position:absolute;inset:-4px;border-radius:20px;border:3px solid rgba(255,255,255,0);transition:border-color .2s;pointer-events:none}
+.panel.lit .glow-ring{border-color:rgba(255,255,255,.5)}
+
+.btn-row{display:flex;gap:12px;margin-top:8px}
+.btn{background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;border:none;padding:12px 32px;border-radius:12px;font-size:15px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px rgba(168,85,247,.4)}
+.btn:hover{transform:scale(1.05)}
+.btn:active{transform:scale(.97)}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;visibility:hidden;transition:all .3s}
+.overlay.show{opacity:1;visibility:visible}
+.overlay-box{background:#1a1a2e;border-radius:20px;padding:32px;text-align:center;max-width:320px;width:90%;border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.overlay-box h2{font-size:28px;font-weight:900;margin-bottom:4px;background:linear-gradient(135deg,#ec4899,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.overlay-box .rating{font-size:16px;color:#fbbf24;font-weight:700;margin-bottom:8px}
+.overlay-box .final-score{font-size:56px;font-weight:900;color:#fbbf24;margin:8px 0}
+.overlay-box .final-label{font-size:13px;color:#94a3b8;margin-bottom:4px}
+.overlay-box .best-label{font-size:14px;color:#a855f7;margin-bottom:20px;font-weight:600}
+.overlay-box .btn-group{display:flex;flex-direction:column;gap:10px}
+.overlay-box button{background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;border:none;padding:14px 40px;border-radius:12px;font-size:16px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px rgba(168,85,247,.4);width:100%}
+.overlay-box button:hover{transform:scale(1.05)}
+.overlay-box button:active{transform:scale(.97)}
+.overlay-box button.secondary{background:rgba(255,255,255,.08);box-shadow:none}
+
+.level-flash{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:64px;font-weight:900;color:#fff;text-shadow:0 0 40px rgba(168,85,247,.6);pointer-events:none;opacity:0;z-index:100}
+.level-flash.show{animation:flashIn .9s ease-out forwards}
+@keyframes flashIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}40%{transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-60%) scale(1.1)}}
+
+.shake{animation:shake .4s ease-out}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+</style>
+</head>
+<body>
+
+<div class="ad-placeholder ad-top"><span data-i18n="ad_area">AD SPACE</span></div>
+
+<div class="header">
+  <a href="../index.html" class="back-link" id="backLink" data-i18n="back"></a>
+  <div class="title" id="gameTitle">Sequence Memory</div>
+</div>
+
+<div class="score-bar">
+  <div class="score-box"><div class="score-label" id="levelLabel">LEVEL</div><div class="score-value" id="levelDisplay">1</div></div>
+  <div class="score-box"><div class="score-label" id="bestLabel">BEST</div><div class="score-value best" id="bestDisplay">0</div></div>
+</div>
+
+<div class="game-area">
+  <div class="message-area">
+    <div id="statusMsg"></div>
+  </div>
+
+  <div class="grid-wrapper">
+    <div class="panel-grid" id="panelGrid">
+      <div class="panel panel-red dim" data-index="0"><div class="glow-ring"></div></div>
+      <div class="panel panel-green dim" data-index="1"><div class="glow-ring"></div></div>
+      <div class="panel panel-blue dim" data-index="2"><div class="glow-ring"></div></div>
+      <div class="panel panel-yellow dim" data-index="3"><div class="glow-ring"></div></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn" id="startBtn">START</button>
+  </div>
+</div>
+
+<div class="ad-placeholder ad-bottom"><span data-i18n="ad_area">AD SPACE</span></div>
+
+<div class="level-flash" id="levelFlash"></div>
+
+<div class="overlay" id="gameOverOverlay">
+  <div class="overlay-box">
+    <h2 id="overTitle"></h2>
+    <div class="rating" id="overRating"></div>
+    <div class="final-label" id="overLabel"></div>
+    <div class="final-score" id="overScore">0</div>
+    <div class="best-label" id="overBest"></div>
+    <div class="btn-group">
+      <button onclick="game.restart()" id="overRetry"></button>
+      <button class="secondary" onclick="game.share()" id="overShare">Share</button>
+    </div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+// ===== CUSTOM I18N =====
+const CUSTOM_I18N = {
+  ko: {
+    game_title: '시퀀스 메모리',
+    start: '시작',
+    watch: '잘 보세요!',
+    your_turn: '당신 차례!',
+    correct: '정답!',
+    wrong: '틀렸습니다!',
+    level_reached: '도달 레벨',
+    rating_good: '좋은 기억력',
+    rating_great: '훌륭한 기억력',
+    rating_excellent: '뛰어난 기억력',
+    rating_photo: '사진 기억력!',
+    share: '공유하기',
+    round: '라운드',
+  },
+  en: {
+    game_title: 'Sequence Memory',
+    start: 'START',
+    watch: 'Watch carefully!',
+    your_turn: 'Your turn!',
+    correct: 'Correct!',
+    wrong: 'Wrong!',
+    level_reached: 'Level Reached',
+    rating_good: 'Good Memory',
+    rating_great: 'Great Memory',
+    rating_excellent: 'Excellent Memory',
+    rating_photo: 'Photographic Memory!',
+    share: 'Share',
+    round: 'Round',
+  },
+  ja: {
+    game_title: 'シーケンスメモリー',
+    start: 'スタート',
+    watch: 'よく見てください！',
+    your_turn: 'あなたの番です！',
+    correct: '正解！',
+    wrong: '不正解！',
+    level_reached: '到達レベル',
+    rating_good: '良い記憶力',
+    rating_great: '素晴らしい記憶力',
+    rating_excellent: '優れた記憶力',
+    rating_photo: '写真記憶力！',
+    share: '共有',
+    round: 'ラウンド',
+  },
+  zh: {
+    game_title: '序列记忆',
+    start: '开始',
+    watch: '仔细看！',
+    your_turn: '你的回合！',
+    correct: '正确！',
+    wrong: '错误！',
+    level_reached: '达到等级',
+    rating_good: '良好记忆',
+    rating_great: '出色记忆',
+    rating_excellent: '卓越记忆',
+    rating_photo: '超强记忆！',
+    share: '分享',
+    round: '回合',
+  },
+  es: {
+    game_title: 'Memoria Secuencial',
+    start: 'INICIAR',
+    watch: '¡Observa bien!',
+    your_turn: '¡Tu turno!',
+    correct: '¡Correcto!',
+    wrong: '¡Incorrecto!',
+    level_reached: 'Nivel alcanzado',
+    rating_good: 'Buena Memoria',
+    rating_great: 'Gran Memoria',
+    rating_excellent: 'Memoria Excelente',
+    rating_photo: '¡Memoria Fotográfica!',
+    share: 'Compartir',
+    round: 'Ronda',
+  }
+};
+
+function ct(key) {
+  const lang = getGameLang();
+  const dict = CUSTOM_I18N[lang] || CUSTOM_I18N.ko;
+  return dict[key] || CUSTOM_I18N.en[key] || key;
+}
+
+// ===== WEB AUDIO SOUND ENGINE =====
+const AudioEngine = {
+  ctx: null,
+  init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  },
+  playTone(freq, duration = 0.3, type = 'sine') {
+    if (!this.ctx) this.init();
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + duration);
+  },
+  panelTones: [329.63, 440.00, 261.63, 523.25], // E4, A4, C4, C5
+  playPanel(index) {
+    this.playTone(this.panelTones[index], 0.35, 'sine');
+  },
+  playError() {
+    if (!this.ctx) this.init();
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.value = 120;
+    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.5);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.5);
+  },
+  playSuccess() {
+    this.playTone(523.25, 0.15);
+    setTimeout(() => this.playTone(659.25, 0.15), 120);
+    setTimeout(() => this.playTone(783.99, 0.25), 240);
+  }
+};
+
+// ===== GAME LOGIC =====
+const game = {
+  sequence: [],
+  playerIndex: 0,
+  level: 0,
+  bestLevel: 0,
+  isShowingSequence: false,
+  isPlayerTurn: false,
+  isGameOver: false,
+  started: false,
+  panels: [],
+  timeouts: [],
+
+  init() {
+    this.panels = document.querySelectorAll('.panel');
+    this.bestLevel = parseInt(localStorage.getItem('sequenceMemoryBest') || '0');
+    document.getElementById('bestDisplay').textContent = this.bestLevel;
+
+    this.panels.forEach((p, i) => {
+      p.addEventListener('click', (e) => this.handlePanelClick(i, e));
+      p.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        AudioEngine.init();
+      }, { passive: false });
+    });
+
+    document.getElementById('startBtn').addEventListener('click', () => {
+      AudioEngine.init();
+      this.startGame();
+    });
+
+    this.applyTranslations();
+  },
+
+  applyTranslations() {
+    const t = getTranslations();
+    document.getElementById('gameTitle').textContent = ct('game_title');
+    document.getElementById('backLink').textContent = t.back;
+    document.getElementById('levelLabel').textContent = t.level.toUpperCase();
+    document.getElementById('bestLabel').textContent = t.best.toUpperCase();
+    document.getElementById('startBtn').textContent = ct('start');
+    document.getElementById('overRetry').textContent = t.try_again;
+    document.getElementById('overShare').textContent = ct('share');
+    document.querySelectorAll('[data-i18n="ad_area"]').forEach(el => el.textContent = t.ad_area);
+  },
+
+  startGame() {
+    this.sequence = [];
+    this.level = 0;
+    this.playerIndex = 0;
+    this.isGameOver = false;
+    this.started = true;
+    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('gameOverOverlay').classList.remove('show');
+    this.nextRound();
+  },
+
+  nextRound() {
+    this.level++;
+    document.getElementById('levelDisplay').textContent = this.level;
+    this.sequence.push(Math.floor(Math.random() * 4));
+    this.playerIndex = 0;
+    this.isPlayerTurn = false;
+
+    // Flash level number
+    const flash = document.getElementById('levelFlash');
+    flash.textContent = this.level;
+    flash.classList.remove('show');
+    void flash.offsetWidth;
+    flash.classList.add('show');
+
+    // Show "Watch carefully!" message
+    const msg = document.getElementById('statusMsg');
+    msg.textContent = ct('watch');
+    msg.className = 'watching';
+
+    // Dim all panels
+    this.panels.forEach(p => { p.classList.add('dim'); p.classList.add('disabled'); });
+
+    // Delay then show sequence
+    const baseDelay = Math.max(300, 600 - this.level * 15);
+    const showDelay = Math.max(200, 400 - this.level * 10);
+
+    this.clearTimeouts();
+    const startDelay = 900;
+
+    this.sequence.forEach((panelIdx, i) => {
+      const t1 = setTimeout(() => {
+        this.lightPanel(panelIdx, showDelay);
+        AudioEngine.playPanel(panelIdx);
+      }, startDelay + i * (baseDelay + showDelay));
+      this.timeouts.push(t1);
+    });
+
+    const totalSeqTime = startDelay + this.sequence.length * (baseDelay + showDelay);
+    const t2 = setTimeout(() => {
+      this.isPlayerTurn = true;
+      this.panels.forEach(p => { p.classList.remove('dim'); p.classList.remove('disabled'); });
+      msg.textContent = ct('your_turn');
+      msg.className = 'your-turn';
+    }, totalSeqTime + 200);
+    this.timeouts.push(t2);
+  },
+
+  lightPanel(index, duration = 300) {
+    const panel = this.panels[index];
+    panel.classList.remove('dim');
+    panel.classList.add('lit');
+    setTimeout(() => {
+      panel.classList.remove('lit');
+      if (this.isShowingSequence || !this.isPlayerTurn) {
+        panel.classList.add('dim');
+      }
+    }, duration);
+  },
+
+  handlePanelClick(index, event) {
+    if (!this.isPlayerTurn || this.isGameOver || this.isShowingSequence) return;
+    AudioEngine.init();
+
+    // Create ripple effect
+    this.createRipple(this.panels[index], event);
+
+    // Light up panel briefly
+    this.lightPanel(index, 250);
+    AudioEngine.playPanel(index);
+
+    // Check if correct
+    if (this.sequence[this.playerIndex] === index) {
+      this.playerIndex++;
+      if (this.playerIndex >= this.sequence.length) {
+        // Completed the sequence
+        this.isPlayerTurn = false;
+        this.panels.forEach(p => p.classList.add('disabled'));
+        const msg = document.getElementById('statusMsg');
+        msg.textContent = ct('correct');
+        msg.className = 'your-turn';
+        AudioEngine.playSuccess();
+        setTimeout(() => this.nextRound(), 1000);
+      }
+    } else {
+      // Wrong answer
+      this.gameOver();
+    }
+  },
+
+  createRipple(panel, event) {
+    const rect = panel.getBoundingClientRect();
+    let x, y;
+    if (event.touches) {
+      x = event.touches[0].clientX - rect.left;
+      y = event.touches[0].clientY - rect.top;
+    } else {
+      x = event.clientX - rect.left;
+      y = event.clientY - rect.top;
+    }
+    const ripple = document.createElement('div');
+    ripple.className = 'ripple';
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (x - size / 2) + 'px';
+    ripple.style.top = (y - size / 2) + 'px';
+    panel.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+  },
+
+  gameOver() {
+    this.isGameOver = true;
+    this.isPlayerTurn = false;
+    this.clearTimeouts();
+
+    AudioEngine.playError();
+
+    // Shake the grid
+    const grid = document.getElementById('panelGrid');
+    grid.classList.add('shake');
+    setTimeout(() => grid.classList.remove('shake'), 400);
+
+    const msg = document.getElementById('statusMsg');
+    msg.textContent = ct('wrong');
+    msg.className = 'error';
+
+    // Flash all panels red briefly
+    this.panels.forEach(p => { p.classList.add('dim'); p.classList.add('disabled'); });
+
+    // Update best
+    const reachedLevel = this.level - 1;
+    if (reachedLevel > this.bestLevel) {
+      this.bestLevel = reachedLevel;
+      localStorage.setItem('sequenceMemoryBest', this.bestLevel);
+      document.getElementById('bestDisplay').textContent = this.bestLevel;
+    }
+
+    // Show overlay after a short delay
+    setTimeout(() => this.showGameOver(reachedLevel), 800);
+  },
+
+  showGameOver(level) {
+    const t = getTranslations();
+    document.getElementById('overTitle').textContent = t.game_over;
+    document.getElementById('overLabel').textContent = ct('level_reached');
+    document.getElementById('overScore').textContent = level;
+    document.getElementById('overBest').textContent = `${t.best}: ${this.bestLevel}`;
+    document.getElementById('overRating').textContent = this.getRating(level);
+    document.getElementById('gameOverOverlay').classList.add('show');
+
+    // Call share modal if available
+    if (typeof PuzzleShare !== 'undefined' && PuzzleShare.showShareModal) {
+      PuzzleShare.showShareModal({
+        game: 'Sequence Memory',
+        score: level,
+        label: ct('level_reached')
+      });
+    }
+  },
+
+  getRating(level) {
+    if (level >= 15) return ct('rating_photo');
+    if (level >= 11) return ct('rating_excellent');
+    if (level >= 8) return ct('rating_great');
+    if (level >= 5) return ct('rating_good');
+    return '';
+  },
+
+  share() {
+    if (typeof PuzzleShare !== 'undefined' && PuzzleShare.showShareModal) {
+      const level = parseInt(document.getElementById('overScore').textContent) || 0;
+      PuzzleShare.showShareModal({
+        game: 'Sequence Memory',
+        score: level,
+        label: ct('level_reached')
+      });
+    }
+  },
+
+  restart() {
+    this.clearTimeouts();
+    document.getElementById('gameOverOverlay').classList.remove('show');
+    this.panels.forEach(p => {
+      p.classList.add('dim');
+      p.classList.remove('lit', 'disabled');
+    });
+    document.getElementById('statusMsg').textContent = '';
+    document.getElementById('statusMsg').className = '';
+    document.getElementById('levelDisplay').textContent = '0';
+    this.startGame();
+  },
+
+  clearTimeouts() {
+    this.timeouts.forEach(t => clearTimeout(t));
+    this.timeouts = [];
+  }
+};
+
+// Init on load
+document.addEventListener('DOMContentLoaded', () => game.init());
+</script>
+</body>
+</html>

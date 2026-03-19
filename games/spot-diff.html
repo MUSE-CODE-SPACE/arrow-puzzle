@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>틀린그림찾기 - Spot the Difference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a1a;
+  --surface: #12122a;
+  --surface2: #1a1a3a;
+  --text: #e8e8f0;
+  --text-dim: #8888aa;
+  --accent1: #a855f7;
+  --accent2: #ec4899;
+  --accent-rgb1: 168, 85, 247;
+  --accent-rgb2: 236, 72, 153;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* Screens */
+.screen { display: none; flex-direction: column; align-items: center; min-height: 100dvh; }
+.screen.active { display: flex; }
+
+/* Header */
+.top-bar {
+  width: 100%; max-width: 600px; padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.back-btn {
+  background: none; border: none; color: var(--text-dim); font-size: 14px;
+  font-family: 'Outfit', sans-serif; cursor: pointer; padding: 8px 12px;
+  border-radius: 8px; transition: all 0.2s; text-decoration: none;
+}
+.back-btn:hover { background: var(--surface); color: var(--text); }
+.sound-btn {
+  background: none; border: 1px solid var(--surface2); color: var(--text-dim);
+  font-size: 18px; cursor: pointer; padding: 6px 10px; border-radius: 8px;
+  transition: all 0.2s;
+}
+.sound-btn:hover { background: var(--surface); }
+
+/* Title Screen */
+.title-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+.game-icon {
+  width: 120px; height: 120px; border-radius: 28px;
+  background: radial-gradient(circle at 40% 40%, rgba(var(--accent-rgb1), 0.3), transparent 70%), var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 56px; margin-bottom: 24px;
+  box-shadow: 0 0 40px rgba(var(--accent-rgb1), 0.2), inset 0 0 30px rgba(var(--accent-rgb1), 0.1);
+  animation: iconPulse 3s ease-in-out infinite;
+}
+@keyframes iconPulse {
+  0%, 100% { box-shadow: 0 0 40px rgba(var(--accent-rgb1), 0.2), inset 0 0 30px rgba(var(--accent-rgb1), 0.1); }
+  50% { box-shadow: 0 0 60px rgba(var(--accent-rgb1), 0.35), inset 0 0 40px rgba(var(--accent-rgb1), 0.2); }
+}
+.game-title {
+  font-size: 32px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #ec4899, #a855f7);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.game-subtitle { font-size: 15px; color: var(--text-dim); margin-bottom: 40px; }
+
+.main-btn {
+  background: linear-gradient(135deg, rgba(var(--accent-rgb1), 0.25), rgba(var(--accent-rgb2), 0.15));
+  border: 1px solid rgba(var(--accent-rgb1), 0.4);
+  color: var(--accent1); font-family: 'Outfit', sans-serif;
+  font-size: 16px; font-weight: 600; padding: 14px 48px;
+  border-radius: 14px; cursor: pointer; margin-bottom: 12px;
+  transition: all 0.25s; min-width: 200px;
+}
+.main-btn:hover {
+  background: linear-gradient(135deg, rgba(var(--accent-rgb1), 0.35), rgba(var(--accent-rgb2), 0.25));
+  box-shadow: 0 0 25px rgba(var(--accent-rgb1), 0.2);
+  transform: translateY(-1px);
+}
+.secondary-btn {
+  background: var(--surface); border: 1px solid var(--surface2);
+  color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: 14px; font-weight: 500; padding: 12px 36px;
+  border-radius: 12px; cursor: pointer; transition: all 0.2s; min-width: 200px;
+}
+.secondary-btn:hover { background: var(--surface2); }
+
+/* Level Select */
+.level-screen { padding: 0 16px 100px; width: 100%; max-width: 500px; }
+.diff-title {
+  font-size: 14px; font-weight: 600; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 12px;
+  width: 100%; text-align: left;
+  display: flex; align-items: center; gap: 8px;
+}
+.diff-title .diff-badge {
+  font-size: 10px; padding: 2px 8px; border-radius: 6px;
+  background: rgba(var(--accent-rgb1), 0.15); color: var(--accent1);
+}
+.level-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 8px; width: 100%;
+}
+.level-cell {
+  aspect-ratio: 1; border-radius: 12px; background: var(--surface);
+  border: 1px solid var(--surface2); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; cursor: pointer;
+  transition: all 0.2s; position: relative; font-size: 18px; font-weight: 600;
+}
+.level-cell:hover { background: var(--surface2); transform: scale(1.05); }
+.level-cell.locked { opacity: 0.3; cursor: default; pointer-events: none; }
+.level-cell.completed { border-color: rgba(var(--accent-rgb1), 0.3); }
+.level-cell .stars-mini { font-size: 8px; margin-top: 2px; letter-spacing: 1px; }
+.level-cell.current {
+  border-color: rgba(var(--accent-rgb1), 0.6);
+  box-shadow: 0 0 15px rgba(var(--accent-rgb1), 0.15);
+  animation: currentPulse 2s ease-in-out infinite;
+}
+@keyframes currentPulse {
+  0%, 100% { box-shadow: 0 0 15px rgba(var(--accent-rgb1), 0.15); }
+  50% { box-shadow: 0 0 25px rgba(var(--accent-rgb1), 0.3); }
+}
+
+/* Game Screen */
+.game-header {
+  width: 100%; max-width: 800px; padding: 8px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.level-label { font-size: 14px; font-weight: 600; color: var(--text-dim); }
+.game-stats { display: flex; gap: 16px; align-items: center; }
+.stat { text-align: center; }
+.stat-val { font-size: 20px; font-weight: 700; }
+.stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Grids Area */
+.grids-container {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  gap: 16px; padding: 8px 16px; width: 100%; max-width: 900px;
+  flex-wrap: wrap;
+}
+
+.grid-panel {
+  position: relative; border-radius: 16px;
+  background: var(--surface); border: 1.5px solid var(--surface2);
+  padding: 8px; flex: 1; min-width: 0; max-width: 420px;
+}
+.grid-panel-label {
+  text-align: center; font-size: 11px; font-weight: 600;
+  color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.emoji-grid {
+  display: grid; gap: 2px; width: 100%;
+}
+.emoji-cell {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; cursor: pointer; position: relative;
+  transition: all 0.15s; font-size: 24px; background: var(--surface2);
+}
+.emoji-cell:hover { background: rgba(var(--accent-rgb1), 0.1); }
+.emoji-cell:active { transform: scale(0.92); }
+
+/* Difference found circle */
+.diff-found-circle {
+  position: absolute; inset: -3px; border-radius: 12px;
+  border: 3px solid #22c55e; pointer-events: none; z-index: 2;
+  animation: diffFound 0.6s ease-out;
+}
+@keyframes diffFound {
+  0% { transform: scale(0.5); opacity: 0; border-width: 6px; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; border-width: 3px; }
+}
+
+/* Wrong tap */
+.emoji-cell.wrong {
+  animation: wrongShake 0.4s ease-out;
+}
+@keyframes wrongShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+
+/* Hint highlight */
+.emoji-cell.hint-highlight {
+  animation: hintPulse 1.2s ease-in-out;
+}
+@keyframes hintPulse {
+  0% { box-shadow: none; }
+  20% { box-shadow: 0 0 20px rgba(255, 200, 0, 0.8), inset 0 0 15px rgba(255, 200, 0, 0.3); }
+  80% { box-shadow: 0 0 20px rgba(255, 200, 0, 0.8), inset 0 0 15px rgba(255, 200, 0, 0.3); }
+  100% { box-shadow: none; }
+}
+
+/* Colored background cell */
+.emoji-cell[data-bg="1"] { background: rgba(168, 85, 247, 0.15); }
+.emoji-cell[data-bg="2"] { background: rgba(236, 72, 153, 0.15); }
+.emoji-cell[data-bg="3"] { background: rgba(34, 197, 94, 0.15); }
+.emoji-cell[data-bg="4"] { background: rgba(59, 130, 246, 0.15); }
+
+/* Bottom bar */
+.game-bottom {
+  width: 100%; max-width: 800px; padding: 12px 16px 24px;
+  display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+}
+.game-btn {
+  background: var(--surface); border: 1px solid var(--surface2);
+  color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: 13px; font-weight: 500; padding: 10px 20px;
+  border-radius: 10px; cursor: pointer; transition: all 0.2s;
+}
+.game-btn:hover { background: var(--surface2); }
+.game-btn:disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+
+/* Found counter */
+.found-counter {
+  display: flex; gap: 6px; align-items: center; justify-content: center;
+  margin: 4px 0;
+}
+.found-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--surface2); border: 2px solid var(--text-dim);
+  transition: all 0.3s;
+}
+.found-dot.filled {
+  background: #22c55e; border-color: #22c55e;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+  animation: dotFill 0.4s ease-out;
+}
+@keyframes dotFill {
+  0% { transform: scale(0.5); }
+  60% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* Win overlay */
+.win-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  display: none; align-items: center; justify-content: center; z-index: 100;
+  backdrop-filter: blur(6px);
+}
+.win-overlay.active { display: flex; }
+.win-card {
+  background: var(--surface); border: 1px solid var(--surface2);
+  border-radius: 20px; padding: 36px 32px; text-align: center;
+  max-width: 340px; width: 90%;
+  animation: winPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes winPop {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.win-emoji { font-size: 48px; margin-bottom: 12px; }
+.win-title {
+  font-size: 24px; font-weight: 700; margin-bottom: 6px;
+  background: linear-gradient(135deg, #ec4899, #a855f7);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.win-sub { font-size: 14px; color: var(--text-dim); margin-bottom: 16px; }
+.win-stars { font-size: 36px; margin-bottom: 16px; letter-spacing: 4px; }
+.win-stats { display: flex; justify-content: center; gap: 24px; margin-bottom: 24px; }
+.win-stat-val { font-size: 22px; font-weight: 700; }
+.win-stat-label { font-size: 11px; color: var(--text-dim); }
+.win-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+/* Ad placeholders */
+.ad-placeholder {
+  width: 100%; max-width: 500px; height: 60px; margin: 8px auto;
+  background: var(--surface); border: 1px dashed var(--surface2);
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim); font-size: 11px; letter-spacing: 0.5px; flex-shrink: 0;
+}
+
+/* Responsive: stack grids on mobile */
+@media (max-width: 640px) {
+  .grids-container { flex-direction: column; gap: 10px; }
+  .grid-panel { max-width: 100%; width: 100%; }
+  .emoji-cell { font-size: 20px; }
+}
+@media (min-width: 641px) {
+  .grids-container { flex-direction: row; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== TITLE SCREEN ===== -->
+<div class="screen active" id="title-screen">
+  <div class="top-bar">
+    <a class="back-btn" href="../index.html" data-i18n="back">← 메인으로</a>
+    <button class="sound-btn" id="sound-toggle">🔊</button>
+  </div>
+  <div class="ad-placeholder" data-i18n="ad_area">광고 영역</div>
+  <div class="title-area">
+    <div class="game-icon">🔍</div>
+    <div class="game-title" id="title-text">틀린그림찾기</div>
+    <div class="game-subtitle" id="subtitle-text">다른 이모지를 찾아보세요!</div>
+    <button class="main-btn" id="start-btn" data-i18n="new_game">새 게임</button>
+    <button class="secondary-btn" id="level-select-btn" data-i18n="level_select">레벨 선택</button>
+  </div>
+  <div class="ad-placeholder" data-i18n="ad_area">광고 영역</div>
+</div>
+
+<!-- ===== LEVEL SELECT SCREEN ===== -->
+<div class="screen" id="level-screen">
+  <div class="top-bar">
+    <button class="back-btn" id="level-back-btn" data-i18n="back">← 메인으로</button>
+    <button class="sound-btn" id="sound-toggle2">🔊</button>
+  </div>
+  <div class="ad-placeholder" data-i18n="ad_area">광고 영역</div>
+  <div class="level-screen" id="level-grid-container"></div>
+  <div class="ad-placeholder" data-i18n="ad_area">광고 영역</div>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div class="screen" id="game-screen">
+  <div class="top-bar">
+    <button class="back-btn" id="game-back-btn">← </button>
+    <button class="sound-btn" id="sound-toggle3">🔊</button>
+  </div>
+  <div class="game-header">
+    <div class="level-label" id="game-level-label">Level 1</div>
+    <div class="game-stats">
+      <div class="stat">
+        <div class="stat-val" id="timer-display">0:00</div>
+        <div class="stat-label" data-i18n="time">시간</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="found-display">0/2</div>
+        <div class="stat-label" id="found-label">남은</div>
+      </div>
+    </div>
+  </div>
+  <div class="found-counter" id="found-dots"></div>
+  <div class="grids-container" id="grids-container">
+    <div class="grid-panel">
+      <div class="grid-panel-label" id="label-original">원본</div>
+      <div class="emoji-grid" id="grid-original"></div>
+    </div>
+    <div class="grid-panel">
+      <div class="grid-panel-label" id="label-different">다른그림</div>
+      <div class="emoji-grid" id="grid-different"></div>
+    </div>
+  </div>
+  <div class="game-bottom">
+    <button class="game-btn" id="hint-btn">💡 힌트 (3)</button>
+    <button class="game-btn" id="restart-btn" data-i18n="restart">↩ 다시하기</button>
+  </div>
+  <div class="ad-placeholder" data-i18n="ad_area">광고 영역</div>
+</div>
+
+<!-- ===== WIN OVERLAY ===== -->
+<div class="win-overlay" id="win-overlay">
+  <div class="win-card">
+    <div class="win-emoji">🎉</div>
+    <div class="win-title" id="win-title">클리어!</div>
+    <div class="win-sub" id="win-sub">잘했어요!</div>
+    <div class="win-stars" id="win-stars">⭐⭐⭐</div>
+    <div class="win-stats">
+      <div class="stat">
+        <div class="win-stat-val" id="win-time">0:00</div>
+        <div class="win-stat-label" data-i18n="time">시간</div>
+      </div>
+    </div>
+    <div class="win-btns">
+      <button class="main-btn" id="win-next" data-i18n="next_level">다음 레벨 →</button>
+      <button class="secondary-btn" id="win-share">📤 Share</button>
+      <button class="game-btn" id="win-levels" data-i18n="level_select">레벨 선택</button>
+    </div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+'use strict';
+
+// ===== Custom i18n =====
+const SPOT_I18N = {
+  ko: {
+    gameTitle: '틀린그림찾기',
+    gameSubtitle: '다른 이모지를 찾아보세요!',
+    original: '원본',
+    different: '다른그림',
+    found: '발견',
+    hintsLeft: '힌트',
+    hintBtn: '💡 힌트',
+    noHints: '힌트 없음',
+    difficulty1: '쉬움 (4×4)',
+    difficulty2: '보통 (5×5)',
+    difficulty3: '어려움 (6×6)',
+    difficulty4: '매우 어려움 (6×6)',
+    shareResult: '공유',
+    gameName: '틀린그림찾기',
+  },
+  en: {
+    gameTitle: 'Spot the Difference',
+    gameSubtitle: 'Find the different emojis!',
+    original: 'Original',
+    different: 'Different',
+    found: 'Found',
+    hintsLeft: 'Hints',
+    hintBtn: '💡 Hint',
+    noHints: 'No hints',
+    difficulty1: 'Easy (4×4)',
+    difficulty2: 'Normal (5×5)',
+    difficulty3: 'Hard (6×6)',
+    difficulty4: 'Very Hard (6×6)',
+    shareResult: 'Share',
+    gameName: 'Spot the Difference',
+  },
+  ja: {
+    gameTitle: '間違い探し',
+    gameSubtitle: '違う絵文字を見つけよう！',
+    original: 'オリジナル',
+    different: '違う画像',
+    found: '発見',
+    hintsLeft: 'ヒント',
+    hintBtn: '💡 ヒント',
+    noHints: 'ヒントなし',
+    difficulty1: '簡単 (4×4)',
+    difficulty2: '普通 (5×5)',
+    difficulty3: '難しい (6×6)',
+    difficulty4: '超難しい (6×6)',
+    shareResult: 'シェア',
+    gameName: '間違い探し',
+  },
+  zh: {
+    gameTitle: '找不同',
+    gameSubtitle: '找出不同的表情！',
+    original: '原图',
+    different: '不同图',
+    found: '已找到',
+    hintsLeft: '提示',
+    hintBtn: '💡 提示',
+    noHints: '无提示',
+    difficulty1: '简单 (4×4)',
+    difficulty2: '普通 (5×5)',
+    difficulty3: '困难 (6×6)',
+    difficulty4: '超困难 (6×6)',
+    shareResult: '分享',
+    gameName: '找不同',
+  },
+  es: {
+    gameTitle: 'Encuentra las diferencias',
+    gameSubtitle: '¡Encuentra los emojis diferentes!',
+    original: 'Original',
+    different: 'Diferente',
+    found: 'Encontrado',
+    hintsLeft: 'Pistas',
+    hintBtn: '💡 Pista',
+    noHints: 'Sin pistas',
+    difficulty1: 'Fácil (4×4)',
+    difficulty2: 'Normal (5×5)',
+    difficulty3: 'Difícil (6×6)',
+    difficulty4: 'Muy difícil (6×6)',
+    shareResult: 'Compartir',
+    gameName: 'Encuentra las diferencias',
+  }
+};
+
+function st() {
+  const lang = getGameLang();
+  return { ...getTranslations(), ...(SPOT_I18N[lang] || SPOT_I18N.ko) };
+}
+
+// ===== Emoji sets =====
+const EMOJI_SETS = [
+  ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🦆','🦅'],
+  ['🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🥑','🥦','🌽'],
+  ['🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑','🚒','🚐','🛻','🚚','🚛','🚜','🏍️','🛵','🚲','🛴','🚂','✈️'],
+  ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🏓','🏸','🥊','🥋','⛳','🏹','🎣','🤿','🎿','🛷'],
+  ['☀️','🌤️','⛅','🌥️','☁️','🌦️','🌧️','⛈️','🌩️','❄️','🌪️','🌈','⭐','🌙','💫','🔥','💧','🌊','🍃','🌸'],
+  ['🎸','🎹','🥁','🎺','🎻','🪕','🎷','🪗','🎤','🎧','🎵','🎶','🎼','🪈','📯','🔔','🎙️','📻','💿','🎬'],
+  ['🏠','🏢','🏰','🗼','🗽','⛪','🕌','🛕','🏛️','⛩️','🌋','🏔️','🗻','🏕️','🏖️','🏗️','🌁','🌃','🎡','🎢'],
+  ['🦋','🐝','🐞','🦗','🐌','🐛','🦂','🕷️','🐢','🦎','🐍','🦕','🦖','🐙','🦑','🦐','🦀','🐡','🐠','🐟'],
+];
+
+// ===== Level configs =====
+function getLevelConfig(level) {
+  if (level <= 5) return { gridSize: 4, diffCount: 2, timeForThree: 15, timeForTwo: 30 };
+  if (level <= 10) return { gridSize: 5, diffCount: 3, timeForThree: 25, timeForTwo: 45 };
+  if (level <= 15) return { gridSize: 6, diffCount: 4, timeForThree: 35, timeForTwo: 60 };
+  return { gridSize: 6, diffCount: 5, timeForThree: 45, timeForTwo: 75 };
+}
+
+// ===== State =====
+let currentLevel = 1;
+let originalGrid = [];
+let differentGrid = [];
+let differences = []; // [{row, col, type, ...}]
+let foundDiffs = [];
+let hintsRemaining = 3;
+let timerStart = 0;
+let timerInterval = null;
+let elapsedSeconds = 0;
+let soundEnabled = true;
+let audioCtx = null;
+
+const STORAGE_KEY = 'spotDiff_progress';
+
+function loadProgress() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch { return {}; }
+}
+function saveProgress(level, stars, time) {
+  const p = loadProgress();
+  if (!p[level] || stars > (p[level].stars || 0)) {
+    p[level] = { stars, time };
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+}
+function getUnlockedLevel() {
+  const p = loadProgress();
+  let max = 1;
+  for (let i = 1; i <= 20; i++) {
+    if (p[i] && p[i].stars > 0) max = Math.max(max, i + 1);
+  }
+  return Math.min(max, 20);
+}
+
+// ===== Sound =====
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function playSound(type) {
+  if (!soundEnabled || !audioCtx) return;
+  try {
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    if (type === 'found') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.setValueAtTime(1100, now + 0.08);
+      osc.frequency.setValueAtTime(1320, now + 0.16);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      osc.start(now); osc.stop(now + 0.4);
+    } else if (type === 'hint') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.setValueAtTime(800, now + 0.1);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc.start(now); osc.stop(now + 0.3);
+    } else if (type === 'wrong') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(200, now);
+      osc.frequency.setValueAtTime(150, now + 0.15);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.start(now); osc.stop(now + 0.25);
+    } else if (type === 'complete') {
+      const notes = [523, 659, 784, 1047];
+      notes.forEach((freq, i) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(freq, now + i * 0.12);
+        g.gain.setValueAtTime(0.12, now + i * 0.12);
+        g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.4);
+        o.start(now + i * 0.12); o.stop(now + i * 0.12 + 0.4);
+      });
+    }
+  } catch(e) {}
+}
+
+// ===== Screens =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ===== Level Select =====
+function buildLevelSelect() {
+  const t = st();
+  const container = document.getElementById('level-grid-container');
+  const progress = loadProgress();
+  const unlocked = getUnlockedLevel();
+
+  const sections = [
+    { label: t.difficulty1, levels: [1,2,3,4,5] },
+    { label: t.difficulty2, levels: [6,7,8,9,10] },
+    { label: t.difficulty3, levels: [11,12,13,14,15] },
+    { label: t.difficulty4, levels: [16,17,18,19,20] },
+  ];
+
+  let html = '';
+  sections.forEach(sec => {
+    html += `<div class="diff-title">${sec.label}</div>`;
+    html += '<div class="level-grid">';
+    sec.levels.forEach(lv => {
+      const done = progress[lv] && progress[lv].stars > 0;
+      const isCurrent = lv === unlocked && !done;
+      const locked = lv > unlocked;
+      let cls = 'level-cell';
+      if (done) cls += ' completed';
+      if (isCurrent) cls += ' current';
+      if (locked) cls += ' locked';
+      const starStr = done ? '⭐'.repeat(progress[lv].stars) + '☆'.repeat(3 - progress[lv].stars) : '';
+      html += `<div class="${cls}" data-level="${lv}">
+        ${lv}
+        ${starStr ? `<div class="stars-mini">${starStr}</div>` : ''}
+      </div>`;
+    });
+    html += '</div>';
+  });
+  container.innerHTML = html;
+
+  container.querySelectorAll('.level-cell:not(.locked)').forEach(cell => {
+    cell.addEventListener('click', () => {
+      currentLevel = parseInt(cell.dataset.level);
+      startGame();
+    });
+  });
+}
+
+// ===== Procedural grid generation =====
+function seededRandom(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 16807 + 0) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+function generateGrids(level) {
+  const config = getLevelConfig(level);
+  const { gridSize, diffCount } = config;
+  const rand = seededRandom(level * 7919 + 42);
+
+  // Pick an emoji set
+  const setIndex = Math.floor(rand() * EMOJI_SETS.length);
+  const emojiPool = [...EMOJI_SETS[setIndex]];
+  // Also pick a secondary set for replacements
+  const setIndex2 = (setIndex + 1 + Math.floor(rand() * (EMOJI_SETS.length - 1))) % EMOJI_SETS.length;
+  const replacementPool = [...EMOJI_SETS[setIndex2]];
+
+  // Shuffle pool
+  for (let i = emojiPool.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [emojiPool[i], emojiPool[j]] = [emojiPool[j], emojiPool[i]];
+  }
+
+  // Generate original grid
+  const orig = [];
+  const bgGrid = [];
+  const neededEmojis = Math.min(gridSize * 2, emojiPool.length);
+  const usedEmojis = emojiPool.slice(0, neededEmojis);
+
+  for (let r = 0; r < gridSize; r++) {
+    orig[r] = [];
+    bgGrid[r] = [];
+    for (let c = 0; c < gridSize; c++) {
+      const idx = Math.floor(rand() * usedEmojis.length);
+      orig[r][c] = usedEmojis[idx];
+      // Some cells get colored backgrounds
+      bgGrid[r][c] = rand() < 0.15 ? (Math.floor(rand() * 4) + 1) : 0;
+    }
+  }
+
+  // Clone for different grid
+  const diff = orig.map(row => [...row]);
+  const diffBg = bgGrid.map(row => [...row]);
+
+  // Generate difference positions
+  const allPositions = [];
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      allPositions.push({ r, c });
+    }
+  }
+  // Shuffle positions
+  for (let i = allPositions.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
+  }
+
+  const diffTypes = ['swap_emoji', 'missing_emoji', 'different_bg', 'different_emoji'];
+  const diffs = [];
+
+  for (let d = 0; d < diffCount; d++) {
+    const pos = allPositions[d];
+    const typeIdx = Math.floor(rand() * diffTypes.length);
+    let type = diffTypes[typeIdx];
+
+    // For higher levels, favor harder diff types
+    if (level > 10 && rand() < 0.4) type = 'different_bg';
+
+    if (type === 'swap_emoji' || type === 'different_emoji') {
+      // Replace with a different emoji
+      let newEmoji;
+      do {
+        newEmoji = replacementPool[Math.floor(rand() * replacementPool.length)];
+      } while (newEmoji === orig[pos.r][pos.c]);
+      diff[pos.r][pos.c] = newEmoji;
+      diffs.push({ row: pos.r, col: pos.c, type: 'emoji', original: orig[pos.r][pos.c], changed: newEmoji });
+    } else if (type === 'missing_emoji') {
+      diff[pos.r][pos.c] = '  '; // blank
+      diffs.push({ row: pos.r, col: pos.c, type: 'missing', original: orig[pos.r][pos.c], changed: '' });
+    } else if (type === 'different_bg') {
+      // Change background color
+      let newBg;
+      do {
+        newBg = Math.floor(rand() * 4) + 1;
+      } while (newBg === bgGrid[pos.r][pos.c]);
+      diffBg[pos.r][pos.c] = newBg;
+      diffs.push({ row: pos.r, col: pos.c, type: 'bg', originalBg: bgGrid[pos.r][pos.c], changedBg: newBg });
+    }
+  }
+
+  return { original: orig, different: diff, originalBg: bgGrid, differentBg: diffBg, differences: diffs, config };
+}
+
+// ===== Render grids =====
+function renderGrid(containerId, grid, bgGrid, isDiffGrid) {
+  const container = document.getElementById(containerId);
+  const size = grid.length;
+  container.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+  container.innerHTML = '';
+
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'emoji-cell';
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      if (bgGrid[r][c]) cell.dataset.bg = bgGrid[r][c];
+      cell.textContent = grid[r][c];
+
+      if (isDiffGrid) {
+        cell.addEventListener('click', () => handleCellClick(r, c, cell));
+      }
+
+      container.appendChild(cell);
+    }
+  }
+}
+
+// ===== Game logic =====
+function startGame() {
+  initAudio();
+  const t = st();
+  showScreen('game-screen');
+
+  const data = generateGrids(currentLevel);
+  originalGrid = data.original;
+  differentGrid = data.different;
+  differences = data.differences;
+  foundDiffs = [];
+  hintsRemaining = 3;
+
+  // Update UI
+  document.getElementById('game-level-label').textContent = `${t.level} ${currentLevel}`;
+  document.getElementById('game-back-btn').textContent = t.back;
+  document.getElementById('label-original').textContent = t.original;
+  document.getElementById('label-different').textContent = t.different;
+  updateHintBtn();
+  updateFoundDisplay();
+
+  // Render grids
+  renderGrid('grid-original', data.original, data.originalBg, false);
+  renderGrid('grid-different', data.different, data.differentBg, true);
+
+  // Found dots
+  const dotsContainer = document.getElementById('found-dots');
+  dotsContainer.innerHTML = '';
+  for (let i = 0; i < differences.length; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'found-dot';
+    dotsContainer.appendChild(dot);
+  }
+
+  // Start timer
+  clearInterval(timerInterval);
+  elapsedSeconds = 0;
+  timerStart = Date.now();
+  timerInterval = setInterval(updateTimer, 100);
+  updateTimer();
+}
+
+function updateTimer() {
+  elapsedSeconds = Math.floor((Date.now() - timerStart) / 1000);
+  const mins = Math.floor(elapsedSeconds / 60);
+  const secs = elapsedSeconds % 60;
+  document.getElementById('timer-display').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function updateFoundDisplay() {
+  const t = st();
+  document.getElementById('found-display').textContent = `${foundDiffs.length}/${differences.length}`;
+  document.getElementById('found-label').textContent = t.found;
+}
+
+function updateHintBtn() {
+  const t = st();
+  const btn = document.getElementById('hint-btn');
+  if (hintsRemaining > 0) {
+    btn.textContent = `${t.hintBtn} (${hintsRemaining})`;
+    btn.disabled = false;
+  } else {
+    btn.textContent = t.noHints;
+    btn.disabled = true;
+  }
+}
+
+function handleCellClick(row, col, cellEl) {
+  // Check if this is a difference
+  const diffIndex = differences.findIndex(d => d.row === row && d.col === col);
+  const alreadyFound = foundDiffs.includes(diffIndex);
+
+  if (diffIndex >= 0 && !alreadyFound) {
+    // Found a difference!
+    foundDiffs.push(diffIndex);
+    playSound('found');
+
+    // Add circle to both grids
+    addFoundCircle('grid-different', row, col);
+    addFoundCircle('grid-original', row, col);
+
+    // Update dots
+    const dots = document.querySelectorAll('#found-dots .found-dot');
+    if (dots[foundDiffs.length - 1]) {
+      dots[foundDiffs.length - 1].classList.add('filled');
+    }
+
+    updateFoundDisplay();
+
+    // Check if all found
+    if (foundDiffs.length === differences.length) {
+      clearInterval(timerInterval);
+      updateTimer();
+      setTimeout(() => showWin(), 600);
+    }
+  } else if (diffIndex < 0) {
+    // Wrong tap
+    playSound('wrong');
+    cellEl.classList.add('wrong');
+    setTimeout(() => cellEl.classList.remove('wrong'), 400);
+  }
+}
+
+function addFoundCircle(gridId, row, col) {
+  const grid = document.getElementById(gridId);
+  const size = originalGrid.length;
+  const cellIndex = row * size + col;
+  const cell = grid.children[cellIndex];
+  if (cell) {
+    const circle = document.createElement('div');
+    circle.className = 'diff-found-circle';
+    cell.style.position = 'relative';
+    cell.appendChild(circle);
+  }
+}
+
+function useHint() {
+  if (hintsRemaining <= 0) return;
+  initAudio();
+  playSound('hint');
+  hintsRemaining--;
+  updateHintBtn();
+
+  // Find an unfound difference
+  const unfound = differences.findIndex((d, i) => !foundDiffs.includes(i));
+  if (unfound < 0) return;
+
+  const diff = differences[unfound];
+  const grid = document.getElementById('grid-different');
+  const size = originalGrid.length;
+  const cellIndex = diff.row * size + diff.col;
+  const cell = grid.children[cellIndex];
+  if (cell) {
+    cell.classList.add('hint-highlight');
+    setTimeout(() => cell.classList.remove('hint-highlight'), 1200);
+  }
+}
+
+// ===== Win screen =====
+function showWin() {
+  const t = st();
+  playSound('complete');
+
+  const config = getLevelConfig(currentLevel);
+  let stars = 1;
+  if (elapsedSeconds <= config.timeForThree) stars = 3;
+  else if (elapsedSeconds <= config.timeForTwo) stars = 2;
+
+  saveProgress(currentLevel, stars, elapsedSeconds);
+
+  const mins = Math.floor(elapsedSeconds / 60);
+  const secs = elapsedSeconds % 60;
+  const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+  document.getElementById('win-title').textContent = t.stage_clear || t.clear;
+  document.getElementById('win-sub').textContent = stars === 3 ? (t.excellent || t.perfect) : stars === 2 ? (t.amazing || t.well_done) : (t.well_done);
+  document.getElementById('win-stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+  document.getElementById('win-time').textContent = timeStr;
+
+  if (currentLevel >= 20) {
+    document.getElementById('win-next').style.display = 'none';
+  } else {
+    document.getElementById('win-next').style.display = '';
+  }
+
+  document.getElementById('win-overlay').classList.add('active');
+}
+
+// ===== Init =====
+function init() {
+  const t = st();
+
+  // Apply i18n
+  applyGameI18n();
+  document.getElementById('title-text').textContent = t.gameTitle;
+  document.getElementById('subtitle-text').textContent = t.gameSubtitle;
+
+  // Sound toggles
+  const updateSoundBtns = () => {
+    const icon = soundEnabled ? '🔊' : '🔇';
+    document.querySelectorAll('.sound-btn').forEach(b => b.textContent = icon);
+  };
+  document.querySelectorAll('.sound-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      updateSoundBtns();
+      if (soundEnabled) initAudio();
+    });
+  });
+
+  // Title buttons
+  document.getElementById('start-btn').addEventListener('click', () => {
+    initAudio();
+    currentLevel = getUnlockedLevel();
+    startGame();
+  });
+  document.getElementById('level-select-btn').addEventListener('click', () => {
+    buildLevelSelect();
+    showScreen('level-screen');
+  });
+
+  // Level back
+  document.getElementById('level-back-btn').addEventListener('click', () => showScreen('title-screen'));
+
+  // Game back
+  document.getElementById('game-back-btn').addEventListener('click', () => {
+    clearInterval(timerInterval);
+    showScreen('title-screen');
+  });
+
+  // Hint
+  document.getElementById('hint-btn').addEventListener('click', useHint);
+
+  // Restart
+  document.getElementById('restart-btn').addEventListener('click', () => startGame());
+
+  // Win buttons
+  document.getElementById('win-next').addEventListener('click', () => {
+    document.getElementById('win-overlay').classList.remove('active');
+    if (currentLevel < 20) currentLevel++;
+    startGame();
+  });
+  document.getElementById('win-levels').addEventListener('click', () => {
+    document.getElementById('win-overlay').classList.remove('active');
+    buildLevelSelect();
+    showScreen('level-screen');
+  });
+  document.getElementById('win-share').addEventListener('click', () => {
+    const mins = Math.floor(elapsedSeconds / 60);
+    const secs = elapsedSeconds % 60;
+    const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+    const progress = loadProgress();
+    const stars = progress[currentLevel] ? progress[currentLevel].stars : 1;
+    PuzzleShare.showShareModal({
+      title: t.gameName,
+      gameName: t.gameName,
+      stars: stars,
+      message: `${t.level} ${currentLevel} - ${timeStr}`,
+      lang: getGameLang()
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

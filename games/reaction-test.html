@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>반응속도 테스트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif;background:#0a0a1a;color:#e2e8f0}
+body{display:flex;flex-direction:column;align-items:center}
+
+.ad-placeholder{width:100%;max-width:480px;height:50px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);font-size:12px;letter-spacing:1px;flex-shrink:0}
+.ad-top{border-radius:0 0 8px 8px}
+.ad-bottom{border-radius:8px 8px 0 0;margin-top:auto}
+
+.header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;flex-shrink:0}
+.back-link{color:#94a3b8;text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;transition:color .2s}
+.back-link:hover{color:#e2e8f0}
+.title{font-size:18px;font-weight:800;background:linear-gradient(135deg,#ec4899,#a855f7,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.game-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:480px;padding:16px;position:relative;min-height:0;overflow-y:auto}
+
+/* Phase indicator */
+.phase-bar{width:100%;max-width:400px;display:flex;gap:4px;margin-bottom:16px;flex-shrink:0}
+.phase-dot{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.1);transition:background .3s}
+.phase-dot.done{background:linear-gradient(135deg,#a855f7,#ec4899)}
+.phase-dot.active{background:linear-gradient(135deg,#fbbf24,#f59e0b);animation:pulseDot 1s ease-in-out infinite}
+@keyframes pulseDot{0%,100%{opacity:.7}50%{opacity:1}}
+
+/* Stats row */
+.stats-row{width:100%;max-width:400px;display:flex;justify-content:space-around;margin-bottom:12px;flex-shrink:0}
+.stat-box{text-align:center}
+.stat-label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.stat-value{font-size:20px;font-weight:900;color:#f1f5f9;line-height:1.1}
+.stat-value.best-val{color:#a855f7}
+
+/* Main tap zone */
+.tap-zone{width:100%;max-width:400px;aspect-ratio:1/1;max-height:340px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;transition:background .15s,transform .1s,box-shadow .3s;flex-shrink:0}
+.tap-zone:active{transform:scale(.98)}
+
+.tap-zone.waiting{background:linear-gradient(135deg,#1e1b4b,#312e81);border:2px solid rgba(139,92,246,.3);box-shadow:0 0 40px rgba(139,92,246,.1)}
+.tap-zone.ready{background:linear-gradient(135deg,#dc2626,#ef4444);border:2px solid rgba(239,68,68,.5);box-shadow:0 0 60px rgba(239,68,68,.3);animation:pulseReady 1.2s ease-in-out infinite}
+@keyframes pulseReady{0%,100%{box-shadow:0 0 40px rgba(239,68,68,.3)}50%{box-shadow:0 0 80px rgba(239,68,68,.5)}}
+.tap-zone.go{background:linear-gradient(135deg,#16a34a,#22c55e);border:2px solid rgba(34,197,94,.6);box-shadow:0 0 80px rgba(34,197,94,.4)}
+.tap-zone.too-early{background:linear-gradient(135deg,#b91c1c,#991b1b);border:2px solid rgba(220,38,38,.5);animation:shakeZone .4s ease-out}
+@keyframes shakeZone{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+.tap-zone.result{background:linear-gradient(135deg,#1e1b4b,#312e81);border:2px solid rgba(139,92,246,.3)}
+
+/* Choice reaction arrows */
+.tap-zone.choice-wait{background:linear-gradient(135deg,#1e1b4b,#312e81);border:2px solid rgba(139,92,246,.3)}
+.tap-zone.choice-go{background:linear-gradient(135deg,#0f172a,#1e293b);border:2px solid rgba(59,130,246,.4);box-shadow:0 0 60px rgba(59,130,246,.2)}
+
+/* Color reaction */
+.tap-zone.color-wait{border:2px solid rgba(255,255,255,.1)}
+
+.tap-text{font-size:28px;font-weight:800;text-align:center;line-height:1.2;pointer-events:none}
+.tap-subtext{font-size:14px;font-weight:600;color:rgba(255,255,255,.6);margin-top:8px;pointer-events:none}
+.tap-time{font-size:64px;font-weight:900;pointer-events:none;line-height:1}
+.tap-ms{font-size:18px;font-weight:600;color:rgba(255,255,255,.7);pointer-events:none}
+
+/* Arrow directions for choice reaction */
+.arrow-display{font-size:100px;pointer-events:none;line-height:1;filter:drop-shadow(0 0 20px rgba(255,255,255,.3))}
+.arrow-choices{display:flex;gap:12px;margin-top:16px;pointer-events:auto}
+.arrow-btn{width:70px;height:70px;border-radius:16px;border:2px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);color:#e2e8f0;font-size:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;font-family:'Outfit',sans-serif}
+.arrow-btn:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3)}
+.arrow-btn:active{transform:scale(.9);background:rgba(255,255,255,.15)}
+.arrow-btn.correct{background:rgba(34,197,94,.3);border-color:#22c55e}
+.arrow-btn.wrong{background:rgba(239,68,68,.3);border-color:#ef4444}
+
+/* Color target indicator */
+.color-target{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 16px;border-radius:12px;background:rgba(255,255,255,.05);flex-shrink:0}
+.color-target-label{font-size:13px;color:#94a3b8;font-weight:600}
+.color-target-swatch{width:28px;height:28px;border-radius:8px;border:2px solid rgba(255,255,255,.2)}
+.color-target-name{font-size:15px;font-weight:700}
+
+/* Round indicators */
+.rounds-row{display:flex;gap:6px;margin-top:12px;flex-shrink:0}
+.round-pip{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.1);transition:all .3s}
+.round-pip.done{background:#22c55e}
+.round-pip.current{background:#fbbf24;box-shadow:0 0 10px rgba(251,191,36,.5)}
+.round-pip.fail{background:#ef4444}
+
+/* Countdown overlay */
+.countdown{position:absolute;font-size:120px;font-weight:900;opacity:0;pointer-events:none;background:linear-gradient(135deg,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 30px rgba(168,85,247,.5))}
+.countdown.show{animation:countPop .7s ease-out forwards}
+@keyframes countPop{0%{opacity:0;transform:scale(2)}15%{opacity:1;transform:scale(.9)}30%{transform:scale(1.05)}50%{transform:scale(1)}100%{opacity:0;transform:scale(.8) translateY(-20px)}}
+
+/* Results overlay */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;visibility:hidden;transition:all .3s}
+.overlay.show{opacity:1;visibility:visible}
+.overlay-box{background:#1a1a2e;border-radius:24px;padding:32px 28px;text-align:center;max-width:360px;width:92%;border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.overlay-box h2{font-size:24px;font-weight:900;margin-bottom:4px;background:linear-gradient(135deg,#ec4899,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.result-rating{font-size:16px;font-weight:700;color:#fbbf24;margin-bottom:16px}
+.result-avg{font-size:56px;font-weight:900;background:linear-gradient(135deg,#22c55e,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.result-avg-label{font-size:14px;color:#94a3b8;margin-bottom:16px}
+.result-breakdown{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.result-phase{background:rgba(255,255,255,.05);border-radius:12px;padding:10px 14px;text-align:center;min-width:90px}
+.result-phase-label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase}
+.result-phase-value{font-size:20px;font-weight:800;color:#f1f5f9}
+.result-comparison{font-size:13px;color:#94a3b8;margin-bottom:20px;line-height:1.5}
+.result-best{font-size:13px;color:#a855f7;margin-bottom:16px;font-weight:600}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{padding:14px 28px;border-radius:14px;font-size:15px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;border:none;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:scale(1.04)}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;box-shadow:0 4px 20px rgba(168,85,247,.4)}
+.btn-secondary{background:rgba(255,255,255,.08);color:#e2e8f0;border:1px solid rgba(255,255,255,.12)}
+.btn-share{background:linear-gradient(135deg,#3b82f6,#06b6d4);color:#fff;box-shadow:0 4px 20px rgba(59,130,246,.3)}
+
+/* Sparkle BG */
+#sparkleCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+
+/* History panel */
+.history-panel{width:100%;max-width:400px;margin-top:12px;flex-shrink:0}
+.history-toggle{background:none;border:1px solid rgba(255,255,255,.1);color:#94a3b8;font-size:12px;font-weight:600;font-family:'Outfit',sans-serif;padding:6px 14px;border-radius:8px;cursor:pointer;transition:all .2s}
+.history-toggle:hover{background:rgba(255,255,255,.05);color:#e2e8f0}
+.history-list{max-height:120px;overflow-y:auto;margin-top:8px;display:none}
+.history-list.open{display:block}
+.history-item{display:flex;justify-content:space-between;padding:6px 12px;border-radius:8px;background:rgba(255,255,255,.03);margin-bottom:4px;font-size:12px;color:#94a3b8}
+.history-item .h-time{font-weight:700;color:#e2e8f0}
+.history-item .h-rating{color:#a855f7}
+
+@media(max-height:640px){
+  .tap-zone{max-height:240px}
+  .tap-time{font-size:48px}
+  .arrow-display{font-size:72px}
+  .stats-row{margin-bottom:6px}
+  .phase-bar{margin-bottom:8px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="sparkleCanvas"></canvas>
+
+<div class="ad-placeholder ad-top">AD SPACE</div>
+
+<div class="header">
+  <a href="../index.html" class="back-link" id="backLink">← 메인으로</a>
+  <div class="title" id="gameTitle">반응속도 테스트</div>
+</div>
+
+<div class="game-area">
+  <!-- Phase progress -->
+  <div class="phase-bar" id="phaseBar">
+    <div class="phase-dot" id="phase0"></div>
+    <div class="phase-dot" id="phase1"></div>
+    <div class="phase-dot" id="phase2"></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-label" id="roundLabel">ROUND</div><div class="stat-value" id="roundDisplay">-</div></div>
+    <div class="stat-box"><div class="stat-label" id="avgLabel">AVG</div><div class="stat-value" id="avgDisplay">-</div></div>
+    <div class="stat-box"><div class="stat-label" id="bestLabel">BEST</div><div class="stat-value best-val" id="bestDisplay">-</div></div>
+  </div>
+
+  <!-- Color target (shown only in color phase) -->
+  <div class="color-target" id="colorTarget" style="display:none">
+    <div class="color-target-label" id="colorTargetLabel">TAP WHEN:</div>
+    <div class="color-target-swatch" id="colorTargetSwatch"></div>
+    <div class="color-target-name" id="colorTargetName"></div>
+  </div>
+
+  <!-- Main tap zone -->
+  <div class="tap-zone waiting" id="tapZone">
+    <div class="tap-text" id="tapText">TAP TO START</div>
+    <div class="tap-subtext" id="tapSubtext"></div>
+    <div class="countdown" id="countdown"></div>
+  </div>
+
+  <!-- Round pips -->
+  <div class="rounds-row" id="roundsRow"></div>
+
+  <!-- History -->
+  <div class="history-panel" id="historyPanel">
+    <button class="history-toggle" id="historyToggle">HISTORY</button>
+    <div class="history-list" id="historyList"></div>
+  </div>
+</div>
+
+<div class="ad-placeholder ad-bottom">AD SPACE</div>
+
+<!-- Results Overlay -->
+<div class="overlay" id="resultOverlay">
+  <div class="overlay-box">
+    <h2 id="resultTitle">Results</h2>
+    <div class="result-rating" id="resultRating"></div>
+    <div class="result-avg" id="resultAvg">0ms</div>
+    <div class="result-avg-label" id="resultAvgLabel">Average Reaction Time</div>
+    <div class="result-breakdown" id="resultBreakdown"></div>
+    <div class="result-comparison" id="resultComparison"></div>
+    <div class="result-best" id="resultBest"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnRetry">RETRY</button>
+      <button class="btn btn-share" id="btnShare">SHARE</button>
+    </div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+// ===== CUSTOM TRANSLATIONS =====
+const RT_I18N = {
+  ko: {
+    title: '반응속도 테스트',
+    back: '← 메인으로',
+    tapToStart: '탭하여 시작',
+    getReady: '준비하세요...',
+    waitForGreen: '초록색이 되면 탭!',
+    tapNow: '지금 탭!',
+    tooEarly: '너무 빨라요!',
+    tapToRetry: '탭하여 다시 시도',
+    round: '라운드',
+    avg: '평균',
+    best: '최고',
+    phase1: '단순 반응',
+    phase2: '방향 선택',
+    phase3: '색상 반응',
+    tapCorrectDir: '올바른 방향을 탭하세요',
+    waitForColor: '탭할 색상:',
+    results: '결과',
+    avgReactionTime: '평균 반응 시간',
+    retry: '다시하기',
+    share: '공유',
+    history: '기록',
+    ratingLightning: '번개처럼 빠름!',
+    ratingFast: '빠름!',
+    ratingAverage: '보통',
+    ratingSlow: '느림',
+    fasterThan: '당신은 사람들의 상위 {pct}%보다 빠릅니다!',
+    bestRecord: '최고 기록: {ms}ms',
+    newBest: 'NEW BEST!',
+    simple: '단순',
+    choice: '방향',
+    color: '색상',
+  },
+  en: {
+    title: 'Reaction Test',
+    back: '← Back',
+    tapToStart: 'TAP TO START',
+    getReady: 'Get ready...',
+    waitForGreen: 'Wait for green, then tap!',
+    tapNow: 'TAP NOW!',
+    tooEarly: 'Too early!',
+    tapToRetry: 'Tap to retry',
+    round: 'ROUND',
+    avg: 'AVG',
+    best: 'BEST',
+    phase1: 'Simple Reaction',
+    phase2: 'Choice Reaction',
+    phase3: 'Color Reaction',
+    tapCorrectDir: 'Tap the correct direction',
+    waitForColor: 'Tap when:',
+    results: 'Results',
+    avgReactionTime: 'Average Reaction Time',
+    retry: 'RETRY',
+    share: 'SHARE',
+    history: 'HISTORY',
+    ratingLightning: 'Lightning Fast!',
+    ratingFast: 'Fast!',
+    ratingAverage: 'Average',
+    ratingSlow: 'Slow',
+    fasterThan: "You're faster than {pct}% of people!",
+    bestRecord: 'Best record: {ms}ms',
+    newBest: 'NEW BEST!',
+    simple: 'Simple',
+    choice: 'Choice',
+    color: 'Color',
+  },
+  ja: {
+    title: '反応速度テスト',
+    back: '← メインへ',
+    tapToStart: 'タップして開始',
+    getReady: '準備してください...',
+    waitForGreen: '緑になったらタップ！',
+    tapNow: '今すぐタップ！',
+    tooEarly: '早すぎます！',
+    tapToRetry: 'タップしてリトライ',
+    round: 'ラウンド',
+    avg: '平均',
+    best: 'ベスト',
+    phase1: '単純反応',
+    phase2: '方向選択',
+    phase3: '色反応',
+    tapCorrectDir: '正しい方向をタップ',
+    waitForColor: 'この色でタップ:',
+    results: '結果',
+    avgReactionTime: '平均反応時間',
+    retry: 'リトライ',
+    share: 'シェア',
+    history: '履歴',
+    ratingLightning: '電光石火！',
+    ratingFast: '速い！',
+    ratingAverage: '普通',
+    ratingSlow: '遅い',
+    fasterThan: 'あなたは{pct}%の人より速いです！',
+    bestRecord: '最高記録: {ms}ms',
+    newBest: 'NEW BEST!',
+    simple: '単純',
+    choice: '方向',
+    color: '色',
+  },
+  zh: {
+    title: '反应速度测试',
+    back: '← 返回',
+    tapToStart: '点击开始',
+    getReady: '准备好...',
+    waitForGreen: '变绿后点击！',
+    tapNow: '现在点击！',
+    tooEarly: '太早了！',
+    tapToRetry: '点击重试',
+    round: '回合',
+    avg: '平均',
+    best: '最佳',
+    phase1: '简单反应',
+    phase2: '方向选择',
+    phase3: '颜色反应',
+    tapCorrectDir: '点击正确的方向',
+    waitForColor: '看到此颜色时点击:',
+    results: '结果',
+    avgReactionTime: '平均反应时间',
+    retry: '重试',
+    share: '分享',
+    history: '历史',
+    ratingLightning: '闪电般快！',
+    ratingFast: '快！',
+    ratingAverage: '一般',
+    ratingSlow: '慢',
+    fasterThan: '你比{pct}%的人更快！',
+    bestRecord: '最佳记录: {ms}ms',
+    newBest: 'NEW BEST!',
+    simple: '简单',
+    choice: '方向',
+    color: '颜色',
+  },
+  es: {
+    title: 'Test de Reaccion',
+    back: '← Volver',
+    tapToStart: 'TOCA PARA EMPEZAR',
+    getReady: 'Preparate...',
+    waitForGreen: 'Toca cuando sea verde!',
+    tapNow: 'TOCA AHORA!',
+    tooEarly: 'Muy rapido!',
+    tapToRetry: 'Toca para reintentar',
+    round: 'RONDA',
+    avg: 'PROM',
+    best: 'MEJOR',
+    phase1: 'Reaccion Simple',
+    phase2: 'Reaccion de Eleccion',
+    phase3: 'Reaccion de Color',
+    tapCorrectDir: 'Toca la direccion correcta',
+    waitForColor: 'Toca con este color:',
+    results: 'Resultados',
+    avgReactionTime: 'Tiempo promedio de reaccion',
+    retry: 'REINTENTAR',
+    share: 'COMPARTIR',
+    history: 'HISTORIAL',
+    ratingLightning: 'Rapido como el rayo!',
+    ratingFast: 'Rapido!',
+    ratingAverage: 'Normal',
+    ratingSlow: 'Lento',
+    fasterThan: 'Eres mas rapido que el {pct}% de la gente!',
+    bestRecord: 'Mejor registro: {ms}ms',
+    newBest: 'NUEVO RECORD!',
+    simple: 'Simple',
+    choice: 'Eleccion',
+    color: 'Color',
+  }
+};
+
+function T(key) {
+  const lang = (typeof getGameLang === 'function') ? getGameLang() : 'ko';
+  const dict = RT_I18N[lang] || RT_I18N.ko;
+  return dict[key] || RT_I18N.ko[key] || key;
+}
+
+// ===== AUDIO ENGINE =====
+const Audio = {
+  ctx: null,
+  init() { if (this.ctx) return; this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+  resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
+  _play(fn) { this.init(); this.resume(); try { fn(this.ctx); } catch(e) {} },
+  beep() {
+    this._play(ctx => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine'; o.frequency.setValueAtTime(880, ctx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.06);
+      g.gain.setValueAtTime(0.15, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.15);
+    });
+  },
+  success() {
+    this._play(ctx => {
+      [523, 659, 784].forEach((f, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine'; o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.08);
+        g.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.08);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.2);
+        o.start(ctx.currentTime + i * 0.08); o.stop(ctx.currentTime + i * 0.08 + 0.2);
+      });
+    });
+  },
+  buzz() {
+    this._play(ctx => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(150, ctx.currentTime);
+      g.gain.setValueAtTime(0.12, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.3);
+    });
+  },
+  countdown() {
+    this._play(ctx => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'triangle'; o.frequency.setValueAtTime(440, ctx.currentTime);
+      g.gain.setValueAtTime(0.1, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.2);
+    });
+  },
+  go() {
+    this._play(ctx => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine'; o.frequency.setValueAtTime(660, ctx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
+      g.gain.setValueAtTime(0.18, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.25);
+    });
+  },
+  fanfare() {
+    this._play(ctx => {
+      const notes = [523, 659, 784, 1047, 784, 1047];
+      notes.forEach((f, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'triangle'; o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.1);
+        g.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.1);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.1 + 0.25);
+        o.start(ctx.currentTime + i * 0.1); o.stop(ctx.currentTime + i * 0.1 + 0.25);
+      });
+    });
+  }
+};
+
+// ===== SPARKLE BACKGROUND =====
+const sparkleCanvas = document.getElementById('sparkleCanvas');
+const sparkleCtx = sparkleCanvas.getContext('2d');
+let sparkles = [];
+
+function resizeSparkle() { sparkleCanvas.width = window.innerWidth; sparkleCanvas.height = window.innerHeight; }
+resizeSparkle();
+window.addEventListener('resize', resizeSparkle);
+
+for (let i = 0; i < 30; i++) {
+  sparkles.push({
+    x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight,
+    size: Math.random() * 2 + 0.5, speed: Math.random() * 0.3 + 0.1,
+    phase: Math.random() * Math.PI * 2, alpha: Math.random()
+  });
+}
+
+function animSparkles(time) {
+  sparkleCtx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
+  sparkles.forEach(s => {
+    s.y -= s.speed; s.phase += 0.02;
+    if (s.y < -5) { s.y = sparkleCanvas.height + 5; s.x = Math.random() * sparkleCanvas.width; }
+    const a = (Math.sin(s.phase) * 0.5 + 0.5) * 0.4;
+    sparkleCtx.beginPath();
+    sparkleCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+    sparkleCtx.fillStyle = `rgba(168,130,255,${a})`;
+    sparkleCtx.fill();
+  });
+  requestAnimationFrame(animSparkles);
+}
+requestAnimationFrame(animSparkles);
+
+// ===== GAME CONSTANTS =====
+const PHASES = [
+  { key: 'simple', rounds: 5 },
+  { key: 'choice', rounds: 10 },
+  { key: 'color', rounds: 5 }
+];
+
+const ARROWS = ['up','down','left','right'];
+const ARROW_SYMBOLS = { up: '\u2191', down: '\u2193', left: '\u2190', right: '\u2192' };
+const COLORS_LIST = [
+  { name: 'Red', hex: '#ef4444', ko: '빨강', ja: '赤', zh: '红色', es: 'Rojo' },
+  { name: 'Blue', hex: '#3b82f6', ko: '파랑', ja: '青', zh: '蓝色', es: 'Azul' },
+  { name: 'Green', hex: '#22c55e', ko: '초록', ja: '緑', zh: '绿色', es: 'Verde' },
+  { name: 'Yellow', hex: '#eab308', ko: '노랑', ja: '黄', zh: '黄色', es: 'Amarillo' },
+  { name: 'Purple', hex: '#a855f7', ko: '보라', ja: '紫', zh: '紫色', es: 'Morado' },
+];
+
+// ===== DOM REFS =====
+const $tapZone = document.getElementById('tapZone');
+const $tapText = document.getElementById('tapText');
+const $tapSubtext = document.getElementById('tapSubtext');
+const $countdown = document.getElementById('countdown');
+const $roundDisplay = document.getElementById('roundDisplay');
+const $avgDisplay = document.getElementById('avgDisplay');
+const $bestDisplay = document.getElementById('bestDisplay');
+const $roundsRow = document.getElementById('roundsRow');
+const $colorTarget = document.getElementById('colorTarget');
+const $colorTargetSwatch = document.getElementById('colorTargetSwatch');
+const $colorTargetName = document.getElementById('colorTargetName');
+const $resultOverlay = document.getElementById('resultOverlay');
+
+// ===== GAME STATE =====
+let state = 'idle'; // idle, countdown, waiting, ready, go, tooEarly, result, choiceWait, choiceGo, colorWait, colorGo, finished
+let currentPhase = 0;
+let currentRound = 0;
+let roundTimes = []; // times for current phase
+let allPhaseTimes = [[], [], []]; // per-phase averages
+let signalTime = 0;
+let timeoutId = null;
+let colorChangeId = null;
+let choiceDirection = '';
+let targetColor = null;
+let currentDisplayColor = null;
+let bestAllTime = parseInt(localStorage.getItem('reactionTestBest') || '0');
+let history = JSON.parse(localStorage.getItem('reactionTestHistory') || '[]');
+
+// ===== APPLY I18N =====
+function applyI18n() {
+  document.getElementById('gameTitle').textContent = T('title');
+  document.getElementById('backLink').textContent = T('back');
+  document.getElementById('roundLabel').textContent = T('round');
+  document.getElementById('avgLabel').textContent = T('avg');
+  document.getElementById('bestLabel').textContent = T('best');
+  document.getElementById('colorTargetLabel').textContent = T('waitForColor');
+  document.getElementById('btnRetry').textContent = T('retry');
+  document.getElementById('btnShare').textContent = T('share');
+  document.getElementById('historyToggle').textContent = T('history');
+  document.getElementById('resultTitle').textContent = T('results');
+  document.getElementById('resultAvgLabel').textContent = T('avgReactionTime');
+  $tapText.textContent = T('tapToStart');
+  if (bestAllTime > 0) $bestDisplay.textContent = bestAllTime + 'ms';
+}
+applyI18n();
+
+// ===== HISTORY =====
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  list.innerHTML = '';
+  history.slice(-20).reverse().forEach(h => {
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    const date = new Date(h.date);
+    const dateStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2,'0')}`;
+    div.innerHTML = `<span>${dateStr}</span><span class="h-time">${h.avg}ms</span><span class="h-rating">${h.rating}</span>`;
+    list.appendChild(div);
+  });
+}
+renderHistory();
+
+document.getElementById('historyToggle').addEventListener('click', () => {
+  document.getElementById('historyList').classList.toggle('open');
+});
+
+// ===== HELPERS =====
+function getColorName(color) {
+  const lang = (typeof getGameLang === 'function') ? getGameLang() : 'ko';
+  if (lang === 'ko') return color.ko;
+  if (lang === 'ja') return color.ja;
+  if (lang === 'zh') return color.zh;
+  if (lang === 'es') return color.es;
+  return color.name;
+}
+
+function getRating(ms) {
+  if (ms < 200) return T('ratingLightning');
+  if (ms < 300) return T('ratingFast');
+  if (ms < 400) return T('ratingAverage');
+  return T('ratingSlow');
+}
+
+function getPercentile(ms) {
+  // Approximate percentile based on typical human reaction times
+  if (ms < 150) return 99;
+  if (ms < 180) return 95;
+  if (ms < 200) return 90;
+  if (ms < 220) return 80;
+  if (ms < 250) return 70;
+  if (ms < 280) return 60;
+  if (ms < 300) return 50;
+  if (ms < 350) return 35;
+  if (ms < 400) return 20;
+  if (ms < 500) return 10;
+  return 5;
+}
+
+function clearTimers() {
+  if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
+  if (colorChangeId) { clearInterval(colorChangeId); colorChangeId = null; }
+}
+
+function setTapZoneClass(cls) {
+  $tapZone.className = 'tap-zone ' + cls;
+}
+
+function updatePhaseDots() {
+  for (let i = 0; i < 3; i++) {
+    const dot = document.getElementById('phase' + i);
+    dot.className = 'phase-dot';
+    if (i < currentPhase) dot.classList.add('done');
+    else if (i === currentPhase) dot.classList.add('active');
+  }
+}
+
+function updateRoundPips() {
+  const phase = PHASES[currentPhase];
+  $roundsRow.innerHTML = '';
+  for (let i = 0; i < phase.rounds; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'round-pip';
+    if (i < currentRound) pip.classList.add('done');
+    else if (i === currentRound) pip.classList.add('current');
+    $roundsRow.appendChild(pip);
+  }
+}
+
+function updateStats() {
+  const phase = PHASES[currentPhase];
+  $roundDisplay.textContent = `${currentRound + 1}/${phase.rounds}`;
+  if (roundTimes.length > 0) {
+    const avg = Math.round(roundTimes.reduce((a, b) => a + b, 0) / roundTimes.length);
+    $avgDisplay.textContent = avg + 'ms';
+  }
+}
+
+function showCountdown(num, cb) {
+  $countdown.textContent = num;
+  $countdown.classList.remove('show');
+  void $countdown.offsetWidth;
+  $countdown.classList.add('show');
+  Audio.countdown();
+  if (num > 1) {
+    timeoutId = setTimeout(() => showCountdown(num - 1, cb), 700);
+  } else {
+    timeoutId = setTimeout(() => { $countdown.classList.remove('show'); cb(); }, 700);
+  }
+}
+
+// ===== PHASE 1: SIMPLE REACTION =====
+function startSimpleRound() {
+  state = 'waiting';
+  setTapZoneClass('ready');
+  $tapText.textContent = T('waitForGreen');
+  $tapSubtext.textContent = '';
+  $colorTarget.style.display = 'none';
+  $tapZone.innerHTML = '';
+  appendTapContent();
+
+  const delay = 1500 + Math.random() * 3000;
+  timeoutId = setTimeout(() => {
+    state = 'go';
+    signalTime = performance.now();
+    setTapZoneClass('go');
+    $tapText.textContent = T('tapNow');
+    Audio.go();
+  }, delay);
+}
+
+function handleSimpleTap() {
+  if (state === 'waiting') {
+    // Too early!
+    clearTimers();
+    state = 'tooEarly';
+    setTapZoneClass('too-early');
+    $tapText.textContent = T('tooEarly');
+    $tapSubtext.textContent = T('tapToRetry');
+    Audio.buzz();
+    return;
+  }
+  if (state === 'tooEarly') {
+    startSimpleRound();
+    return;
+  }
+  if (state === 'go') {
+    const elapsed = Math.round(performance.now() - signalTime);
+    roundTimes.push(elapsed);
+    Audio.beep();
+    state = 'result';
+    setTapZoneClass('result');
+    $tapZone.innerHTML = '';
+    const timeEl = document.createElement('div');
+    timeEl.className = 'tap-time';
+    timeEl.textContent = elapsed;
+    timeEl.style.cssText = 'animation:countPop .5s ease-out forwards;opacity:1;position:relative;' +
+      'background:linear-gradient(135deg,#22c55e,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;';
+    const msEl = document.createElement('div');
+    msEl.className = 'tap-ms';
+    msEl.textContent = 'ms';
+    $tapZone.appendChild(timeEl);
+    $tapZone.appendChild(msEl);
+    currentRound++;
+    updateRoundPips();
+    updateStats();
+
+    timeoutId = setTimeout(() => {
+      if (currentRound >= PHASES[currentPhase].rounds) {
+        finishPhase();
+      } else {
+        startSimpleRound();
+      }
+    }, 1200);
+  }
+}
+
+// ===== PHASE 2: CHOICE REACTION =====
+function startChoiceRound() {
+  state = 'choiceWait';
+  setTapZoneClass('choice-wait');
+  $colorTarget.style.display = 'none';
+  $tapZone.innerHTML = '';
+  appendTapContent();
+  $tapText.textContent = T('getReady');
+  $tapSubtext.textContent = '';
+
+  const delay = 1000 + Math.random() * 2000;
+  timeoutId = setTimeout(() => {
+    state = 'choiceGo';
+    signalTime = performance.now();
+    choiceDirection = ARROWS[Math.floor(Math.random() * ARROWS.length)];
+    setTapZoneClass('choice-go');
+
+    $tapZone.innerHTML = '';
+    const arrowEl = document.createElement('div');
+    arrowEl.className = 'arrow-display';
+    arrowEl.textContent = ARROW_SYMBOLS[choiceDirection];
+    $tapZone.appendChild(arrowEl);
+
+    const subEl = document.createElement('div');
+    subEl.className = 'tap-subtext';
+    subEl.textContent = T('tapCorrectDir');
+    $tapZone.appendChild(subEl);
+
+    const choices = document.createElement('div');
+    choices.className = 'arrow-choices';
+    ARROWS.forEach(dir => {
+      const btn = document.createElement('button');
+      btn.className = 'arrow-btn';
+      btn.textContent = ARROW_SYMBOLS[dir];
+      btn.dataset.dir = dir;
+      btn.addEventListener('click', (e) => { e.stopPropagation(); handleChoiceTap(dir, btn); });
+      btn.addEventListener('touchstart', (e) => { e.stopPropagation(); });
+      choices.appendChild(btn);
+    });
+    $tapZone.appendChild(choices);
+    Audio.go();
+  }, delay);
+}
+
+function handleChoiceTap(dir, btnEl) {
+  if (state !== 'choiceGo') return;
+  const elapsed = Math.round(performance.now() - signalTime);
+  state = 'result';
+
+  if (dir === choiceDirection) {
+    btnEl.classList.add('correct');
+    roundTimes.push(elapsed);
+    Audio.beep();
+  } else {
+    btnEl.classList.add('wrong');
+    // Find correct button and highlight it
+    const btns = $tapZone.querySelectorAll('.arrow-btn');
+    btns.forEach(b => { if (b.dataset.dir === choiceDirection) b.classList.add('correct'); });
+    roundTimes.push(elapsed + 200); // penalty
+    Audio.buzz();
+  }
+
+  currentRound++;
+  updateRoundPips();
+  updateStats();
+
+  timeoutId = setTimeout(() => {
+    if (currentRound >= PHASES[currentPhase].rounds) {
+      finishPhase();
+    } else {
+      startChoiceRound();
+    }
+  }, 1200);
+}
+
+// ===== PHASE 3: COLOR REACTION =====
+function startColorRound() {
+  state = 'colorWait';
+  // Pick target color
+  targetColor = COLORS_LIST[Math.floor(Math.random() * COLORS_LIST.length)];
+  $colorTarget.style.display = 'flex';
+  $colorTargetSwatch.style.background = targetColor.hex;
+  $colorTargetName.textContent = getColorName(targetColor);
+  $colorTargetName.style.color = targetColor.hex;
+
+  // Start with a random non-target color
+  let startColor;
+  do { startColor = COLORS_LIST[Math.floor(Math.random() * COLORS_LIST.length)]; } while (startColor === targetColor);
+  currentDisplayColor = startColor;
+  $tapZone.style.background = startColor.hex;
+  setTapZoneClass('color-wait');
+  $tapZone.style.background = `linear-gradient(135deg, ${startColor.hex}, ${adjustColor(startColor.hex, -30)})`;
+  $tapZone.innerHTML = '';
+  appendTapContent();
+  $tapText.textContent = T('getReady');
+  $tapSubtext.textContent = '';
+
+  // Cycle colors, eventually show target
+  const targetAppearance = 3 + Math.floor(Math.random() * 5); // show after 3-7 changes
+  let changeCount = 0;
+
+  colorChangeId = setInterval(() => {
+    changeCount++;
+    if (changeCount >= targetAppearance) {
+      clearInterval(colorChangeId);
+      colorChangeId = null;
+      // Show target color
+      currentDisplayColor = targetColor;
+      state = 'colorGo';
+      signalTime = performance.now();
+      $tapZone.style.background = `linear-gradient(135deg, ${targetColor.hex}, ${adjustColor(targetColor.hex, -30)})`;
+      $tapText.textContent = T('tapNow');
+      Audio.go();
+    } else {
+      let nextColor;
+      do { nextColor = COLORS_LIST[Math.floor(Math.random() * COLORS_LIST.length)]; } while (nextColor === targetColor || nextColor === currentDisplayColor);
+      currentDisplayColor = nextColor;
+      $tapZone.style.background = `linear-gradient(135deg, ${nextColor.hex}, ${adjustColor(nextColor.hex, -30)})`;
+    }
+  }, 800 + Math.random() * 600);
+}
+
+function adjustColor(hex, amount) {
+  const num = parseInt(hex.slice(1), 16);
+  const r = Math.max(0, Math.min(255, ((num >> 16) & 0xFF) + amount));
+  const g = Math.max(0, Math.min(255, ((num >> 8) & 0xFF) + amount));
+  const b = Math.max(0, Math.min(255, (num & 0xFF) + amount));
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+}
+
+function handleColorTap() {
+  if (state === 'colorWait') {
+    // Tapped on wrong color - too early / wrong
+    clearTimers();
+    state = 'tooEarly';
+    $tapZone.style.background = '';
+    setTapZoneClass('too-early');
+    $tapText.textContent = T('tooEarly');
+    $tapSubtext.textContent = T('tapToRetry');
+    Audio.buzz();
+    return;
+  }
+  if (state === 'tooEarly') {
+    $tapZone.style.background = '';
+    startColorRound();
+    return;
+  }
+  if (state === 'colorGo') {
+    const elapsed = Math.round(performance.now() - signalTime);
+    roundTimes.push(elapsed);
+    Audio.beep();
+    state = 'result';
+    $tapZone.style.background = '';
+    setTapZoneClass('result');
+    $tapZone.innerHTML = '';
+    const timeEl = document.createElement('div');
+    timeEl.className = 'tap-time';
+    timeEl.textContent = elapsed;
+    timeEl.style.cssText = 'background:linear-gradient(135deg,#22c55e,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;';
+    const msEl = document.createElement('div');
+    msEl.className = 'tap-ms';
+    msEl.textContent = 'ms';
+    $tapZone.appendChild(timeEl);
+    $tapZone.appendChild(msEl);
+    currentRound++;
+    updateRoundPips();
+    updateStats();
+
+    timeoutId = setTimeout(() => {
+      if (currentRound >= PHASES[currentPhase].rounds) {
+        finishPhase();
+      } else {
+        startColorRound();
+      }
+    }, 1200);
+  }
+}
+
+// ===== FLOW CONTROL =====
+function appendTapContent() {
+  // Re-add tap-text and tap-subtext and countdown to tap zone
+  const t = document.createElement('div');
+  t.className = 'tap-text'; t.id = '_tapText';
+  const s = document.createElement('div');
+  s.className = 'tap-subtext'; s.id = '_tapSubtext';
+  const c = document.createElement('div');
+  c.className = 'countdown'; c.id = '_countdown';
+  $tapZone.appendChild(t);
+  $tapZone.appendChild(s);
+  $tapZone.appendChild(c);
+  // Update refs
+  refreshTapRefs();
+}
+
+function refreshTapRefs() {
+  // We use the global $tapText etc but they may have been removed from DOM
+  // So we just query fresh each time
+}
+
+Object.defineProperty(window, '_tapText', { get() { return $tapZone.querySelector('.tap-text'); }});
+Object.defineProperty(window, '_tapSubtext', { get() { return $tapZone.querySelector('.tap-subtext'); }});
+
+// Override $tapText setter behavior by using direct property
+Object.defineProperty($tapText, '_override', { value: true });
+
+// Simpler approach: just use $tapZone and manage inner content directly
+
+function startGame() {
+  Audio.init(); Audio.resume();
+  currentPhase = 0;
+  allPhaseTimes = [[], [], []];
+  updatePhaseDots();
+  startPhase();
+}
+
+function startPhase() {
+  currentRound = 0;
+  roundTimes = [];
+  updatePhaseDots();
+  updateRoundPips();
+  $colorTarget.style.display = 'none';
+  $tapZone.style.background = '';
+
+  // Show phase name with countdown
+  const phaseNames = [T('phase1'), T('phase2'), T('phase3')];
+  setTapZoneClass('waiting');
+  $tapZone.innerHTML = '';
+  const title = document.createElement('div');
+  title.className = 'tap-text';
+  title.textContent = phaseNames[currentPhase];
+  title.style.fontSize = '22px';
+  $tapZone.appendChild(title);
+
+  const sub = document.createElement('div');
+  sub.className = 'tap-subtext';
+  const roundCounts = [5, 10, 5];
+  sub.textContent = `${roundCounts[currentPhase]} ${T('round').toLowerCase()}s`;
+  $tapZone.appendChild(sub);
+
+  const cdEl = document.createElement('div');
+  cdEl.className = 'countdown';
+  $tapZone.appendChild(cdEl);
+
+  state = 'countdown';
+  $roundDisplay.textContent = `0/${PHASES[currentPhase].rounds}`;
+  $avgDisplay.textContent = '-';
+
+  timeoutId = setTimeout(() => {
+    showCountdownInZone(cdEl, 3, () => {
+      launchRound();
+    });
+  }, 800);
+}
+
+function showCountdownInZone(el, num, cb) {
+  el.textContent = num;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  Audio.countdown();
+  if (num > 1) {
+    timeoutId = setTimeout(() => showCountdownInZone(el, num - 1, cb), 700);
+  } else {
+    timeoutId = setTimeout(() => { el.classList.remove('show'); cb(); }, 700);
+  }
+}
+
+function launchRound() {
+  updateRoundPips();
+  updateStats();
+  if (currentPhase === 0) startSimpleRound();
+  else if (currentPhase === 1) startChoiceRound();
+  else startColorRound();
+}
+
+function finishPhase() {
+  clearTimers();
+  const avg = roundTimes.length > 0 ? Math.round(roundTimes.reduce((a, b) => a + b, 0) / roundTimes.length) : 0;
+  allPhaseTimes[currentPhase] = [...roundTimes];
+
+  currentPhase++;
+  if (currentPhase < 3) {
+    Audio.success();
+    startPhase();
+  } else {
+    showFinalResults();
+  }
+}
+
+function showFinalResults() {
+  state = 'finished';
+  Audio.fanfare();
+
+  // Calculate overall average
+  const allTimes = allPhaseTimes.flat();
+  const overallAvg = Math.round(allTimes.reduce((a, b) => a + b, 0) / allTimes.length);
+  const rating = getRating(overallAvg);
+  const pct = getPercentile(overallAvg);
+  const isNewBest = bestAllTime === 0 || overallAvg < bestAllTime;
+
+  if (isNewBest) {
+    bestAllTime = overallAvg;
+    localStorage.setItem('reactionTestBest', bestAllTime);
+    $bestDisplay.textContent = bestAllTime + 'ms';
+  }
+
+  // Save to history
+  history.push({ date: Date.now(), avg: overallAvg, rating: rating });
+  if (history.length > 50) history = history.slice(-50);
+  localStorage.setItem('reactionTestHistory', JSON.stringify(history));
+  renderHistory();
+
+  // Phase averages
+  const phaseAvgs = allPhaseTimes.map(times =>
+    times.length > 0 ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0
+  );
+
+  // Populate overlay
+  document.getElementById('resultRating').textContent = rating;
+  document.getElementById('resultAvg').textContent = overallAvg + 'ms';
+
+  const breakdown = document.getElementById('resultBreakdown');
+  breakdown.innerHTML = '';
+  const phaseLabels = [T('simple'), T('choice'), T('color')];
+  phaseAvgs.forEach((avg, i) => {
+    const div = document.createElement('div');
+    div.className = 'result-phase';
+    div.innerHTML = `<div class="result-phase-label">${phaseLabels[i]}</div><div class="result-phase-value">${avg}ms</div>`;
+    breakdown.appendChild(div);
+  });
+
+  const compText = T('fasterThan').replace('{pct}', pct);
+  document.getElementById('resultComparison').textContent = compText;
+
+  const bestText = isNewBest ? T('newBest') : T('bestRecord').replace('{ms}', bestAllTime);
+  document.getElementById('resultBest').textContent = bestText;
+  if (isNewBest) document.getElementById('resultBest').style.color = '#fbbf24';
+  else document.getElementById('resultBest').style.color = '#a855f7';
+
+  // Update phase dots to all done
+  for (let i = 0; i < 3; i++) {
+    document.getElementById('phase' + i).className = 'phase-dot done';
+  }
+
+  setTimeout(() => { $resultOverlay.classList.add('show'); }, 600);
+}
+
+// ===== EVENT HANDLERS =====
+$tapZone.addEventListener('click', (e) => {
+  Audio.init(); Audio.resume();
+
+  if (state === 'idle') {
+    startGame();
+    return;
+  }
+
+  // Phase 1: simple
+  if (currentPhase === 0 || (state === 'waiting' || state === 'go' || state === 'tooEarly')) {
+    if (state === 'waiting' || state === 'go' || state === 'tooEarly') {
+      handleSimpleTap();
+      return;
+    }
+  }
+
+  // Phase 3: color
+  if (state === 'colorWait' || state === 'colorGo' || (state === 'tooEarly' && currentPhase === 2)) {
+    handleColorTap();
+    return;
+  }
+
+  // Phase 2: choice - tapping zone itself during wait is too early
+  if (state === 'choiceWait') {
+    clearTimers();
+    state = 'tooEarly';
+    setTapZoneClass('too-early');
+    $tapZone.innerHTML = '';
+    appendTapContent();
+    const t = $tapZone.querySelector('.tap-text');
+    const s = $tapZone.querySelector('.tap-subtext');
+    if (t) t.textContent = T('tooEarly');
+    if (s) s.textContent = T('tapToRetry');
+    Audio.buzz();
+    return;
+  }
+  if (state === 'tooEarly' && currentPhase === 1) {
+    startChoiceRound();
+    return;
+  }
+});
+
+// Retry button
+document.getElementById('btnRetry').addEventListener('click', () => {
+  $resultOverlay.classList.remove('show');
+  state = 'idle';
+  currentPhase = 0;
+  currentRound = 0;
+  roundTimes = [];
+  allPhaseTimes = [[], [], []];
+  $colorTarget.style.display = 'none';
+  $tapZone.style.background = '';
+  setTapZoneClass('waiting');
+  $tapZone.innerHTML = '';
+  appendTapContent();
+  const t = $tapZone.querySelector('.tap-text');
+  if (t) t.textContent = T('tapToStart');
+  $roundDisplay.textContent = '-';
+  $avgDisplay.textContent = '-';
+  $roundsRow.innerHTML = '';
+  updatePhaseDots();
+  setTimeout(() => startGame(), 300);
+});
+
+// Share button
+document.getElementById('btnShare').addEventListener('click', () => {
+  const allTimes = allPhaseTimes.flat();
+  const overallAvg = Math.round(allTimes.reduce((a, b) => a + b, 0) / allTimes.length);
+  if (typeof PuzzleShare !== 'undefined' && PuzzleShare.showShareModal) {
+    PuzzleShare.showShareModal({
+      game: T('title'),
+      score: overallAvg + 'ms',
+      rating: getRating(overallAvg)
+    });
+  } else {
+    // Fallback: copy to clipboard
+    const text = `${T('title')}: ${overallAvg}ms - ${getRating(overallAvg)}`;
+    navigator.clipboard.writeText(text).catch(() => {});
+  }
+});
+
+// Handle resize
+window.addEventListener('resize', resizeSparkle);
+
+// Prevent double-tap zoom on mobile
+$tapZone.addEventListener('touchend', (e) => { e.preventDefault(); }, { passive: false });
+$tapZone.addEventListener('touchstart', (e) => {
+  // Trigger click manually for touch
+  if (e.target.classList.contains('arrow-btn')) return; // let arrow buttons handle themselves
+  e.preventDefault();
+  $tapZone.click();
+}, { passive: false });
+
+// ===== INIT =====
+setTapZoneClass('waiting');
+$tapZone.innerHTML = '';
+appendTapContent();
+const initText = $tapZone.querySelector('.tap-text');
+if (initText) initText.textContent = T('tapToStart');
+updatePhaseDots();
+if (bestAllTime > 0) $bestDisplay.textContent = bestAllTime + 'ms';
+</script>
+</body>
+</html>

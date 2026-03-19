@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Maze Runner - Puzzle Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;touch-action:none}
+body{background:#0a0a1a;color:#fff;font-family:'Outfit',sans-serif;display:flex;flex-direction:column;align-items:center;user-select:none;-webkit-user-select:none}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at 30% 20%,rgba(99,102,241,.06) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(168,85,247,.05) 0%,transparent 50%);z-index:-1;pointer-events:none}
+
+.back-link{position:absolute;top:16px;left:16px;color:#666;text-decoration:none;font-size:.9rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:color .2s;z-index:10}
+.back-link:hover{color:#6366f1}
+
+.ad-banner{background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.08);border-radius:10px;padding:12px;text-align:center;color:#444;font-size:.75rem;width:100%;max-width:480px;margin:8px auto 0;flex-shrink:0}
+.ad-label{font-size:.65rem;color:#333;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+
+.game-wrapper{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;width:100%;max-width:480px;padding:8px 16px 16px;gap:8px;min-height:0}
+
+.header{display:flex;align-items:center;justify-content:space-between;width:100%;gap:12px}
+.title{font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,#6366f1,#a78bfa,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-1px;line-height:1}
+.scores{display:flex;gap:8px}
+.score-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:6px 14px;text-align:center;min-width:70px}
+.score-box .label{font-size:.65rem;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.score-box .value{font-size:1.2rem;font-weight:800;color:#fff;transition:transform .15s}
+.score-box .value.bump{animation:scoreBump .3s ease}
+@keyframes scoreBump{0%{transform:scale(1)}40%{transform:scale(1.3)}100%{transform:scale(1)}}
+
+.controls{display:flex;gap:8px;width:100%}
+.btn{flex:1;padding:10px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.04);color:#aaa;font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn:hover{border-color:rgba(99,102,241,.3);color:#fff;background:rgba(99,102,241,.1)}
+.btn:active{transform:scale(.97)}
+.btn.active{border-color:rgba(99,102,241,.4);color:#6366f1;background:rgba(99,102,241,.12)}
+
+.canvas-container{position:relative;width:100%;aspect-ratio:1/1;max-height:min(60vh,460px);flex-shrink:1;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+canvas{width:100%;height:100%;display:block;border-radius:16px}
+
+.overlay{position:absolute;inset:0;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:20;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.show{opacity:1;pointer-events:auto}
+.overlay-bg{position:absolute;inset:0;border-radius:16px;background:rgba(10,10,26,.88);backdrop-filter:blur(6px)}
+.overlay-content{position:relative;z-index:1;text-align:center;padding:20px}
+.overlay-title{font-size:2rem;font-weight:900;margin-bottom:8px}
+.overlay-title.clear{background:linear-gradient(135deg,#6366f1,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.overlay-score{font-size:1rem;color:#888;margin-bottom:16px}
+.overlay-stars{font-size:2rem;margin-bottom:12px}
+.overlay-ad{background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.08);border-radius:10px;padding:16px 24px;color:#444;font-size:.75rem;margin-bottom:16px;min-width:200px}
+.overlay-btn{padding:12px 32px;border:none;border-radius:12px;font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s;margin:4px}
+.overlay-btn:active{transform:scale(.95)}
+.btn-primary{background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff}
+.btn-primary:hover{box-shadow:0 0 20px rgba(99,102,241,.3)}
+.btn-secondary{background:rgba(255,255,255,.08);color:#ccc;border:1px solid rgba(255,255,255,.1)}
+
+/* Level select */
+.level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;width:100%;max-width:320px;margin:12px auto}
+.level-cell{aspect-ratio:1;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.04);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;font-weight:700;font-size:1.1rem;color:#888;gap:2px}
+.level-cell:hover{border-color:rgba(99,102,241,.4);background:rgba(99,102,241,.1);color:#fff}
+.level-cell.locked{opacity:.3;pointer-events:none}
+.level-cell.current{border-color:#6366f1;color:#6366f1;background:rgba(99,102,241,.15)}
+.level-cell .cell-stars{font-size:.6rem;color:#f9d423;letter-spacing:1px}
+
+/* D-pad for mobile */
+.dpad{display:none;width:160px;height:160px;position:relative;margin-top:4px;flex-shrink:0}
+.dpad-btn{position:absolute;width:52px;height:52px;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(255,255,255,.06);color:#888;font-size:1.4rem;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.dpad-btn:active{background:rgba(99,102,241,.2);color:#6366f1;border-color:rgba(99,102,241,.4);transform:scale(.92)}
+.dpad-up{top:0;left:50%;transform:translateX(-50%)}
+.dpad-down{bottom:0;left:50%;transform:translateX(-50%)}
+.dpad-left{left:0;top:50%;transform:translateY(-50%)}
+.dpad-right{right:0;top:50%;transform:translateY(-50%)}
+
+@media (max-width:600px){
+  .dpad{display:block}
+  .game-wrapper{padding:4px 12px 10px;gap:6px}
+  .header{gap:8px}
+  .title{font-size:1.5rem}
+  .score-box{padding:4px 10px;min-width:55px}
+  .score-box .value{font-size:1rem}
+  .canvas-container{max-height:min(46vh,360px)}
+}
+@media (max-width:380px){
+  .title{font-size:1.2rem}
+  .canvas-container{max-height:min(40vh,300px)}
+}
+
+.ad-banner-bottom{background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.08);border-radius:10px;padding:12px;text-align:center;color:#444;font-size:.75rem;width:100%;max-width:480px;margin:0 auto 8px;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<a class="back-link" href="../index.html" id="backLink">
+  <span data-i18n="back"></span>
+</a>
+
+<!-- Ad banner top -->
+<div class="ad-banner">
+  <div class="ad-label" data-i18n="ad_area"></div>
+  <div style="height:50px;display:flex;align-items:center;justify-content:center;color:#333">AD SPACE</div>
+</div>
+
+<div class="game-wrapper">
+  <!-- Header -->
+  <div class="header">
+    <div class="title" id="gameTitle">Maze Runner</div>
+    <div class="scores">
+      <div class="score-box">
+        <div class="label" id="levelLabel">LEVEL</div>
+        <div class="value" id="levelValue">1</div>
+      </div>
+      <div class="score-box">
+        <div class="label" id="timeLabel">TIME</div>
+        <div class="value" id="timeValue">0:00</div>
+      </div>
+      <div class="score-box">
+        <div class="label" id="coinLabel">COINS</div>
+        <div class="value" id="coinValue">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn" id="btnRestart"><span data-i18n="restart"></span></button>
+    <button class="btn" id="btnLevels"><span data-i18n="level_select"></span></button>
+  </div>
+
+  <!-- Canvas -->
+  <div class="canvas-container" id="canvasContainer">
+    <canvas id="gameCanvas"></canvas>
+    <!-- Level clear overlay -->
+    <div class="overlay" id="clearOverlay">
+      <div class="overlay-bg"></div>
+      <div class="overlay-content">
+        <div class="overlay-stars" id="clearStars"></div>
+        <div class="overlay-title clear" id="clearTitle"></div>
+        <div class="overlay-score" id="clearScore"></div>
+        <div class="overlay-ad">
+          <div class="ad-label" data-i18n="ad_area"></div>
+          <div style="height:60px;display:flex;align-items:center;justify-content:center;color:#333">AD SPACE</div>
+        </div>
+        <button class="overlay-btn btn-primary" id="btnNext"></button>
+        <button class="overlay-btn btn-secondary" id="btnShare">Share</button>
+      </div>
+    </div>
+    <!-- Level select overlay -->
+    <div class="overlay" id="levelOverlay">
+      <div class="overlay-bg"></div>
+      <div class="overlay-content">
+        <div class="overlay-title clear" id="levelSelectTitle"></div>
+        <div class="level-grid" id="levelGrid"></div>
+        <button class="overlay-btn btn-secondary" id="btnCloseLevels"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- D-pad for mobile -->
+  <div class="dpad" id="dpad">
+    <div class="dpad-btn dpad-up" data-dir="up">▲</div>
+    <div class="dpad-btn dpad-down" data-dir="down">▼</div>
+    <div class="dpad-btn dpad-left" data-dir="left">◀</div>
+    <div class="dpad-btn dpad-right" data-dir="right">▶</div>
+  </div>
+</div>
+
+<!-- Ad banner bottom -->
+<div class="ad-banner-bottom">
+  <div class="ad-label" data-i18n="ad_area"></div>
+  <div style="height:50px;display:flex;align-items:center;justify-content:center;color:#333">AD SPACE</div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+'use strict';
+
+// ── Custom translations ──
+const MAZE_I18N = {
+  ko: {
+    title: '미로 탈출',
+    coins: '코인',
+    fog_on: '안개 ON',
+    fog_off: '안개 OFF',
+    level_clear: '레벨 클리어!',
+    time_taken: '소요 시간',
+    coins_collected: '코인 획득',
+    next_level: '다음 레벨 →',
+    all_clear: '모든 레벨 클리어!',
+    close: '닫기',
+    share: '공유하기',
+    game_name: 'Maze Runner',
+    star1_msg: '클리어!',
+    star2_msg: '잘했어요!',
+    star3_msg: '완벽해요!',
+  },
+  en: {
+    title: 'Maze Runner',
+    coins: 'Coins',
+    fog_on: 'Fog ON',
+    fog_off: 'Fog OFF',
+    level_clear: 'Level Clear!',
+    time_taken: 'Time',
+    coins_collected: 'Coins collected',
+    next_level: 'Next Level →',
+    all_clear: 'All levels cleared!',
+    close: 'Close',
+    share: 'Share',
+    game_name: 'Maze Runner',
+    star1_msg: 'Cleared!',
+    star2_msg: 'Well done!',
+    star3_msg: 'Perfect!',
+  },
+  ja: {
+    title: '迷路ランナー',
+    coins: 'コイン',
+    fog_on: '霧 ON',
+    fog_off: '霧 OFF',
+    level_clear: 'レベルクリア！',
+    time_taken: 'タイム',
+    coins_collected: 'コイン獲得',
+    next_level: '次のレベル →',
+    all_clear: '全レベルクリア！',
+    close: '閉じる',
+    share: 'シェア',
+    game_name: 'Maze Runner',
+    star1_msg: 'クリア！',
+    star2_msg: 'よくできました！',
+    star3_msg: '完璧！',
+  },
+  zh: {
+    title: '迷宫跑者',
+    coins: '金币',
+    fog_on: '迷雾 ON',
+    fog_off: '迷雾 OFF',
+    level_clear: '关卡通过！',
+    time_taken: '用时',
+    coins_collected: '收集金币',
+    next_level: '下一关 →',
+    all_clear: '全部通关！',
+    close: '关闭',
+    share: '分享',
+    game_name: 'Maze Runner',
+    star1_msg: '通关！',
+    star2_msg: '做得好！',
+    star3_msg: '完美！',
+  },
+  es: {
+    title: 'Laberinto',
+    coins: 'Monedas',
+    fog_on: 'Niebla ON',
+    fog_off: 'Niebla OFF',
+    level_clear: '¡Nivel completado!',
+    time_taken: 'Tiempo',
+    coins_collected: 'Monedas recogidas',
+    next_level: 'Siguiente →',
+    all_clear: '¡Todos los niveles completados!',
+    close: 'Cerrar',
+    share: 'Compartir',
+    game_name: 'Maze Runner',
+    star1_msg: '¡Completado!',
+    star2_msg: '¡Bien hecho!',
+    star3_msg: '¡Perfecto!',
+  }
+};
+
+const t = getTranslations();
+const lang = getGameLang();
+const mt = MAZE_I18N[lang] || MAZE_I18N.ko;
+
+// ── Apply i18n ──
+applyGameI18n();
+document.getElementById('gameTitle').textContent = mt.title;
+document.getElementById('coinLabel').textContent = mt.coins.toUpperCase();
+document.getElementById('levelLabel').textContent = t.level.toUpperCase();
+document.getElementById('timeLabel').textContent = t.time.toUpperCase();
+document.title = mt.title + ' - Puzzle Arcade';
+
+// ── DOM refs ──
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const container = document.getElementById('canvasContainer');
+const clearOverlay = document.getElementById('clearOverlay');
+const levelOverlay = document.getElementById('levelOverlay');
+
+// ── Constants ──
+const TOTAL_LEVELS = 20;
+const STORAGE_KEY = 'mazeRunner_progress';
+
+// ── Level config ──
+function getMazeSize(level) {
+  if (level <= 5) return 8;
+  if (level <= 10) return 12;
+  if (level <= 15) return 16;
+  return 20;
+}
+
+function hasFog(level) {
+  return level >= 11;
+}
+
+// Star time thresholds (seconds) per level
+function getStarThresholds(level) {
+  const size = getMazeSize(level);
+  const base = size * size * 0.12;
+  return [base * 3, base * 2, base]; // 1-star, 2-star, 3-star (must be under)
+}
+
+function getCoinsCount(level) {
+  const size = getMazeSize(level);
+  return Math.floor(size * 0.6) + Math.min(level, 5);
+}
+
+// ── Game state ──
+let state = {
+  level: 1,
+  maze: null,
+  cols: 8,
+  rows: 8,
+  playerX: 0,
+  playerY: 0,
+  targetX: 0,
+  targetY: 0,
+  // Smooth rendering
+  renderX: 0,
+  renderY: 0,
+  trail: [],
+  coins: [],
+  coinsCollected: 0,
+  timer: 0,
+  timerInterval: null,
+  playing: false,
+  fogEnabled: false,
+  completed: false,
+};
+
+let progress = loadProgress();
+
+// ── Audio (Web Audio API) ──
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playSound(type) {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === 'move') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(220, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(330, ctx.currentTime + 0.06);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.08);
+    } else if (type === 'coin') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.2);
+    } else if (type === 'finish') {
+      const notes = [523, 659, 784, 1047];
+      notes.forEach((freq, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
+        g.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.12);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.3);
+        o.start(ctx.currentTime + i * 0.12);
+        o.stop(ctx.currentTime + i * 0.12 + 0.3);
+      });
+    }
+  } catch (e) {}
+}
+
+// ── Maze generation (recursive backtracking) ──
+// Cell walls: { top, right, bottom, left }
+function generateMaze(cols, rows) {
+  const grid = [];
+  for (let y = 0; y < rows; y++) {
+    grid[y] = [];
+    for (let x = 0; x < cols; x++) {
+      grid[y][x] = { top: true, right: true, bottom: true, left: true, visited: false };
+    }
+  }
+
+  const stack = [];
+  let cx = 0, cy = 0;
+  grid[cy][cx].visited = true;
+  stack.push({ x: cx, y: cy });
+
+  while (stack.length > 0) {
+    const neighbors = [];
+    const dirs = [
+      { dx: 0, dy: -1, wall: 'top', opp: 'bottom' },
+      { dx: 1, dy: 0, wall: 'right', opp: 'left' },
+      { dx: 0, dy: 1, wall: 'bottom', opp: 'top' },
+      { dx: -1, dy: 0, wall: 'left', opp: 'right' },
+    ];
+
+    for (const d of dirs) {
+      const nx = cx + d.dx, ny = cy + d.dy;
+      if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && !grid[ny][nx].visited) {
+        neighbors.push({ ...d, nx, ny });
+      }
+    }
+
+    if (neighbors.length > 0) {
+      const chosen = neighbors[Math.floor(Math.random() * neighbors.length)];
+      grid[cy][cx][chosen.wall] = false;
+      grid[chosen.ny][chosen.nx][chosen.opp] = false;
+      grid[chosen.ny][chosen.nx].visited = true;
+      stack.push({ x: cx, y: cy });
+      cx = chosen.nx;
+      cy = chosen.ny;
+    } else {
+      const prev = stack.pop();
+      cx = prev.x;
+      cy = prev.y;
+    }
+  }
+
+  return grid;
+}
+
+// ── Place coins ──
+function placeCoins(maze, cols, rows, count) {
+  const coins = [];
+  const avoid = new Set(['0,0', `${cols - 1},${rows - 1}`]);
+  let attempts = 0;
+  while (coins.length < count && attempts < 500) {
+    const x = Math.floor(Math.random() * cols);
+    const y = Math.floor(Math.random() * rows);
+    const key = `${x},${y}`;
+    if (!avoid.has(key)) {
+      avoid.add(key);
+      coins.push({ x, y, collected: false });
+    }
+    attempts++;
+  }
+  return coins;
+}
+
+// ── Progress ──
+function loadProgress() {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (data && data.levels) return data;
+  } catch (e) {}
+  return { levels: {}, unlocked: 1 };
+}
+
+function saveProgress() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+}
+
+// ── Canvas sizing ──
+function resizeCanvas() {
+  const rect = container.getBoundingClientRect();
+  const size = Math.min(rect.width, rect.height);
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  render();
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+// ── Rendering ──
+let animFrame = null;
+
+function render() {
+  const w = canvas.width / (window.devicePixelRatio || 1);
+  const h = canvas.height / (window.devicePixelRatio || 1);
+  ctx.clearRect(0, 0, w, h);
+
+  if (!state.maze) return;
+
+  const cols = state.cols;
+  const rows = state.rows;
+  const padding = 8;
+  const cellW = (w - padding * 2) / cols;
+  const cellH = (h - padding * 2) / rows;
+
+  const ox = padding;
+  const oy = padding;
+
+  // Fog of war
+  const fogRadius = state.fogEnabled ? 2.5 : Infinity;
+
+  // Draw visited trail
+  for (const t of state.trail) {
+    if (state.fogEnabled) {
+      const dist = Math.abs(t.x - state.playerX) + Math.abs(t.y - state.playerY);
+      if (dist > fogRadius + 1) continue;
+    }
+    ctx.fillStyle = 'rgba(99,102,241,.08)';
+    ctx.fillRect(ox + t.x * cellW, oy + t.y * cellH, cellW, cellH);
+  }
+
+  // Draw maze walls
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      if (state.fogEnabled) {
+        const dist = Math.abs(x - state.playerX) + Math.abs(y - state.playerY);
+        if (dist > fogRadius + 0.5) {
+          // Draw fog
+          ctx.fillStyle = 'rgba(10,10,26,.95)';
+          ctx.fillRect(ox + x * cellW - 0.5, oy + y * cellH - 0.5, cellW + 1, cellH + 1);
+          continue;
+        }
+      }
+
+      const cell = state.maze[y][x];
+      const cx = ox + x * cellW;
+      const cy = oy + y * cellH;
+
+      ctx.strokeStyle = 'rgba(139,92,246,.5)';
+      ctx.lineWidth = 1.5;
+      ctx.lineCap = 'round';
+
+      if (cell.top) {
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + cellW, cy); ctx.stroke();
+      }
+      if (cell.right) {
+        ctx.beginPath(); ctx.moveTo(cx + cellW, cy); ctx.lineTo(cx + cellW, cy + cellH); ctx.stroke();
+      }
+      if (cell.bottom) {
+        ctx.beginPath(); ctx.moveTo(cx, cy + cellH); ctx.lineTo(cx + cellW, cy + cellH); ctx.stroke();
+      }
+      if (cell.left) {
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy + cellH); ctx.stroke();
+      }
+    }
+  }
+
+  // Draw neon wall glow (outer border)
+  ctx.strokeStyle = 'rgba(139,92,246,.3)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(ox, oy, cols * cellW, rows * cellH);
+
+  // Draw finish
+  const finishVisible = !state.fogEnabled ||
+    (Math.abs(state.targetX - state.playerX) + Math.abs(state.targetY - state.playerY)) <= fogRadius + 0.5;
+  if (finishVisible) {
+    const fx = ox + state.targetX * cellW + cellW / 2;
+    const fy = oy + state.targetY * cellH + cellH / 2;
+    const fr = Math.min(cellW, cellH) * 0.3;
+    // Pulsing glow
+    const pulse = 0.5 + Math.sin(Date.now() * 0.004) * 0.3;
+    ctx.save();
+    ctx.shadowColor = '#22c55e';
+    ctx.shadowBlur = 12 * pulse;
+    ctx.fillStyle = `rgba(34,197,94,${0.5 + pulse * 0.3})`;
+    ctx.beginPath();
+    ctx.arc(fx, fy, fr, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    // Flag emoji
+    ctx.font = `${Math.min(cellW, cellH) * 0.6}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🏁', fx, fy);
+  }
+
+  // Draw coins
+  for (const coin of state.coins) {
+    if (coin.collected) continue;
+    if (state.fogEnabled) {
+      const dist = Math.abs(coin.x - state.playerX) + Math.abs(coin.y - state.playerY);
+      if (dist > fogRadius + 0.5) continue;
+    }
+    const ccx = ox + coin.x * cellW + cellW / 2;
+    const ccy = oy + coin.y * cellH + cellH / 2;
+    const cr = Math.min(cellW, cellH) * 0.2;
+    const coinPulse = 0.8 + Math.sin(Date.now() * 0.005 + coin.x * 2 + coin.y * 3) * 0.2;
+    ctx.save();
+    ctx.shadowColor = '#f9d423';
+    ctx.shadowBlur = 8 * coinPulse;
+    ctx.fillStyle = `rgba(249,212,35,${coinPulse})`;
+    ctx.beginPath();
+    ctx.arc(ccx, ccy, cr, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.font = `${Math.min(cellW, cellH) * 0.4}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🪙', ccx, ccy);
+  }
+
+  // Draw player (smooth)
+  const lerp = 0.25;
+  state.renderX += (state.playerX - state.renderX) * lerp;
+  state.renderY += (state.playerY - state.renderY) * lerp;
+
+  const px = ox + state.renderX * cellW + cellW / 2;
+  const py = oy + state.renderY * cellH + cellH / 2;
+  const pr = Math.min(cellW, cellH) * 0.28;
+
+  // Player glow
+  ctx.save();
+  ctx.shadowColor = '#6366f1';
+  ctx.shadowBlur = 16;
+  const playerGrad = ctx.createRadialGradient(px, py, 0, px, py, pr * 1.5);
+  playerGrad.addColorStop(0, 'rgba(99,102,241,.9)');
+  playerGrad.addColorStop(0.6, 'rgba(139,92,246,.5)');
+  playerGrad.addColorStop(1, 'rgba(139,92,246,0)');
+  ctx.fillStyle = playerGrad;
+  ctx.beginPath();
+  ctx.arc(px, py, pr * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Player dot
+  ctx.save();
+  ctx.shadowColor = '#a78bfa';
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = '#c084fc';
+  ctx.beginPath();
+  ctx.arc(px, py, pr, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Inner highlight
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,.3)';
+  ctx.beginPath();
+  ctx.arc(px - pr * 0.2, py - pr * 0.2, pr * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // If still animating, keep rendering
+  const snapDist = Math.abs(state.renderX - state.playerX) + Math.abs(state.renderY - state.playerY);
+  if (snapDist > 0.01 || state.playing) {
+    animFrame = requestAnimationFrame(render);
+  }
+}
+
+function startRenderLoop() {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  function loop() {
+    render();
+    if (state.playing) {
+      animFrame = requestAnimationFrame(loop);
+    }
+  }
+  loop();
+}
+
+// ── Game logic ──
+function startLevel(level) {
+  if (state.timerInterval) clearInterval(state.timerInterval);
+
+  state.level = level;
+  state.cols = getMazeSize(level);
+  state.rows = getMazeSize(level);
+  state.maze = generateMaze(state.cols, state.rows);
+  state.playerX = 0;
+  state.playerY = 0;
+  state.renderX = 0;
+  state.renderY = 0;
+  state.targetX = state.cols - 1;
+  state.targetY = state.rows - 1;
+  state.trail = [{ x: 0, y: 0 }];
+  state.coins = placeCoins(state.maze, state.cols, state.rows, getCoinsCount(level));
+  state.coinsCollected = 0;
+  state.timer = 0;
+  state.playing = true;
+  state.completed = false;
+  state.fogEnabled = hasFog(level);
+
+  document.getElementById('levelValue').textContent = level;
+  document.getElementById('timeValue').textContent = '0:00';
+  document.getElementById('coinValue').textContent = '0';
+
+  clearOverlay.classList.remove('show');
+  levelOverlay.classList.remove('show');
+
+  state.timerInterval = setInterval(() => {
+    if (!state.playing) return;
+    state.timer++;
+    const m = Math.floor(state.timer / 60);
+    const s = state.timer % 60;
+    document.getElementById('timeValue').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+  }, 1000);
+
+  resizeCanvas();
+  startRenderLoop();
+}
+
+function movePlayer(dx, dy) {
+  if (!state.playing || state.completed) return;
+
+  const nx = state.playerX + dx;
+  const ny = state.playerY + dy;
+
+  if (nx < 0 || nx >= state.cols || ny < 0 || ny >= state.rows) return;
+
+  // Check walls
+  const cell = state.maze[state.playerY][state.playerX];
+  if (dx === 1 && cell.right) return;
+  if (dx === -1 && cell.left) return;
+  if (dy === 1 && cell.bottom) return;
+  if (dy === -1 && cell.top) return;
+
+  state.playerX = nx;
+  state.playerY = ny;
+
+  // Trail
+  if (!state.trail.some(t => t.x === nx && t.y === ny)) {
+    state.trail.push({ x: nx, y: ny });
+  }
+
+  playSound('move');
+
+  // Check coins
+  for (const coin of state.coins) {
+    if (!coin.collected && coin.x === nx && coin.y === ny) {
+      coin.collected = true;
+      state.coinsCollected++;
+      document.getElementById('coinValue').textContent = state.coinsCollected;
+      const valEl = document.getElementById('coinValue');
+      valEl.classList.remove('bump');
+      void valEl.offsetWidth;
+      valEl.classList.add('bump');
+      playSound('coin');
+    }
+  }
+
+  // Check finish
+  if (nx === state.targetX && ny === state.targetY) {
+    levelComplete();
+  }
+}
+
+function levelComplete() {
+  state.playing = false;
+  state.completed = true;
+  if (state.timerInterval) clearInterval(state.timerInterval);
+
+  playSound('finish');
+
+  // Calculate stars
+  const thresholds = getStarThresholds(state.level);
+  let stars = 1;
+  if (state.timer <= thresholds[1]) stars = 2;
+  if (state.timer <= thresholds[2]) stars = 3;
+
+  // Bonus for coins
+  const totalCoins = state.coins.length;
+  const coinBonus = totalCoins > 0 ? state.coinsCollected / totalCoins : 0;
+  if (coinBonus >= 1 && stars < 3) stars = Math.min(3, stars + 1);
+
+  // Save progress
+  const existing = progress.levels[state.level];
+  if (!existing || existing.stars < stars) {
+    progress.levels[state.level] = { stars, time: state.timer, coins: state.coinsCollected };
+  }
+  if (state.level >= progress.unlocked) {
+    progress.unlocked = Math.min(TOTAL_LEVELS, state.level + 1);
+  }
+  saveProgress();
+
+  // Show overlay
+  const starStr = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+  document.getElementById('clearStars').textContent = starStr;
+
+  const msgs = [mt.star1_msg, mt.star2_msg, mt.star3_msg];
+  document.getElementById('clearTitle').textContent = mt.level_clear;
+
+  const m = Math.floor(state.timer / 60);
+  const s = state.timer % 60;
+  const timeStr = `${m}:${s.toString().padStart(2, '0')}`;
+  document.getElementById('clearScore').textContent =
+    `${mt.time_taken}: ${timeStr} | ${mt.coins_collected}: ${state.coinsCollected}/${totalCoins}`;
+
+  const btnNext = document.getElementById('btnNext');
+  if (state.level < TOTAL_LEVELS) {
+    btnNext.textContent = mt.next_level;
+    btnNext.onclick = () => startLevel(state.level + 1);
+  } else {
+    btnNext.textContent = mt.all_clear;
+    btnNext.onclick = () => showLevelSelect();
+  }
+
+  document.getElementById('btnShare').textContent = mt.share;
+  document.getElementById('btnShare').onclick = () => {
+    PuzzleShare.showShareModal({
+      gameName: mt.game_name,
+      title: mt.level_clear,
+      stars: stars,
+      message: `${t.level} ${state.level} - ${timeStr} | ${msgs[stars - 1]}`,
+      lang: lang,
+    });
+  };
+
+  clearOverlay.classList.add('show');
+}
+
+// ── Level select ──
+function showLevelSelect() {
+  const grid = document.getElementById('levelGrid');
+  grid.innerHTML = '';
+  document.getElementById('levelSelectTitle').textContent = t.level_select;
+  document.getElementById('btnCloseLevels').textContent = mt.close;
+  document.getElementById('btnCloseLevels').onclick = () => levelOverlay.classList.remove('show');
+
+  for (let i = 1; i <= TOTAL_LEVELS; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'level-cell';
+    const unlocked = i <= progress.unlocked;
+    const data = progress.levels[i];
+
+    if (!unlocked) {
+      cell.classList.add('locked');
+      cell.innerHTML = `<span>🔒</span>`;
+    } else {
+      if (state.level === i) cell.classList.add('current');
+      const starsHtml = data ? `<div class="cell-stars">${'★'.repeat(data.stars)}${'☆'.repeat(3 - data.stars)}</div>` : '';
+      cell.innerHTML = `<span>${i}</span>${starsHtml}`;
+      cell.addEventListener('click', () => {
+        levelOverlay.classList.remove('show');
+        startLevel(i);
+      });
+    }
+
+    grid.appendChild(cell);
+  }
+
+  levelOverlay.classList.add('show');
+}
+
+// ── Input handling ──
+
+// Keyboard
+document.addEventListener('keydown', (e) => {
+  switch (e.key) {
+    case 'ArrowUp': case 'w': case 'W': e.preventDefault(); movePlayer(0, -1); break;
+    case 'ArrowDown': case 's': case 'S': e.preventDefault(); movePlayer(0, 1); break;
+    case 'ArrowLeft': case 'a': case 'A': e.preventDefault(); movePlayer(-1, 0); break;
+    case 'ArrowRight': case 'd': case 'D': e.preventDefault(); movePlayer(1, 0); break;
+  }
+});
+
+// D-pad
+document.querySelectorAll('.dpad-btn').forEach(btn => {
+  btn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    const dir = btn.dataset.dir;
+    if (dir === 'up') movePlayer(0, -1);
+    else if (dir === 'down') movePlayer(0, 1);
+    else if (dir === 'left') movePlayer(-1, 0);
+    else if (dir === 'right') movePlayer(1, 0);
+  });
+});
+
+// Swipe
+let touchStartX = 0, touchStartY = 0, touchActive = false;
+canvas.addEventListener('touchstart', (e) => {
+  const touch = e.touches[0];
+  touchStartX = touch.clientX;
+  touchStartY = touch.clientY;
+  touchActive = true;
+}, { passive: true });
+
+canvas.addEventListener('touchmove', (e) => {
+  if (!touchActive) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  const dx = touch.clientX - touchStartX;
+  const dy = touch.clientY - touchStartY;
+  const threshold = 25;
+
+  if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
+    if (Math.abs(dx) > Math.abs(dy)) {
+      movePlayer(dx > 0 ? 1 : -1, 0);
+    } else {
+      movePlayer(0, dy > 0 ? 1 : -1);
+    }
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', () => { touchActive = false; });
+
+// ── Buttons ──
+document.getElementById('btnRestart').addEventListener('click', () => startLevel(state.level));
+document.getElementById('btnLevels').addEventListener('click', showLevelSelect);
+
+// ── Init ──
+startLevel(progress.unlocked || 1);
+</script>
+</body>
+</html>

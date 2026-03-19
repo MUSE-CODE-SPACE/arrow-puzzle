@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>IQ Test - Pattern Recognition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{width:100%;height:100%;overflow-x:hidden;font-family:'Outfit',sans-serif;background:#0a0a1a;color:#e2e8f0}
+body{display:flex;flex-direction:column;align-items:center;min-height:100vh}
+
+.ad-placeholder{width:100%;max-width:480px;height:50px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);font-size:12px;letter-spacing:1px;flex-shrink:0}
+.ad-top{border-radius:0 0 8px 8px}
+.ad-bottom{border-radius:8px 8px 0 0;margin-top:auto}
+
+.header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;flex-shrink:0}
+.back-link{color:#94a3b8;text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;transition:color .2s}
+.back-link:hover{color:#e2e8f0}
+.title{font-size:18px;font-weight:800;background:linear-gradient(135deg,#ec4899,#a855f7,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.game-container{flex:1;width:100%;max-width:480px;display:flex;flex-direction:column;padding:0 16px;overflow-y:auto}
+
+/* Progress bar */
+.progress-section{margin:8px 0}
+.progress-info{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:13px;color:#94a3b8;font-weight:600}
+.progress-bar{width:100%;height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#a855f7,#ec4899);border-radius:4px;transition:width .4s ease;width:0}
+
+/* Timer */
+.timer-section{display:flex;align-items:center;gap:10px;margin:8px 0}
+.timer-bar{flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.timer-fill{height:100%;background:linear-gradient(90deg,#22c55e,#eab308,#ef4444);border-radius:3px;transition:width .1s linear;width:100%}
+.timer-fill.urgent{animation:timerPulse .5s ease-in-out infinite}
+@keyframes timerPulse{0%,100%{opacity:1}50%{opacity:.5}}
+.timer-text{font-size:18px;font-weight:800;color:#f1f5f9;min-width:36px;text-align:right}
+.timer-text.urgent{color:#ef4444}
+
+/* Question card */
+.question-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:24px 20px;margin:8px 0;text-align:center;position:relative;overflow:hidden}
+.question-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(168,85,247,.05),rgba(236,72,153,.05));pointer-events:none}
+.question-number{font-size:12px;color:#a855f7;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.question-pattern{font-size:32px;line-height:1.4;margin:12px 0 8px;min-height:48px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;word-break:break-all}
+.question-label{font-size:15px;color:#94a3b8;font-weight:600;margin-top:8px}
+
+/* Answer options */
+.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 16px}
+.option-btn{background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.1);border-radius:14px;padding:16px 12px;font-size:22px;font-family:'Outfit',sans-serif;color:#e2e8f0;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;min-height:64px;position:relative;overflow:hidden}
+.option-btn:hover{border-color:rgba(168,85,247,.5);background:rgba(168,85,247,.1)}
+.option-btn:active{transform:scale(.96)}
+.option-btn.correct{border-color:#22c55e;background:rgba(34,197,94,.15);color:#22c55e;animation:correctPop .4s ease}
+.option-btn.wrong{border-color:#ef4444;background:rgba(239,68,68,.15);color:#ef4444;animation:shake .4s ease}
+.option-btn.reveal{border-color:#22c55e;background:rgba(34,197,94,.08)}
+.option-btn.disabled{pointer-events:none;opacity:.6}
+@keyframes correctPop{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+
+/* Question transition */
+.question-card.slide-out{animation:slideOut .3s ease forwards}
+.question-card.slide-in{animation:slideIn .3s ease forwards}
+@keyframes slideOut{to{opacity:0;transform:translateX(-40px)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+
+/* Start screen */
+.start-screen,.result-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;flex:1;padding:24px 0}
+.start-icon{font-size:64px;margin-bottom:16px}
+.start-title{font-size:28px;font-weight:900;background:linear-gradient(135deg,#ec4899,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.start-desc{font-size:14px;color:#94a3b8;line-height:1.6;margin-bottom:24px;max-width:320px}
+.start-btn,.result-btn{background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;border:none;padding:16px 48px;border-radius:14px;font-size:18px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 24px rgba(168,85,247,.4)}
+.start-btn:hover,.result-btn:hover{transform:scale(1.05)}
+.start-btn:active,.result-btn:active{transform:scale(.97)}
+
+/* Result screen */
+.result-screen{display:none}
+.result-iq{font-size:72px;font-weight:900;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin:8px 0}
+.result-label{font-size:13px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.result-rating{font-size:24px;font-weight:800;margin:8px 0 4px;background:linear-gradient(135deg,#ec4899,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.result-detail{font-size:13px;color:#64748b;margin:4px 0}
+.result-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px 24px;margin:16px 0;width:100%;max-width:320px}
+.result-best{font-size:14px;color:#a855f7;font-weight:600;margin-top:8px}
+.result-buttons{display:flex;flex-direction:column;gap:10px;margin-top:20px;width:100%;max-width:280px}
+.share-btn{background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;border:none;padding:14px 40px;border-radius:12px;font-size:16px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:transform .15s;box-shadow:0 4px 20px rgba(99,102,241,.3)}
+.share-btn:hover{transform:scale(1.05)}
+
+/* Confetti canvas */
+#confettiCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:300}
+#sparkleCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+
+/* Hide game initially */
+.game-section{display:none}
+
+/* Scrollbar */
+.game-container::-webkit-scrollbar{width:4px}
+.game-container::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+
+/* Share modal */
+.share-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:400;opacity:0;visibility:hidden;transition:all .3s}
+.share-modal-overlay.show{opacity:1;visibility:visible}
+.share-modal{background:#1a1a2e;border-radius:20px;padding:28px;text-align:center;max-width:340px;width:90%;border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.share-modal h3{font-size:20px;font-weight:800;margin-bottom:16px;background:linear-gradient(135deg,#ec4899,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.share-text{background:rgba(255,255,255,.06);border-radius:12px;padding:16px;font-size:14px;color:#e2e8f0;line-height:1.5;margin-bottom:16px;white-space:pre-line;text-align:left;word-break:break-word}
+.share-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.share-actions button{padding:10px 20px;border-radius:10px;border:none;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:transform .15s}
+.share-actions .copy-btn{background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff}
+.share-actions .close-btn{background:rgba(255,255,255,.08);color:#94a3b8}
+.share-actions button:active{transform:scale(.95)}
+</style>
+</head>
+<body>
+
+<canvas id="sparkleCanvas"></canvas>
+<canvas id="confettiCanvas"></canvas>
+
+<div class="ad-placeholder ad-top" data-i18n="ad_area">AD SPACE</div>
+
+<div class="header">
+  <a href="../index.html" class="back-link" id="backLink">← Back</a>
+  <div class="title" id="gameTitle">IQ Test</div>
+</div>
+
+<div class="game-container">
+  <!-- Start Screen -->
+  <div class="start-screen" id="startScreen">
+    <div class="start-icon">🧠</div>
+    <div class="start-title" id="startTitle">IQ Test</div>
+    <div class="start-desc" id="startDesc">Test your pattern recognition skills with 20 questions. Answer quickly for a higher score!</div>
+    <button class="start-btn" id="startBtn" onclick="startGame()">Start Test</button>
+  </div>
+
+  <!-- Game Section -->
+  <div class="game-section" id="gameSection">
+    <div class="progress-section">
+      <div class="progress-info">
+        <span id="progressLabel">Question 1 / 20</span>
+        <span id="correctLabel">0 correct</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div class="timer-section">
+      <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+      <div class="timer-text" id="timerText">15</div>
+    </div>
+
+    <div class="question-card" id="questionCard">
+      <div class="question-number" id="questionNumber">QUESTION 1</div>
+      <div class="question-pattern" id="questionPattern"></div>
+      <div class="question-label" id="questionLabel">What comes next?</div>
+    </div>
+
+    <div class="options-grid" id="optionsGrid"></div>
+  </div>
+
+  <!-- Result Screen -->
+  <div class="result-screen" id="resultScreen">
+    <div class="result-label" id="resLabel">YOUR IQ SCORE</div>
+    <div class="result-iq" id="resultIQ">120</div>
+    <div class="result-rating" id="resultRating">Above Average</div>
+    <div class="result-card">
+      <div class="result-detail" id="resCorrect">Correct: 15 / 20</div>
+      <div class="result-detail" id="resAvgTime">Avg. time: 8.2s</div>
+      <div class="result-best" id="resBest">Best IQ: 130</div>
+    </div>
+    <div class="result-buttons">
+      <button class="result-btn" onclick="restartGame()" id="retryBtn">Try Again</button>
+      <button class="share-btn" onclick="shareResult()" id="shareBtn">Share Result</button>
+    </div>
+  </div>
+</div>
+
+<div class="ad-placeholder ad-bottom" data-i18n="ad_area">AD SPACE</div>
+
+<!-- Share Modal -->
+<div class="share-modal-overlay" id="shareModal">
+  <div class="share-modal">
+    <h3 id="shareTitle">Share Result</h3>
+    <div class="share-text" id="shareText"></div>
+    <div class="share-actions">
+      <button class="copy-btn" onclick="copyShare()">Copy</button>
+      <button class="close-btn" onclick="closeShare()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script>
+// ===== CUSTOM I18N FOR IQ TEST =====
+const IQ_I18N = {
+  ko: {
+    title: 'IQ 테스트',
+    desc: '20개의 패턴 인식 문제를 풀어보세요. 빠르게 답할수록 점수가 높아집니다!',
+    start: '테스트 시작',
+    question: '문제',
+    of: '/',
+    correct_count: '정답',
+    what_next: '다음에 올 것은?',
+    your_iq: '당신의 IQ 점수',
+    correct_label: '정답',
+    avg_time: '평균 시간',
+    best_iq: '최고 IQ',
+    try_again: '다시 도전',
+    share: '결과 공유',
+    share_title: '결과 공유',
+    copy: '복사',
+    close: '닫기',
+    copied: '복사됨!',
+    genius: '천재!',
+    brilliant: '매우 우수!',
+    above_avg: '우수',
+    average: '평균',
+    below_avg: '평균 이하',
+    share_text: '🧠 IQ 테스트 결과\n📊 IQ: {iq}\n🏆 등급: {rating}\n✅ 정답: {correct}/20\n⏱ 평균: {time}초\n\nPuzzle Arcade에서 도전하세요!',
+    time_up: '시간 초과!',
+  },
+  en: {
+    title: 'IQ Test',
+    desc: 'Test your pattern recognition with 20 questions. Answer quickly for a higher score!',
+    start: 'Start Test',
+    question: 'Question',
+    of: '/',
+    correct_count: 'correct',
+    what_next: 'What comes next?',
+    your_iq: 'YOUR IQ SCORE',
+    correct_label: 'Correct',
+    avg_time: 'Avg. time',
+    best_iq: 'Best IQ',
+    try_again: 'Try Again',
+    share: 'Share Result',
+    share_title: 'Share Result',
+    copy: 'Copy',
+    close: 'Close',
+    copied: 'Copied!',
+    genius: 'Genius!',
+    brilliant: 'Brilliant!',
+    above_avg: 'Above Average',
+    average: 'Average',
+    below_avg: 'Below Average',
+    share_text: '🧠 IQ Test Result\n📊 IQ: {iq}\n🏆 Rating: {rating}\n✅ Correct: {correct}/20\n⏱ Avg: {time}s\n\nTry it on Puzzle Arcade!',
+    time_up: "Time's up!",
+  },
+  ja: {
+    title: 'IQテスト',
+    desc: '20問のパターン認識問題に挑戦！素早く答えるほど高得点！',
+    start: 'テスト開始',
+    question: '問題',
+    of: '/',
+    correct_count: '正解',
+    what_next: '次に来るのは？',
+    your_iq: 'あなたのIQスコア',
+    correct_label: '正解数',
+    avg_time: '平均時間',
+    best_iq: '最高IQ',
+    try_again: 'もう一度',
+    share: '結果をシェア',
+    share_title: '結果をシェア',
+    copy: 'コピー',
+    close: '閉じる',
+    copied: 'コピーしました！',
+    genius: '天才！',
+    brilliant: '非常に優秀！',
+    above_avg: '優秀',
+    average: '平均的',
+    below_avg: '平均以下',
+    share_text: '🧠 IQテスト結果\n📊 IQ: {iq}\n🏆 評価: {rating}\n✅ 正解: {correct}/20\n⏱ 平均: {time}秒\n\nPuzzle Arcadeで挑戦！',
+    time_up: '時間切れ！',
+  },
+  zh: {
+    title: 'IQ测试',
+    desc: '挑战20道图案识别题！答得越快分数越高！',
+    start: '开始测试',
+    question: '问题',
+    of: '/',
+    correct_count: '正确',
+    what_next: '下一个是什么？',
+    your_iq: '你的IQ分数',
+    correct_label: '正确',
+    avg_time: '平均时间',
+    best_iq: '最高IQ',
+    try_again: '再试一次',
+    share: '分享结果',
+    share_title: '分享结果',
+    copy: '复制',
+    close: '关闭',
+    copied: '已复制！',
+    genius: '天才！',
+    brilliant: '非常优秀！',
+    above_avg: '高于平均',
+    average: '平均水平',
+    below_avg: '低于平均',
+    share_text: '🧠 IQ测试结果\n📊 IQ: {iq}\n🏆 评级: {rating}\n✅ 正确: {correct}/20\n⏱ 平均: {time}秒\n\n来Puzzle Arcade挑战吧！',
+    time_up: '时间到！',
+  },
+  es: {
+    title: 'Test de IQ',
+    desc: 'Pon a prueba tu reconocimiento de patrones con 20 preguntas. Responde rapido para mayor puntuacion!',
+    start: 'Iniciar Test',
+    question: 'Pregunta',
+    of: '/',
+    correct_count: 'correctas',
+    what_next: 'Que sigue?',
+    your_iq: 'TU PUNTUACION IQ',
+    correct_label: 'Correctas',
+    avg_time: 'Tiempo prom.',
+    best_iq: 'Mejor IQ',
+    try_again: 'Intentar de nuevo',
+    share: 'Compartir',
+    share_title: 'Compartir resultado',
+    copy: 'Copiar',
+    close: 'Cerrar',
+    copied: 'Copiado!',
+    genius: 'Genio!',
+    brilliant: 'Brillante!',
+    above_avg: 'Sobre el promedio',
+    average: 'Promedio',
+    below_avg: 'Bajo el promedio',
+    share_text: '🧠 Resultado IQ\n📊 IQ: {iq}\n🏆 Nivel: {rating}\n✅ Correctas: {correct}/20\n⏱ Prom: {time}s\n\nPruebalo en Puzzle Arcade!',
+    time_up: 'Se acabo el tiempo!',
+  }
+};
+
+function getIQTranslation() {
+  const lang = getGameLang();
+  return IQ_I18N[lang] || IQ_I18N.en;
+}
+
+// ===== WEB AUDIO SOUND ENGINE =====
+const AudioEngine = {
+  ctx: null,
+  init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  },
+  resume() {
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  _play(fn) {
+    this.init();
+    this.resume();
+    try { fn(this.ctx); } catch(e) {}
+  },
+  correct() {
+    this._play(ctx => {
+      const notes = [523, 659, 784];
+      notes.forEach((f, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.08);
+        g.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.08);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.2);
+        o.start(ctx.currentTime + i * 0.08);
+        o.stop(ctx.currentTime + i * 0.08 + 0.2);
+      });
+    });
+  },
+  wrong() {
+    this._play(ctx => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(200, ctx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.3);
+      g.gain.setValueAtTime(0.1, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      o.start(ctx.currentTime);
+      o.stop(ctx.currentTime + 0.3);
+    });
+  },
+  tick() {
+    this._play(ctx => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine';
+      o.frequency.setValueAtTime(880, ctx.currentTime);
+      g.gain.setValueAtTime(0.05, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+      o.start(ctx.currentTime);
+      o.stop(ctx.currentTime + 0.05);
+    });
+  },
+  fanfare() {
+    this._play(ctx => {
+      const notes = [523, 659, 784, 1047, 784, 1047];
+      notes.forEach((f, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.1);
+        g.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.1);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.1 + 0.3);
+        o.start(ctx.currentTime + i * 0.1);
+        o.stop(ctx.currentTime + i * 0.1 + 0.3);
+      });
+    });
+  },
+  timeout() {
+    this._play(ctx => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'square';
+      o.frequency.setValueAtTime(300, ctx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.4);
+      g.gain.setValueAtTime(0.06, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      o.start(ctx.currentTime);
+      o.stop(ctx.currentTime + 0.4);
+    });
+  }
+};
+
+// ===== SPARKLE BACKGROUND =====
+const sparkleCanvas = document.getElementById('sparkleCanvas');
+const sparkleCtx = sparkleCanvas.getContext('2d');
+let sparkles = [];
+
+function resizeSparkle() {
+  sparkleCanvas.width = window.innerWidth;
+  sparkleCanvas.height = window.innerHeight;
+}
+resizeSparkle();
+window.addEventListener('resize', resizeSparkle);
+
+for (let i = 0; i < 30; i++) {
+  sparkles.push({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    size: Math.random() * 2 + 0.5,
+    speed: Math.random() * 0.3 + 0.1,
+    phase: Math.random() * Math.PI * 2,
+    alpha: Math.random()
+  });
+}
+
+function drawSparkles(time) {
+  sparkleCtx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
+  sparkles.forEach(s => {
+    s.phase += s.speed * 0.02;
+    s.alpha = 0.3 + Math.sin(s.phase) * 0.3;
+    sparkleCtx.beginPath();
+    sparkleCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+    sparkleCtx.fillStyle = `rgba(168,85,247,${s.alpha})`;
+    sparkleCtx.fill();
+  });
+  requestAnimationFrame(drawSparkles);
+}
+requestAnimationFrame(drawSparkles);
+
+// ===== CONFETTI =====
+const confettiCanvas = document.getElementById('confettiCanvas');
+const confettiCtx = confettiCanvas.getContext('2d');
+let confettiPieces = [];
+let confettiActive = false;
+
+function resizeConfetti() {
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+}
+resizeConfetti();
+window.addEventListener('resize', resizeConfetti);
+
+function launchConfetti() {
+  confettiPieces = [];
+  const colors = ['#ec4899', '#a855f7', '#3b82f6', '#22c55e', '#fbbf24', '#f59e0b', '#ef4444'];
+  for (let i = 0; i < 150; i++) {
+    confettiPieces.push({
+      x: Math.random() * confettiCanvas.width,
+      y: -20 - Math.random() * 200,
+      w: Math.random() * 8 + 4,
+      h: Math.random() * 6 + 3,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      vx: (Math.random() - 0.5) * 4,
+      vy: Math.random() * 3 + 2,
+      rot: Math.random() * 360,
+      rotSpeed: (Math.random() - 0.5) * 10,
+      alpha: 1
+    });
+  }
+  confettiActive = true;
+}
+
+function drawConfetti() {
+  if (!confettiActive) { requestAnimationFrame(drawConfetti); return; }
+  confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  let alive = 0;
+  confettiPieces.forEach(p => {
+    if (p.alpha <= 0) return;
+    alive++;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.05;
+    p.rot += p.rotSpeed;
+    if (p.y > confettiCanvas.height + 20) { p.alpha = 0; return; }
+    confettiCtx.save();
+    confettiCtx.translate(p.x, p.y);
+    confettiCtx.rotate(p.rot * Math.PI / 180);
+    confettiCtx.globalAlpha = p.alpha;
+    confettiCtx.fillStyle = p.color;
+    confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+    confettiCtx.restore();
+  });
+  if (alive === 0) {
+    confettiActive = false;
+    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  }
+  requestAnimationFrame(drawConfetti);
+}
+requestAnimationFrame(drawConfetti);
+
+// ===== QUESTIONS =====
+const ALL_QUESTIONS = [
+  // 1. Number sequence - doubling
+  { pattern: '2, 4, 8, 16, ?', options: ['24', '32', '30', '28'], answer: 1 },
+  // 2. Emoji pattern - alternating
+  { pattern: '🔴🔵🔴🔵🔴 ?', options: ['🔴', '🔵', '🟢', '🟡'], answer: 1 },
+  // 3. Fibonacci
+  { pattern: '1, 1, 2, 3, 5, ?', options: ['7', '6', '8', '9'], answer: 2 },
+  // 4. Letter pattern - skip one
+  { pattern: 'A, C, E, G, ?', options: ['H', 'I', 'J', 'K'], answer: 1 },
+  // 5. Rotation emoji
+  { pattern: '⬆️ ➡️ ⬇️ ⬅️ ?', options: ['⬆️', '➡️', '⬇️', '↗️'], answer: 0 },
+  // 6. Squares
+  { pattern: '1, 4, 9, 16, ?', options: ['20', '24', '25', '36'], answer: 2 },
+  // 7. Emoji pattern - growing
+  { pattern: '⭐, ⭐⭐, ⭐⭐⭐, ?', options: ['⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐', '⭐'], answer: 1 },
+  // 8. Triangular numbers
+  { pattern: '1, 3, 6, 10, ?', options: ['13', '14', '15', '16'], answer: 2 },
+  // 9. Alternating add pattern
+  { pattern: '2, 5, 10, 17, ?', options: ['24', '26', '28', '22'], answer: 1 },
+  // 10. Shape rotation
+  { pattern: '🌑 🌒 🌓 🌔 ?', options: ['🌕', '🌑', '🌖', '🌗'], answer: 0 },
+  // 11. Primes
+  { pattern: '2, 3, 5, 7, 11, ?', options: ['12', '13', '14', '15'], answer: 1 },
+  // 12. Emoji logic
+  { pattern: '🍎🍊🍋🍏 ?', options: ['🍇', '🫐', '🍎', '🍌'], answer: 1 },
+  // 13. Powers of 3
+  { pattern: '3, 9, 27, 81, ?', options: ['162', '243', '216', '100'], answer: 1 },
+  // 14. Letter reverse
+  { pattern: 'Z, Y, X, W, ?', options: ['U', 'V', 'T', 'S'], answer: 1 },
+  // 15. Emoji face pattern
+  { pattern: '😀😐😀😐😀 ?', options: ['😀', '😐', '😢', '😡'], answer: 1 },
+  // 16. Add increasing
+  { pattern: '1, 2, 4, 7, 11, ?', options: ['15', '16', '14', '17'], answer: 1 },
+  // 17. Multiply then add
+  { pattern: '1, 3, 7, 15, ?', options: ['30', '31', '29', '32'], answer: 1 },
+  // 18. Emoji arrows cycle
+  { pattern: '↖️ ↗️ ↘️ ↙️ ?', options: ['↖️', '↗️', '↘️', '⬆️'], answer: 0 },
+  // 19. Subtraction pattern
+  { pattern: '100, 95, 85, 70, ?', options: ['55', '50', '60', '45'], answer: 1 },
+  // 20. Mixed - letters as numbers
+  { pattern: 'A1, B2, C3, D4, ?', options: ['E5', 'F5', 'E6', 'D5'], answer: 0 },
+];
+
+// ===== GAME STATE =====
+let currentQ = 0;
+let correctCount = 0;
+let totalTime = 0;
+let timeTaken = [];
+let timerValue = 15;
+let timerInterval = null;
+let timerRAF = null;
+let timerStart = 0;
+let answering = false;
+let questions = [];
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ===== APPLY i18n =====
+function applyI18n() {
+  const t = getIQTranslation();
+  const gt = getTranslations();
+  document.getElementById('backLink').textContent = gt.back;
+  document.getElementById('gameTitle').textContent = t.title;
+  document.getElementById('startTitle').textContent = t.title;
+  document.getElementById('startDesc').textContent = t.desc;
+  document.getElementById('startBtn').textContent = t.start;
+  document.getElementById('questionLabel').textContent = t.what_next;
+  document.getElementById('retryBtn').textContent = t.try_again;
+  document.getElementById('shareBtn').textContent = t.share;
+  document.getElementById('shareTitle').textContent = t.share_title;
+  document.querySelectorAll('[data-i18n="ad_area"]').forEach(el => el.textContent = gt.ad_area);
+}
+applyI18n();
+
+// ===== START GAME =====
+function startGame() {
+  AudioEngine.init();
+  questions = shuffleArray(ALL_QUESTIONS).slice(0, 20);
+  currentQ = 0;
+  correctCount = 0;
+  totalTime = 0;
+  timeTaken = [];
+  answering = false;
+
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('gameSection').style.display = 'block';
+
+  showQuestion();
+}
+
+function showQuestion() {
+  answering = false;
+  const t = getIQTranslation();
+  const q = questions[currentQ];
+
+  // Update progress
+  document.getElementById('progressLabel').textContent = `${t.question} ${currentQ + 1} ${t.of} 20`;
+  document.getElementById('correctLabel').textContent = `${correctCount} ${t.correct_count}`;
+  document.getElementById('progressFill').style.width = `${((currentQ) / 20) * 100}%`;
+
+  // Question card
+  const card = document.getElementById('questionCard');
+  card.classList.remove('slide-in', 'slide-out');
+  void card.offsetWidth;
+  card.classList.add('slide-in');
+
+  document.getElementById('questionNumber').textContent = `${t.question} ${currentQ + 1}`;
+  document.getElementById('questionPattern').textContent = q.pattern;
+  document.getElementById('questionLabel').textContent = t.what_next;
+
+  // Options
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt;
+    btn.onclick = () => selectAnswer(i);
+    grid.appendChild(btn);
+  });
+
+  // Start timer
+  startTimer();
+}
+
+function startTimer() {
+  clearTimer();
+  timerValue = 15;
+  timerStart = performance.now();
+  const timerFill = document.getElementById('timerFill');
+  const timerText = document.getElementById('timerText');
+  timerFill.style.width = '100%';
+  timerFill.classList.remove('urgent');
+  timerText.classList.remove('urgent');
+  timerText.textContent = '15';
+
+  function updateTimer() {
+    const elapsed = (performance.now() - timerStart) / 1000;
+    const remaining = Math.max(0, 15 - elapsed);
+    timerValue = remaining;
+    const pct = (remaining / 15) * 100;
+    timerFill.style.width = pct + '%';
+    timerText.textContent = Math.ceil(remaining);
+
+    if (remaining <= 5) {
+      timerFill.classList.add('urgent');
+      timerText.classList.add('urgent');
+    }
+
+    if (remaining <= 3 && Math.ceil(remaining) !== Math.ceil(remaining + 0.1)) {
+      AudioEngine.tick();
+    }
+
+    if (remaining <= 0) {
+      timeUp();
+      return;
+    }
+    timerRAF = requestAnimationFrame(updateTimer);
+  }
+  timerRAF = requestAnimationFrame(updateTimer);
+}
+
+function clearTimer() {
+  if (timerRAF) cancelAnimationFrame(timerRAF);
+  timerRAF = null;
+}
+
+function timeUp() {
+  if (answering) return;
+  answering = true;
+  clearTimer();
+  AudioEngine.timeout();
+
+  const q = questions[currentQ];
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach((btn, i) => {
+    btn.classList.add('disabled');
+    if (i === q.answer) btn.classList.add('reveal');
+  });
+
+  timeTaken.push(15);
+  totalTime += 15;
+
+  setTimeout(() => nextQuestion(), 1200);
+}
+
+function selectAnswer(idx) {
+  if (answering) return;
+  answering = true;
+  clearTimer();
+
+  const elapsed = (performance.now() - timerStart) / 1000;
+  timeTaken.push(elapsed);
+  totalTime += elapsed;
+
+  const q = questions[currentQ];
+  const btns = document.querySelectorAll('.option-btn');
+
+  if (idx === q.answer) {
+    correctCount++;
+    btns[idx].classList.add('correct');
+    AudioEngine.correct();
+  } else {
+    btns[idx].classList.add('wrong');
+    btns[q.answer].classList.add('reveal');
+    AudioEngine.wrong();
+  }
+  btns.forEach(b => b.classList.add('disabled'));
+
+  document.getElementById('correctLabel').textContent = `${correctCount} ${getIQTranslation().correct_count}`;
+
+  setTimeout(() => nextQuestion(), 1000);
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= 20) {
+    showResult();
+  } else {
+    const card = document.getElementById('questionCard');
+    card.classList.remove('slide-in');
+    card.classList.add('slide-out');
+    setTimeout(() => showQuestion(), 300);
+  }
+}
+
+// ===== IQ CALCULATION =====
+function calculateIQ() {
+  // Base: 85-145 range
+  // Each correct answer: up to ~3 IQ points
+  // Speed bonus: faster avg time = higher score
+  const correctBonus = correctCount * 3; // 0-60 raw
+  const avgTime = totalTime / 20;
+  // Speed factor: 1.0 at 0s, 0.0 at 15s
+  const speedFactor = Math.max(0, 1 - avgTime / 15);
+  const speedBonus = speedFactor * 15; // 0-15 extra
+  const raw = 85 + correctBonus + speedBonus;
+  return Math.round(Math.min(145, Math.max(85, raw)));
+}
+
+function getRating(iq) {
+  const t = getIQTranslation();
+  if (iq >= 135) return t.genius;
+  if (iq >= 120) return t.brilliant;
+  if (iq >= 105) return t.above_avg;
+  if (iq >= 95) return t.average;
+  return t.below_avg;
+}
+
+// ===== RESULT SCREEN =====
+function showResult() {
+  const t = getIQTranslation();
+  const iq = calculateIQ();
+  const rating = getRating(iq);
+  const avgTime = (totalTime / 20).toFixed(1);
+
+  // Save best
+  const bestKey = 'iqTestBestScore';
+  const prevBest = parseInt(localStorage.getItem(bestKey) || '0');
+  const best = Math.max(iq, prevBest);
+  localStorage.setItem(bestKey, best.toString());
+
+  document.getElementById('gameSection').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'flex';
+
+  document.getElementById('resLabel').textContent = t.your_iq;
+  document.getElementById('resultRating').textContent = rating;
+  document.getElementById('resCorrect').textContent = `${t.correct_label}: ${correctCount} / 20`;
+  document.getElementById('resAvgTime').textContent = `${t.avg_time}: ${avgTime}s`;
+  document.getElementById('resBest').textContent = `${t.best_iq}: ${best}`;
+
+  // Animate IQ number
+  const iqEl = document.getElementById('resultIQ');
+  let displayIQ = 85;
+  const step = Math.max(1, Math.floor((iq - 85) / 40));
+  function animateIQ() {
+    displayIQ += step;
+    if (displayIQ >= iq) {
+      displayIQ = iq;
+      iqEl.textContent = displayIQ;
+      AudioEngine.fanfare();
+      launchConfetti();
+      return;
+    }
+    iqEl.textContent = displayIQ;
+    requestAnimationFrame(animateIQ);
+  }
+  setTimeout(animateIQ, 300);
+
+  clearTimer();
+}
+
+function restartGame() {
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'flex';
+}
+
+// ===== SHARE =====
+function shareResult() {
+  const t = getIQTranslation();
+  const iq = calculateIQ();
+  const rating = getRating(iq);
+  const avgTime = (totalTime / 20).toFixed(1);
+
+  const text = t.share_text
+    .replace('{iq}', iq)
+    .replace('{rating}', rating)
+    .replace('{correct}', correctCount)
+    .replace('{time}', avgTime);
+
+  // Try PuzzleShare if available
+  if (typeof PuzzleShare !== 'undefined' && PuzzleShare.showShareModal) {
+    PuzzleShare.showShareModal({ text });
+    return;
+  }
+
+  // Fallback: built-in share modal
+  document.getElementById('shareText').textContent = text;
+  document.getElementById('shareModal').classList.add('show');
+}
+
+function copyShare() {
+  const text = document.getElementById('shareText').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const t = getIQTranslation();
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = t.copied;
+    setTimeout(() => btn.textContent = t.copy, 1500);
+  });
+}
+
+function closeShare() {
+  document.getElementById('shareModal').classList.remove('show');
+}
+
+// Close share modal on overlay click
+document.getElementById('shareModal').addEventListener('click', function(e) {
+  if (e.target === this) closeShare();
+});
+
+// Init audio on first interaction
+document.addEventListener('touchstart', () => AudioEngine.init(), { once: true });
+document.addEventListener('click', () => AudioEngine.init(), { once: true });
+</script>
+<script src="share.js" onerror=""></script>
+</body>
+</html>

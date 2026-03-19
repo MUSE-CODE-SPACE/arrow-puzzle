@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>타일 매치 - Tile Match</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a1a;
+  --surface: #12122a;
+  --surface2: #1a1a3a;
+  --text: #e8e8f0;
+  --text-dim: #8888aa;
+  --accent1: #a855f7;
+  --accent2: #ec4899;
+  --accent-rgb1: 168, 85, 247;
+  --accent-rgb2: 236, 72, 153;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.screen { display: none; flex-direction: column; align-items: center; min-height: 100dvh; }
+.screen.active { display: flex; }
+
+.top-bar {
+  width: 100%; max-width: 600px; padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.back-btn {
+  background: none; border: none; color: var(--text-dim); font-size: 14px;
+  font-family: 'Outfit', sans-serif; cursor: pointer; padding: 8px 12px;
+  border-radius: 8px; transition: all 0.2s; text-decoration: none;
+}
+.back-btn:hover { background: var(--surface); color: var(--text); }
+.sound-btn {
+  background: none; border: 1px solid var(--surface2); color: var(--text-dim);
+  font-size: 18px; cursor: pointer; padding: 6px 10px; border-radius: 8px;
+  transition: all 0.2s;
+}
+.sound-btn:hover { background: var(--surface); }
+
+.title-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+.game-icon {
+  width: 120px; height: 120px; border-radius: 28px;
+  background: radial-gradient(circle at 40% 40%, rgba(var(--accent-rgb1), 0.3), transparent 70%), var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 56px; margin-bottom: 24px;
+  box-shadow: 0 0 40px rgba(var(--accent-rgb1), 0.2), inset 0 0 30px rgba(var(--accent-rgb1), 0.1);
+  animation: iconPulse 3s ease-in-out infinite;
+}
+@keyframes iconPulse {
+  0%, 100% { box-shadow: 0 0 40px rgba(var(--accent-rgb1), 0.2), inset 0 0 30px rgba(var(--accent-rgb1), 0.1); }
+  50% { box-shadow: 0 0 60px rgba(var(--accent-rgb1), 0.35), inset 0 0 40px rgba(var(--accent-rgb1), 0.2); }
+}
+.game-title {
+  font-size: 32px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #ec4899, #a855f7);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.game-subtitle { font-size: 15px; color: var(--text-dim); margin-bottom: 40px; }
+
+.main-btn {
+  background: linear-gradient(135deg, rgba(var(--accent-rgb1), 0.25), rgba(var(--accent-rgb2), 0.15));
+  border: 1px solid rgba(var(--accent-rgb1), 0.4);
+  color: var(--accent1); font-family: 'Outfit', sans-serif;
+  font-size: 16px; font-weight: 600; padding: 14px 48px;
+  border-radius: 14px; cursor: pointer; margin-bottom: 12px;
+  transition: all 0.25s; min-width: 200px;
+}
+.main-btn:hover {
+  background: linear-gradient(135deg, rgba(var(--accent-rgb1), 0.35), rgba(var(--accent-rgb2), 0.25));
+  box-shadow: 0 0 25px rgba(var(--accent-rgb1), 0.2);
+  transform: translateY(-1px);
+}
+.secondary-btn {
+  background: var(--surface); border: 1px solid var(--surface2);
+  color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: 14px; font-weight: 500; padding: 12px 36px;
+  border-radius: 12px; cursor: pointer; transition: all 0.2s; min-width: 200px;
+}
+.secondary-btn:hover { background: var(--surface2); }
+
+/* Level Select */
+.level-screen { padding: 0 16px 100px; width: 100%; max-width: 500px; }
+.diff-title {
+  font-size: 13px; font-weight: 600; color: var(--text-dim); text-transform: uppercase;
+  letter-spacing: 1.5px; margin: 24px 0 12px; padding-left: 4px;
+}
+.level-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 8px;
+}
+.level-cell {
+  aspect-ratio: 1; border-radius: 14px; background: var(--surface);
+  border: 1px solid var(--surface2); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; cursor: pointer;
+  transition: all 0.2s; position: relative; gap: 4px;
+}
+.level-cell:hover { background: var(--surface2); border-color: rgba(var(--accent-rgb1), 0.3); }
+.level-cell.locked { opacity: 0.35; cursor: not-allowed; }
+.level-cell .lv-num { font-size: 18px; font-weight: 700; }
+.level-cell .lv-stars { font-size: 11px; color: #f9d423; letter-spacing: 1px; }
+.level-cell .lv-stars .empty { opacity: 0.2; }
+
+/* Ad Placeholder */
+.ad-placeholder {
+  width: 100%; max-width: 600px; margin: 10px auto;
+  padding: 14px; text-align: center; font-size: 12px;
+  color: var(--text-dim); background: var(--surface);
+  border: 1px dashed var(--surface2); border-radius: 12px;
+}
+
+/* Game Screen */
+.game-header {
+  width: 100%; max-width: 600px; padding: 8px 16px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+}
+.game-info { display: flex; gap: 16px; align-items: center; }
+.info-item { display: flex; flex-direction: column; align-items: center; }
+.info-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+.info-value { font-size: 18px; font-weight: 700; }
+
+.game-actions { display: flex; gap: 8px; }
+.action-btn {
+  background: var(--surface); border: 1px solid var(--surface2);
+  color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: 13px; font-weight: 500; padding: 8px 14px;
+  border-radius: 10px; cursor: pointer; transition: all 0.2s;
+  white-space: nowrap;
+}
+.action-btn:hover { background: var(--surface2); }
+.action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.action-btn .count { font-size: 11px; opacity: 0.7; margin-left: 2px; }
+
+/* Board */
+.board-container {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 12px; width: 100%; position: relative;
+}
+.board-wrapper { position: relative; }
+.board {
+  display: grid; gap: 3px; position: relative;
+}
+.tile {
+  border-radius: 8px; background: var(--surface);
+  border: 1px solid var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.15s; position: relative;
+  font-size: 22px;
+}
+.tile:hover { background: var(--surface2); border-color: rgba(var(--accent-rgb1), 0.3); transform: scale(1.04); }
+.tile.selected {
+  border-color: var(--accent1);
+  box-shadow: 0 0 12px rgba(var(--accent-rgb1), 0.4), inset 0 0 8px rgba(var(--accent-rgb1), 0.15);
+  background: rgba(var(--accent-rgb1), 0.12);
+  animation: selectGlow 1s ease-in-out infinite;
+}
+@keyframes selectGlow {
+  0%, 100% { box-shadow: 0 0 12px rgba(var(--accent-rgb1), 0.4), inset 0 0 8px rgba(var(--accent-rgb1), 0.15); }
+  50% { box-shadow: 0 0 20px rgba(var(--accent-rgb1), 0.6), inset 0 0 14px rgba(var(--accent-rgb1), 0.25); }
+}
+.tile.matched {
+  animation: matchPop 0.4s ease-out forwards;
+}
+@keyframes matchPop {
+  0% { transform: scale(1); opacity: 1; }
+  30% { transform: scale(1.2); }
+  100% { transform: scale(0); opacity: 0; }
+}
+.tile.mismatch {
+  animation: mismatchShake 0.4s ease-out;
+  border-color: #ef4444;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+@keyframes mismatchShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+.tile.empty {
+  visibility: hidden; pointer-events: none;
+}
+.tile.hint-glow {
+  border-color: #f9d423;
+  box-shadow: 0 0 14px rgba(249, 212, 35, 0.5);
+  animation: hintPulse 0.6s ease-in-out 3;
+}
+@keyframes hintPulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(249, 212, 35, 0.5); }
+  50% { box-shadow: 0 0 22px rgba(249, 212, 35, 0.8); }
+}
+
+/* Path drawing SVG overlay */
+.path-svg {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 10;
+}
+.path-line {
+  stroke: var(--accent1); stroke-width: 3; fill: none;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px rgba(var(--accent-rgb1), 0.6));
+}
+.path-line.drawing {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: drawPath 0.35s ease-out forwards;
+}
+@keyframes drawPath {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Complete Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+  z-index: 1000; display: flex; align-items: center; justify-content: center;
+  padding: 20px; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+}
+.modal-overlay.active { opacity: 1; pointer-events: all; }
+.modal {
+  background: linear-gradient(145deg, var(--surface), var(--bg));
+  border: 1px solid rgba(var(--accent-rgb1), 0.25);
+  border-radius: 24px; padding: 32px 28px; max-width: 360px; width: 100%;
+  text-align: center; transform: translateY(20px) scale(0.95);
+  transition: transform 0.35s cubic-bezier(.22,1,.36,1);
+}
+.modal-overlay.active .modal { transform: translateY(0) scale(1); }
+.modal-emoji { font-size: 48px; margin-bottom: 12px; }
+.modal-title {
+  font-size: 24px; font-weight: 800; margin-bottom: 8px;
+  background: linear-gradient(135deg, #f9d423, #f7971e);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.modal-stars { font-size: 36px; margin: 12px 0; letter-spacing: 4px; }
+.modal-stars .filled { color: #f9d423; text-shadow: 0 0 10px rgba(249,212,35,0.5); }
+.modal-stars .empty { color: #333; }
+.modal-stats { color: var(--text-dim); font-size: 14px; margin-bottom: 20px; line-height: 1.8; }
+.modal-btns { display: flex; flex-direction: column; gap: 10px; }
+.modal-btns .main-btn { width: 100%; }
+.modal-btns .secondary-btn { width: 100%; }
+
+/* Responsive */
+@media (max-width: 400px) {
+  .tile { font-size: 18px; border-radius: 6px; }
+  .game-header { padding: 6px 10px; }
+  .action-btn { font-size: 12px; padding: 6px 10px; }
+}
+@media (max-width: 340px) {
+  .tile { font-size: 15px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== TITLE SCREEN ===== -->
+<div id="title-screen" class="screen active">
+  <div class="top-bar">
+    <a class="back-btn" id="back-link" href="../index.html" data-i18n="back"></a>
+    <button class="sound-btn" id="sound-toggle">🔊</button>
+  </div>
+  <div class="title-area">
+    <div class="game-icon">🀄</div>
+    <div class="game-title" id="title-text">Tile Match</div>
+    <div class="game-subtitle" id="subtitle-text"></div>
+    <button class="main-btn" id="btn-start" data-i18n="new_game"></button>
+    <button class="secondary-btn" id="btn-levels" data-i18n="level_select"></button>
+  </div>
+  <div class="ad-placeholder" data-i18n="ad_area"></div>
+</div>
+
+<!-- ===== LEVEL SELECT ===== -->
+<div id="level-screen" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" id="btn-back-title" data-i18n="back"></button>
+    <button class="sound-btn" id="sound-toggle2">🔊</button>
+  </div>
+  <div class="level-screen">
+    <div class="diff-title" id="diff-easy"></div>
+    <div class="level-grid" id="levels-easy"></div>
+    <div class="diff-title" id="diff-medium"></div>
+    <div class="level-grid" id="levels-medium"></div>
+    <div class="diff-title" id="diff-hard"></div>
+    <div class="level-grid" id="levels-hard"></div>
+    <div class="diff-title" id="diff-expert"></div>
+    <div class="level-grid" id="levels-expert"></div>
+  </div>
+  <div class="ad-placeholder" data-i18n="ad_area"></div>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div id="game-screen" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" id="btn-back-levels" data-i18n="level_select"></button>
+    <button class="sound-btn" id="sound-toggle3">🔊</button>
+  </div>
+  <div class="game-header">
+    <div class="game-info">
+      <div class="info-item">
+        <span class="info-label" id="lbl-level" data-i18n="level"></span>
+        <span class="info-value" id="val-level">1</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label" id="lbl-time" data-i18n="time"></span>
+        <span class="info-value" id="val-time">0:00</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label" id="lbl-remaining" data-i18n="remaining"></span>
+        <span class="info-value" id="val-remaining">0</span>
+      </div>
+    </div>
+    <div class="game-actions">
+      <button class="action-btn" id="btn-hint">💡<span class="count" id="hint-count"></span></button>
+      <button class="action-btn" id="btn-shuffle">🔀<span class="count" id="shuffle-count"></span></button>
+      <button class="action-btn" id="btn-restart" data-i18n="restart"></button>
+    </div>
+  </div>
+  <div class="board-container">
+    <div class="board-wrapper" id="board-wrapper">
+      <div class="board" id="board"></div>
+      <svg class="path-svg" id="path-svg"></svg>
+    </div>
+  </div>
+  <div class="ad-placeholder" data-i18n="ad_area"></div>
+</div>
+
+<!-- ===== COMPLETE MODAL ===== -->
+<div class="modal-overlay" id="complete-modal">
+  <div class="modal">
+    <div class="modal-emoji">🎉</div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-stars" id="modal-stars"></div>
+    <div class="modal-stats" id="modal-stats"></div>
+    <div class="modal-btns">
+      <button class="main-btn" id="btn-next" data-i18n="next_level"></button>
+      <button class="secondary-btn" id="btn-share">📤 Share</button>
+      <button class="secondary-btn" id="btn-levels-modal" data-i18n="level_select"></button>
+    </div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+'use strict';
+
+// ===== CUSTOM I18N =====
+const TILE_I18N = {
+  ko: {
+    gameTitle: '타일 매치', subtitle: '같은 타일을 찾아 연결하세요!',
+    easy: '쉬움 (1-5)', medium: '보통 (6-10)', hard: '어려움 (11-15)', expert: '전문가 (16-20)',
+    pairs_left: '쌍 남음', share: '📤 공유하기',
+    complete_msg: '스테이지 클리어!', time_result: '시간',
+    no_moves: '가능한 매치가 없습니다! 셔플합니다.',
+    no_shuffle: '셔플 횟수를 모두 사용했습니다.',
+    shuffled: '타일이 섞였습니다!',
+  },
+  en: {
+    gameTitle: 'Tile Match', subtitle: 'Find and connect matching tiles!',
+    easy: 'Easy (1-5)', medium: 'Medium (6-10)', hard: 'Hard (11-15)', expert: 'Expert (16-20)',
+    pairs_left: 'pairs left', share: '📤 Share',
+    complete_msg: 'Stage Clear!', time_result: 'Time',
+    no_moves: 'No valid matches! Shuffling...', no_shuffle: 'No shuffles remaining.',
+    shuffled: 'Tiles shuffled!',
+  },
+  ja: {
+    gameTitle: 'タイルマッチ', subtitle: '同じタイルを見つけて繋げよう！',
+    easy: '簡単 (1-5)', medium: '普通 (6-10)', hard: '難しい (11-15)', expert: 'エキスパート (16-20)',
+    pairs_left: 'ペア残り', share: '📤 シェア',
+    complete_msg: 'ステージクリア！', time_result: '時間',
+    no_moves: '有効なマッチがありません！シャッフルします。', no_shuffle: 'シャッフル回数がありません。',
+    shuffled: 'タイルがシャッフルされました！',
+  },
+  zh: {
+    gameTitle: '瓷砖配对', subtitle: '找到并连接相同的瓷砖！',
+    easy: '简单 (1-5)', medium: '中等 (6-10)', hard: '困难 (11-15)', expert: '专家 (16-20)',
+    pairs_left: '对剩余', share: '📤 分享',
+    complete_msg: '关卡通过！', time_result: '时间',
+    no_moves: '没有可用的匹配！正在洗牌...', no_shuffle: '没有剩余洗牌次数。',
+    shuffled: '瓷砖已洗牌！',
+  },
+  es: {
+    gameTitle: 'Tile Match', subtitle: '¡Encuentra y conecta los azulejos iguales!',
+    easy: 'Fácil (1-5)', medium: 'Medio (6-10)', hard: 'Difícil (11-15)', expert: 'Experto (16-20)',
+    pairs_left: 'pares restantes', share: '📤 Compartir',
+    complete_msg: '¡Nivel completado!', time_result: 'Tiempo',
+    no_moves: '¡No hay coincidencias válidas! Mezclando...', no_shuffle: 'No quedan mezclas.',
+    shuffled: '¡Azulejos mezclados!',
+  },
+};
+
+const lang = getGameLang();
+const t = getTranslations();
+const tg = TILE_I18N[lang] || TILE_I18N.ko;
+
+// ===== SOUND ENGINE =====
+let soundEnabled = true;
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playSound(type) {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    const now = ctx.currentTime;
+
+    switch(type) {
+      case 'select':
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.linearRampToValueAtTime(800, now + 0.08);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.start(now); osc.stop(now + 0.15);
+        break;
+      case 'match':
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523, now);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.start(now); osc.stop(now + 0.3);
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.connect(gain2); gain2.connect(ctx.destination);
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(659, now + 0.1);
+        gain2.gain.setValueAtTime(0.15, now + 0.1);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        osc2.start(now + 0.1); osc2.stop(now + 0.4);
+        const osc3 = ctx.createOscillator();
+        const gain3 = ctx.createGain();
+        osc3.connect(gain3); gain3.connect(ctx.destination);
+        osc3.type = 'sine';
+        osc3.frequency.setValueAtTime(784, now + 0.2);
+        gain3.gain.setValueAtTime(0.15, now + 0.2);
+        gain3.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc3.start(now + 0.2); osc3.stop(now + 0.5);
+        break;
+      case 'mismatch':
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.linearRampToValueAtTime(150, now + 0.2);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc.start(now); osc.stop(now + 0.25);
+        break;
+      case 'complete':
+        [523, 659, 784, 1047].forEach((freq, i) => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.connect(g); g.connect(ctx.destination);
+          o.type = 'sine';
+          o.frequency.setValueAtTime(freq, now + i * 0.12);
+          g.gain.setValueAtTime(0.15, now + i * 0.12);
+          g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.4);
+          o.start(now + i * 0.12); o.stop(now + i * 0.12 + 0.4);
+        });
+        break;
+    }
+  } catch(e) {}
+}
+
+// ===== LEVEL CONFIG =====
+const EMOJIS = ['🍎','🍊','🍋','🍇','🍓','🍑','🍒','🥝','🍌','🍍','🥭','🍈','🫐','🥥','🍐','🌽','🥕','🍆','🌶️','🥑','🎯','🎲','🎸','🎺','🎨','🏀','⚽','🎾','🏈','🎳','🚀','✈️','🚂','🚁','⛵','🌟','💎','🔮','🎭','🎪'];
+
+const LEVELS = [];
+for (let i = 1; i <= 20; i++) {
+  let cols, rows;
+  if (i <= 5) { cols = 6; rows = 5; }
+  else if (i <= 10) { cols = 8; rows = 6; }
+  else if (i <= 15) { cols = 8; rows = 7; }
+  else { cols = 10; rows = 8; }
+  const pairs = (cols * rows) / 2;
+  LEVELS.push({ cols, rows, pairs, shuffles: i <= 5 ? 3 : i <= 10 ? 3 : 2, hints: i <= 5 ? 3 : i <= 10 ? 2 : 2 });
+}
+
+// ===== STATE =====
+let currentLevel = 0;
+let grid = []; // 2D array: grid[row][col] = emoji or null
+let gridCols = 0;
+let gridRows = 0;
+let selectedTile = null; // {row, col}
+let timerInterval = null;
+let elapsedSeconds = 0;
+let remainingPairs = 0;
+let shufflesLeft = 0;
+let hintsLeft = 0;
+let hintsUsed = 0;
+let isProcessing = false;
+
+// Progress: { level: { stars, time } }
+let progress = JSON.parse(localStorage.getItem('tileMatchProgress') || '{}');
+
+function saveProgress() {
+  localStorage.setItem('tileMatchProgress', JSON.stringify(progress));
+}
+
+// ===== SCREENS =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ===== INIT UI =====
+function initUI() {
+  document.getElementById('title-text').textContent = tg.gameTitle;
+  document.getElementById('subtitle-text').textContent = tg.subtitle;
+  document.getElementById('back-link').textContent = t.back;
+  document.getElementById('back-link').href = '../index.html';
+  document.getElementById('btn-share').textContent = tg.share;
+
+  applyGameI18n();
+
+  // Difficulty labels
+  document.getElementById('diff-easy').textContent = tg.easy;
+  document.getElementById('diff-medium').textContent = tg.medium;
+  document.getElementById('diff-hard').textContent = tg.hard;
+  document.getElementById('diff-expert').textContent = tg.expert;
+
+  buildLevelSelect();
+  setupEvents();
+  updateSoundBtns();
+}
+
+function buildLevelSelect() {
+  const containers = [
+    { id: 'levels-easy', start: 0, end: 5 },
+    { id: 'levels-medium', start: 5, end: 10 },
+    { id: 'levels-hard', start: 10, end: 15 },
+    { id: 'levels-expert', start: 15, end: 20 },
+  ];
+
+  containers.forEach(({ id, start, end }) => {
+    const el = document.getElementById(id);
+    el.innerHTML = '';
+    for (let i = start; i < end; i++) {
+      const unlocked = i === 0 || progress[i - 1];
+      const cell = document.createElement('div');
+      cell.className = 'level-cell' + (unlocked ? '' : ' locked');
+      const stars = progress[i] ? progress[i].stars : 0;
+      const starsHtml = [1,2,3].map(s => s <= stars ? '★' : '<span class="empty">★</span>').join('');
+      cell.innerHTML = `<span class="lv-num">${i + 1}</span><span class="lv-stars">${starsHtml}</span>`;
+      if (unlocked) {
+        cell.addEventListener('click', () => startLevel(i));
+      }
+      el.appendChild(cell);
+    }
+  });
+}
+
+function setupEvents() {
+  document.getElementById('btn-start').addEventListener('click', () => {
+    // Find the highest unlocked level
+    let lvl = 0;
+    for (let i = 0; i < 20; i++) {
+      if (progress[i]) lvl = i + 1;
+    }
+    if (lvl >= 20) lvl = 19;
+    startLevel(lvl);
+  });
+  document.getElementById('btn-levels').addEventListener('click', () => { buildLevelSelect(); showScreen('level-screen'); });
+  document.getElementById('btn-back-title').addEventListener('click', () => showScreen('title-screen'));
+  document.getElementById('btn-back-levels').addEventListener('click', () => { stopTimer(); buildLevelSelect(); showScreen('level-screen'); });
+  document.getElementById('btn-hint').addEventListener('click', doHint);
+  document.getElementById('btn-shuffle').addEventListener('click', doShuffle);
+  document.getElementById('btn-restart').addEventListener('click', () => startLevel(currentLevel));
+  document.getElementById('btn-next').addEventListener('click', () => {
+    closeModal();
+    if (currentLevel < 19) startLevel(currentLevel + 1);
+    else { buildLevelSelect(); showScreen('level-screen'); }
+  });
+  document.getElementById('btn-share').addEventListener('click', () => {
+    const stars = calcStars();
+    PuzzleShare.showShareModal({
+      gameName: tg.gameTitle,
+      title: tg.gameTitle,
+      stars: stars,
+      message: `${t.level} ${currentLevel + 1} - ${formatTime(elapsedSeconds)}`,
+      lang: lang,
+    });
+  });
+  document.getElementById('btn-levels-modal').addEventListener('click', () => {
+    closeModal();
+    buildLevelSelect();
+    showScreen('level-screen');
+  });
+
+  // Sound toggles
+  [document.getElementById('sound-toggle'), document.getElementById('sound-toggle2'), document.getElementById('sound-toggle3')].forEach(btn => {
+    btn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      updateSoundBtns();
+    });
+  });
+}
+
+function updateSoundBtns() {
+  const icon = soundEnabled ? '🔊' : '🔇';
+  document.getElementById('sound-toggle').textContent = icon;
+  document.getElementById('sound-toggle2').textContent = icon;
+  document.getElementById('sound-toggle3').textContent = icon;
+}
+
+// ===== GAME LOGIC =====
+function startLevel(lvl) {
+  currentLevel = lvl;
+  const cfg = LEVELS[lvl];
+  gridCols = cfg.cols;
+  gridRows = cfg.rows;
+  shufflesLeft = cfg.shuffles;
+  hintsLeft = cfg.hints;
+  hintsUsed = 0;
+  selectedTile = null;
+  isProcessing = false;
+  elapsedSeconds = 0;
+
+  // Generate pairs
+  const totalTiles = gridCols * gridRows;
+  const pairCount = totalTiles / 2;
+  const emojiPool = EMOJIS.slice(0, pairCount);
+  let tiles = [];
+  emojiPool.forEach(e => { tiles.push(e); tiles.push(e); });
+
+  // Shuffle
+  for (let i = tiles.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+  }
+
+  // Fill grid
+  grid = [];
+  let idx = 0;
+  for (let r = 0; r < gridRows; r++) {
+    grid[r] = [];
+    for (let c = 0; c < gridCols; c++) {
+      grid[r][c] = tiles[idx++];
+    }
+  }
+
+  remainingPairs = pairCount;
+
+  // Ensure at least one valid match exists
+  if (!findValidMatch()) {
+    shuffleGrid();
+  }
+
+  showScreen('game-screen');
+  updateGameUI();
+  renderBoard();
+  startTimer();
+}
+
+function updateGameUI() {
+  document.getElementById('val-level').textContent = currentLevel + 1;
+  document.getElementById('val-time').textContent = formatTime(elapsedSeconds);
+  document.getElementById('val-remaining').textContent = remainingPairs;
+  document.getElementById('hint-count').textContent = `(${hintsLeft})`;
+  document.getElementById('shuffle-count').textContent = `(${shufflesLeft})`;
+  document.getElementById('btn-hint').disabled = hintsLeft <= 0;
+  document.getElementById('btn-shuffle').disabled = shufflesLeft <= 0;
+}
+
+function renderBoard() {
+  const board = document.getElementById('board');
+  const wrapper = document.getElementById('board-wrapper');
+
+  // Calculate tile size based on available space
+  const container = document.querySelector('.board-container');
+  const availW = container.clientWidth - 24;
+  const availH = container.clientHeight - 24;
+  const gap = 3;
+
+  // Account for extra 2 columns/rows for path routing (virtual border)
+  const tileW = Math.floor((availW - (gridCols - 1) * gap) / gridCols);
+  const tileH = Math.floor((availH - (gridRows - 1) * gap) / gridRows);
+  const tileSize = Math.min(tileW, tileH, 60);
+
+  board.style.gridTemplateColumns = `repeat(${gridCols}, ${tileSize}px)`;
+  board.style.gridTemplateRows = `repeat(${gridRows}, ${tileSize}px)`;
+  board.style.gap = `${gap}px`;
+
+  const boardW = gridCols * tileSize + (gridCols - 1) * gap;
+  const boardH = gridRows * tileSize + (gridRows - 1) * gap;
+  wrapper.style.width = boardW + 'px';
+  wrapper.style.height = boardH + 'px';
+
+  board.innerHTML = '';
+  const svg = document.getElementById('path-svg');
+  svg.innerHTML = '';
+  svg.setAttribute('viewBox', `0 0 ${boardW} ${boardH}`);
+
+  for (let r = 0; r < gridRows; r++) {
+    for (let c = 0; c < gridCols; c++) {
+      const tile = document.createElement('div');
+      tile.className = 'tile' + (grid[r][c] === null ? ' empty' : '');
+      tile.textContent = grid[r][c] || '';
+      tile.dataset.row = r;
+      tile.dataset.col = c;
+      if (grid[r][c] !== null) {
+        tile.addEventListener('click', () => onTileClick(r, c));
+      }
+      board.appendChild(tile);
+    }
+  }
+}
+
+function getTileElement(r, c) {
+  const idx = r * gridCols + c;
+  return document.getElementById('board').children[idx];
+}
+
+function getTileCenter(r, c) {
+  const board = document.getElementById('board');
+  const gap = 3;
+  const tileEl = board.children[0];
+  if (!tileEl) return { x: 0, y: 0 };
+  const tileSize = tileEl.offsetWidth;
+  return {
+    x: c * (tileSize + gap) + tileSize / 2,
+    y: r * (tileSize + gap) + tileSize / 2,
+  };
+}
+
+function onTileClick(r, c) {
+  if (isProcessing) return;
+  if (grid[r][c] === null) return;
+
+  const tileEl = getTileElement(r, c);
+
+  if (selectedTile && selectedTile.row === r && selectedTile.col === c) {
+    // Deselect
+    tileEl.classList.remove('selected');
+    selectedTile = null;
+    playSound('select');
+    return;
+  }
+
+  if (!selectedTile) {
+    // First selection
+    selectedTile = { row: r, col: c };
+    tileEl.classList.add('selected');
+    playSound('select');
+    return;
+  }
+
+  // Second selection - check match
+  const first = selectedTile;
+  const firstEl = getTileElement(first.row, first.col);
+
+  if (grid[first.row][first.col] !== grid[r][c]) {
+    // Mismatch
+    playSound('mismatch');
+    tileEl.classList.add('mismatch');
+    firstEl.classList.add('mismatch');
+    isProcessing = true;
+    setTimeout(() => {
+      tileEl.classList.remove('mismatch');
+      firstEl.classList.remove('mismatch');
+      firstEl.classList.remove('selected');
+      selectedTile = null;
+      isProcessing = false;
+    }, 400);
+    return;
+  }
+
+  // Same emoji - check path
+  const path = findPath(first.row, first.col, r, c);
+  if (!path) {
+    // Can't connect
+    playSound('mismatch');
+    tileEl.classList.add('mismatch');
+    firstEl.classList.add('mismatch');
+    isProcessing = true;
+    setTimeout(() => {
+      tileEl.classList.remove('mismatch');
+      firstEl.classList.remove('mismatch');
+      firstEl.classList.remove('selected');
+      selectedTile = null;
+      isProcessing = false;
+    }, 400);
+    return;
+  }
+
+  // Successful match!
+  isProcessing = true;
+  playSound('match');
+  drawPath(path);
+
+  setTimeout(() => {
+    firstEl.classList.remove('selected');
+    firstEl.classList.add('matched');
+    tileEl.classList.add('matched');
+
+    setTimeout(() => {
+      grid[first.row][first.col] = null;
+      grid[r][c] = null;
+      firstEl.classList.add('empty');
+      firstEl.classList.remove('matched');
+      firstEl.textContent = '';
+      tileEl.classList.add('empty');
+      tileEl.classList.remove('matched');
+      tileEl.textContent = '';
+
+      // Clear path
+      document.getElementById('path-svg').innerHTML = '';
+
+      remainingPairs--;
+      selectedTile = null;
+      isProcessing = false;
+      updateGameUI();
+
+      if (remainingPairs <= 0) {
+        levelComplete();
+      } else if (!findValidMatch()) {
+        // Auto shuffle if no moves
+        if (shufflesLeft > 0) {
+          shufflesLeft--;
+          shuffleGrid();
+          renderBoard();
+          updateGameUI();
+        }
+      }
+    }, 400);
+  }, 350);
+}
+
+// ===== PATH FINDING (0, 1, or 2 turns) =====
+function isBlocked(r, c) {
+  // Out of the extended grid (allow -1 and gridRows/gridCols as virtual border)
+  if (r < -1 || r > gridRows || c < -1 || c > gridCols) return true;
+  // Virtual border cells are always free
+  if (r === -1 || r === gridRows || c === -1 || c === gridCols) return false;
+  // Normal cell: blocked if tile exists
+  return grid[r][c] !== null;
+}
+
+function findPath(r1, c1, r2, c2) {
+  // Try 0-turn (straight line)
+  const p0 = tryLine(r1, c1, r2, c2);
+  if (p0) return p0;
+
+  // Try 1-turn
+  const p1 = try1Turn(r1, c1, r2, c2);
+  if (p1) return p1;
+
+  // Try 2-turn
+  const p2 = try2Turn(r1, c1, r2, c2);
+  if (p2) return p2;
+
+  return null;
+}
+
+function tryLine(r1, c1, r2, c2) {
+  if (r1 === r2) {
+    // Horizontal
+    const minC = Math.min(c1, c2);
+    const maxC = Math.max(c1, c2);
+    for (let c = minC + 1; c < maxC; c++) {
+      if (isBlocked(r1, c)) return null;
+    }
+    return [{ r: r1, c: c1 }, { r: r2, c: c2 }];
+  }
+  if (c1 === c2) {
+    // Vertical
+    const minR = Math.min(r1, r2);
+    const maxR = Math.max(r1, r2);
+    for (let r = minR + 1; r < maxR; r++) {
+      if (isBlocked(r, c1)) return null;
+    }
+    return [{ r: r1, c: c1 }, { r: r2, c: c2 }];
+  }
+  return null;
+}
+
+function canWalkLine(r1, c1, r2, c2) {
+  // Check if straight line from (r1,c1) to (r2,c2) is clear (both must be on same row or col)
+  if (r1 === r2) {
+    const minC = Math.min(c1, c2);
+    const maxC = Math.max(c1, c2);
+    for (let c = minC + 1; c < maxC; c++) {
+      if (isBlocked(r1, c)) return false;
+    }
+    return true;
+  }
+  if (c1 === c2) {
+    const minR = Math.min(r1, r2);
+    const maxR = Math.max(r1, r2);
+    for (let r = minR + 1; r < maxR; r++) {
+      if (isBlocked(r, c1)) return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+function try1Turn(r1, c1, r2, c2) {
+  // Corner at (r1, c2)
+  if (!isBlocked(r1, c2) && canWalkLine(r1, c1, r1, c2) && canWalkLine(r1, c2, r2, c2)) {
+    return [{ r: r1, c: c1 }, { r: r1, c: c2 }, { r: r2, c: c2 }];
+  }
+  // Corner at (r2, c1)
+  if (!isBlocked(r2, c1) && canWalkLine(r1, c1, r2, c1) && canWalkLine(r2, c1, r2, c2)) {
+    return [{ r: r1, c: c1 }, { r: r2, c: c1 }, { r: r2, c: c2 }];
+  }
+  return null;
+}
+
+function try2Turn(r1, c1, r2, c2) {
+  // Try horizontal scan lines
+  for (let r = -1; r <= gridRows; r++) {
+    if (r === r1 && r === r2) continue;
+    const m1r = r, m1c = c1;
+    const m2r = r, m2c = c2;
+    if ((m1r !== r1 || m1c !== c1) && isBlocked(m1r, m1c)) continue;
+    if ((m2r !== r2 || m2c !== c2) && isBlocked(m2r, m2c)) continue;
+    if (canWalkLine(r1, c1, m1r, m1c) && canWalkLine(m1r, m1c, m2r, m2c) && canWalkLine(m2r, m2c, r2, c2)) {
+      return [{ r: r1, c: c1 }, { r: m1r, c: m1c }, { r: m2r, c: m2c }, { r: r2, c: c2 }];
+    }
+  }
+
+  // Try vertical scan lines
+  for (let c = -1; c <= gridCols; c++) {
+    if (c === c1 && c === c2) continue;
+    const m1r = r1, m1c = c;
+    const m2r = r2, m2c = c;
+    if ((m1r !== r1 || m1c !== c1) && isBlocked(m1r, m1c)) continue;
+    if ((m2r !== r2 || m2c !== c2) && isBlocked(m2r, m2c)) continue;
+    if (canWalkLine(r1, c1, m1r, m1c) && canWalkLine(m1r, m1c, m2r, m2c) && canWalkLine(m2r, m2c, r2, c2)) {
+      return [{ r: r1, c: c1 }, { r: m1r, c: m1c }, { r: m2r, c: m2c }, { r: r2, c: c2 }];
+    }
+  }
+
+  return null;
+}
+
+function findValidMatch() {
+  // Find all non-null tiles
+  const tiles = [];
+  for (let r = 0; r < gridRows; r++) {
+    for (let c = 0; c < gridCols; c++) {
+      if (grid[r][c] !== null) tiles.push({ r, c, emoji: grid[r][c] });
+    }
+  }
+
+  // Group by emoji
+  const groups = {};
+  tiles.forEach(t => {
+    if (!groups[t.emoji]) groups[t.emoji] = [];
+    groups[t.emoji].push(t);
+  });
+
+  for (const emoji in groups) {
+    const arr = groups[emoji];
+    for (let i = 0; i < arr.length; i++) {
+      for (let j = i + 1; j < arr.length; j++) {
+        if (findPath(arr[i].r, arr[i].c, arr[j].r, arr[j].c)) {
+          return { a: arr[i], b: arr[j] };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function shuffleGrid() {
+  // Collect remaining tiles
+  const tiles = [];
+  for (let r = 0; r < gridRows; r++) {
+    for (let c = 0; c < gridCols; c++) {
+      if (grid[r][c] !== null) tiles.push(grid[r][c]);
+    }
+  }
+
+  // Shuffle
+  for (let i = tiles.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+  }
+
+  // Refill
+  let idx = 0;
+  for (let r = 0; r < gridRows; r++) {
+    for (let c = 0; c < gridCols; c++) {
+      if (grid[r][c] !== null) {
+        grid[r][c] = tiles[idx++];
+      }
+    }
+  }
+}
+
+function doShuffle() {
+  if (shufflesLeft <= 0 || isProcessing) return;
+  shufflesLeft--;
+  if (selectedTile) {
+    getTileElement(selectedTile.row, selectedTile.col).classList.remove('selected');
+    selectedTile = null;
+  }
+  shuffleGrid();
+  renderBoard();
+  updateGameUI();
+  playSound('select');
+}
+
+function doHint() {
+  if (hintsLeft <= 0 || isProcessing) return;
+  const match = findValidMatch();
+  if (!match) return;
+  hintsLeft--;
+  hintsUsed++;
+
+  const elA = getTileElement(match.a.r, match.a.c);
+  const elB = getTileElement(match.b.r, match.b.c);
+  elA.classList.add('hint-glow');
+  elB.classList.add('hint-glow');
+  setTimeout(() => {
+    elA.classList.remove('hint-glow');
+    elB.classList.remove('hint-glow');
+  }, 1800);
+  updateGameUI();
+  playSound('select');
+}
+
+// ===== PATH DRAWING =====
+function drawPath(path) {
+  const svg = document.getElementById('path-svg');
+  svg.innerHTML = '';
+
+  if (path.length < 2) return;
+
+  const points = path.map(p => {
+    // Clamp virtual border points to edge
+    const cr = Math.max(0, Math.min(gridRows - 1, p.r));
+    const cc = Math.max(0, Math.min(gridCols - 1, p.c));
+    const center = getTileCenter(cr, cc);
+
+    // Adjust for virtual border
+    if (p.r === -1) center.y = -10;
+    if (p.r === gridRows) {
+      const board = document.getElementById('board');
+      center.y = board.offsetHeight + 10;
+    }
+    if (p.c === -1) center.x = -10;
+    if (p.c === gridCols) {
+      const board = document.getElementById('board');
+      center.x = board.offsetWidth + 10;
+    }
+
+    return center;
+  });
+
+  const d = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+  const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  polyline.setAttribute('d', d);
+  polyline.setAttribute('class', 'path-line drawing');
+
+  // Calculate total length for dash animation
+  svg.appendChild(polyline);
+  const len = polyline.getTotalLength();
+  polyline.style.strokeDasharray = len;
+  polyline.style.strokeDashoffset = len;
+  polyline.style.animation = `drawPath 0.35s ease-out forwards`;
+}
+
+// ===== TIMER =====
+function startTimer() {
+  stopTimer();
+  elapsedSeconds = 0;
+  updateGameUI();
+  timerInterval = setInterval(() => {
+    elapsedSeconds++;
+    document.getElementById('val-time').textContent = formatTime(elapsedSeconds);
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+// ===== LEVEL COMPLETE =====
+function calcStars() {
+  const cfg = LEVELS[currentLevel];
+  const pairCount = cfg.pairs;
+  // Time thresholds based on pair count
+  const baseTime = pairCount * 4; // generous base
+  const goodTime = pairCount * 2.5;
+  const greatTime = pairCount * 1.5;
+
+  let stars = 1;
+  if (elapsedSeconds <= goodTime && hintsUsed <= 1) stars = 2;
+  if (elapsedSeconds <= greatTime && hintsUsed === 0) stars = 3;
+  return stars;
+}
+
+function levelComplete() {
+  stopTimer();
+  playSound('complete');
+
+  const stars = calcStars();
+  const prev = progress[currentLevel];
+  if (!prev || prev.stars < stars) {
+    progress[currentLevel] = { stars, time: elapsedSeconds };
+  }
+  saveProgress();
+
+  // Show modal
+  setTimeout(() => {
+    const starsHtml = [1,2,3].map(s =>
+      `<span class="${s <= stars ? 'filled' : 'empty'}">★</span>`
+    ).join('');
+
+    document.getElementById('modal-title').textContent = tg.complete_msg;
+    document.getElementById('modal-stars').innerHTML = starsHtml;
+    document.getElementById('modal-stats').innerHTML =
+      `${t.level} ${currentLevel + 1}<br>${tg.time_result}: ${formatTime(elapsedSeconds)}`;
+
+    document.getElementById('btn-next').style.display = currentLevel < 19 ? '' : 'none';
+    document.getElementById('complete-modal').classList.add('active');
+
+    PuzzleShare.showShareModal({
+      gameName: tg.gameTitle,
+      title: tg.gameTitle,
+      stars: stars,
+      message: `${t.level} ${currentLevel + 1} - ${formatTime(elapsedSeconds)}`,
+      lang: lang,
+    });
+  }, 600);
+}
+
+function closeModal() {
+  document.getElementById('complete-modal').classList.remove('active');
+}
+
+// ===== INIT =====
+initUI();
+</script>
+</body>
+</html>

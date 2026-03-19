@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Whack-a-Mole</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif;background:#0a0a1a;color:#e2e8f0}
+body{display:flex;flex-direction:column;align-items:center}
+
+.ad-placeholder{width:100%;max-width:480px;height:50px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);font-size:12px;letter-spacing:1px;flex-shrink:0}
+.ad-top{border-radius:0 0 8px 8px}
+.ad-bottom{border-radius:8px 8px 0 0;margin-top:auto}
+
+.header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;flex-shrink:0}
+.back-link{color:#94a3b8;text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;transition:color .2s}
+.back-link:hover{color:#e2e8f0}
+.title{font-size:18px;font-weight:800;background:linear-gradient(135deg,#f59e0b,#ec4899,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.game-container{flex:1;display:flex;flex-direction:column;align-items:center;width:100%;max-width:480px;padding:0 16px;min-height:0;overflow:hidden}
+
+/* Mode select */
+.mode-select{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;width:100%;gap:12px}
+.mode-title{font-size:28px;font-weight:900;margin-bottom:4px;text-align:center}
+.mode-emoji{font-size:48px;margin-bottom:8px}
+.mode-subtitle{font-size:14px;color:#94a3b8;margin-bottom:16px;text-align:center}
+.mode-btn{width:100%;max-width:320px;padding:16px 20px;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.08);border-radius:14px;color:#e2e8f0;font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;text-align:left}
+.mode-btn:hover{background:rgba(245,158,11,.18);border-color:rgba(245,158,11,.5);transform:translateY(-2px)}
+.mode-btn .mode-name{font-size:17px;margin-bottom:4px}
+.mode-btn .mode-desc{font-size:12px;color:#94a3b8;font-weight:400}
+.mode-best{font-size:11px;color:#f59e0b;margin-top:4px;font-weight:600}
+
+/* Stats bar */
+.stats-bar{width:100%;display:flex;justify-content:space-between;padding:8px 0;flex-shrink:0;gap:4px}
+.stat-item{text-align:center;flex:1}
+.stat-label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.5px}
+.stat-value{font-size:16px;font-weight:800;color:#e2e8f0}
+.stat-value.score-val{color:#f59e0b}
+.stat-value.combo-val{color:#ec4899}
+
+/* Timer bar */
+.timer-bar{width:100%;height:6px;background:rgba(255,255,255,.06);border-radius:3px;margin-bottom:6px;flex-shrink:0;overflow:hidden}
+.timer-fill{height:100%;background:linear-gradient(90deg,#ec4899,#f59e0b);border-radius:3px;transition:width .1s linear;width:100%}
+
+/* Mole grid */
+.mole-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:360px;aspect-ratio:1;margin:auto 0;flex-shrink:0}
+
+.hole{position:relative;background:radial-gradient(ellipse at center bottom,#2a1a0a 0%,#1a1020 60%,transparent 70%);border-radius:50%;aspect-ratio:1;overflow:hidden;cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><text y="28" font-size="28">🔨</text></svg>') 8 28,pointer}
+
+.hole-bg{position:absolute;bottom:0;left:10%;right:10%;height:30%;background:radial-gradient(ellipse at center,#3d2817,#2a1a0a);border-radius:50%;z-index:3}
+
+.mole-wrapper{position:absolute;bottom:0;left:0;right:0;height:100%;display:flex;align-items:flex-end;justify-content:center;z-index:2;pointer-events:none;clip-path:ellipse(48% 45% at 50% 55%)}
+
+.mole{font-size:clamp(36px,8vw,52px);transform:translateY(100%);transition:transform .15s ease-out;pointer-events:auto;line-height:1;padding-bottom:8%;cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><text y="28" font-size="28">🔨</text></svg>') 8 28,pointer}
+.mole.up{transform:translateY(10%);transition:transform .2s cubic-bezier(.17,.67,.35,1.1)}
+.mole.whacked{animation:whackAnim .35s ease-out forwards}
+.mole.missed{animation:missAnim .3s ease-out forwards}
+.mole.helmet-hit{animation:helmetShake .3s ease-out}
+
+/* Helmet indicator */
+.helmet-badge{position:absolute;top:8%;right:18%;font-size:12px;background:rgba(0,0,0,.5);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:#f59e0b;font-weight:900;z-index:5;opacity:0;transition:opacity .15s}
+.hole.show-badge .helmet-badge{opacity:1}
+
+@keyframes whackAnim{
+  0%{transform:translateY(10%) scale(1,1)}
+  30%{transform:translateY(10%) scale(1.3,.7)}
+  60%{transform:translateY(50%) scale(.8,1.2)}
+  100%{transform:translateY(100%) scale(1,1)}
+}
+@keyframes missAnim{
+  0%{transform:translateY(10%)}
+  100%{transform:translateY(100%)}
+}
+@keyframes helmetShake{
+  0%{transform:translateY(10%) rotate(0)}
+  25%{transform:translateY(10%) rotate(-8deg)}
+  50%{transform:translateY(10%) rotate(8deg)}
+  75%{transform:translateY(10%) rotate(-4deg)}
+  100%{transform:translateY(10%) rotate(0)}
+}
+
+/* Stars on whack */
+.whack-stars{position:absolute;top:20%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:10;font-size:14px;animation:starsExplode .5s ease-out forwards}
+@keyframes starsExplode{0%{transform:translate(-50%,-50%) scale(0);opacity:1}100%{transform:translate(-50%,-50%) scale(2);opacity:0}}
+
+/* Score popup */
+.score-popup{position:absolute;top:10%;left:50%;transform:translate(-50%,0);pointer-events:none;z-index:10;font-weight:900;font-size:18px;animation:scoreFloat .8s ease-out forwards}
+.score-popup.positive{color:#4ade80}
+.score-popup.negative{color:#ef4444}
+.score-popup.golden{color:#fbbf24;font-size:22px}
+@keyframes scoreFloat{0%{transform:translate(-50%,0) scale(1.2);opacity:1}100%{transform:translate(-50%,-40px) scale(.8);opacity:0}}
+
+/* Combo popup */
+.combo-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);pointer-events:none;font-size:32px;font-weight:900;color:#ec4899;text-shadow:0 0 20px rgba(236,72,153,.5);z-index:20;animation:comboPop .6s ease-out forwards}
+@keyframes comboPop{0%{transform:translate(-50%,-50%) scale(0)}20%{transform:translate(-50%,-50%) scale(1.3)}40%{transform:translate(-50%,-50%) scale(1)}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
+
+/* Countdown */
+.countdown-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,10,26,.8);z-index:30;font-size:72px;font-weight:900;color:#f59e0b}
+.countdown-overlay span{animation:countPulse .6s ease-out}
+@keyframes countPulse{0%{transform:scale(2);opacity:0}50%{opacity:1}100%{transform:scale(1);opacity:1}}
+
+/* Result overlay */
+.result-overlay{position:fixed;inset:0;background:rgba(10,10,26,.92);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .3s}
+.result-overlay.show{opacity:1;pointer-events:auto}
+.result-card{background:linear-gradient(145deg,#111128,#0e0e24);border:1px solid rgba(245,158,11,.25);border-radius:20px;padding:28px 24px;max-width:360px;width:90%;text-align:center}
+.result-rating{font-size:32px;font-weight:900;margin-bottom:4px;background:linear-gradient(135deg,#f59e0b,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.result-emoji{font-size:48px;margin-bottom:8px}
+.result-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.result-stat{background:rgba(255,255,255,.04);border-radius:10px;padding:10px}
+.result-stat-label{font-size:11px;color:#64748b;margin-bottom:2px}
+.result-stat-value{font-size:20px;font-weight:800}
+.result-best{font-size:13px;color:#f59e0b;font-weight:600;margin-bottom:16px}
+.result-btns{display:flex;gap:10px}
+.result-btn{flex:1;padding:12px;border:none;border-radius:12px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s}
+.result-btn:hover{transform:translateY(-2px)}
+.result-btn.primary{background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff}
+.result-btn.secondary{background:rgba(255,255,255,.08);color:#e2e8f0;border:1px solid rgba(255,255,255,.1)}
+
+@media(max-width:380px){
+  .stat-value{font-size:14px}
+  .mode-btn{padding:12px 16px}
+  .mole-grid{gap:8px}
+  .mole{font-size:32px}
+}
+@media(max-height:640px){
+  .mole-grid{max-width:280px}
+  .header{padding:4px 16px}
+  .stats-bar{padding:4px 0}
+}
+</style>
+</head>
+<body>
+
+<div class="ad-placeholder ad-top"><span data-i18n="ad_area">광고 영역</span></div>
+
+<div class="header">
+  <a class="back-link" href="../index.html" data-i18n="back">← 메인으로</a>
+  <div class="title" id="gameTitle">Whack-a-Mole</div>
+</div>
+
+<div class="game-container" id="gameContainer">
+  <!-- Mode Select -->
+  <div class="mode-select" id="modeSelect">
+    <div class="mode-emoji">🐹🔨</div>
+    <div class="mode-title" id="modeTitle">Whack-a-Mole</div>
+    <div class="mode-subtitle" id="modeSubtitle"></div>
+    <button class="mode-btn" onclick="startGame('easy')">
+      <div class="mode-name" id="easyName"></div>
+      <div class="mode-desc" id="easyDesc"></div>
+      <div class="mode-best" id="easyBest"></div>
+    </button>
+    <button class="mode-btn" onclick="startGame('normal')">
+      <div class="mode-name" id="normalName"></div>
+      <div class="mode-desc" id="normalDesc"></div>
+      <div class="mode-best" id="normalBest"></div>
+    </button>
+    <button class="mode-btn" onclick="startGame('hard')">
+      <div class="mode-name" id="hardName"></div>
+      <div class="mode-desc" id="hardDesc"></div>
+      <div class="mode-best" id="hardBest"></div>
+    </button>
+  </div>
+
+  <!-- In-game UI -->
+  <div id="gameUI" style="display:none;width:100%;flex:1;flex-direction:column;min-height:0">
+    <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+    <div class="stats-bar">
+      <div class="stat-item"><div class="stat-label" id="labelScore"></div><div class="stat-value score-val" id="statScore">0</div></div>
+      <div class="stat-item"><div class="stat-label" id="labelTime"></div><div class="stat-value" id="statTime">30</div></div>
+      <div class="stat-item"><div class="stat-label" id="labelCombo"></div><div class="stat-value combo-val" id="statCombo">x0</div></div>
+    </div>
+    <div class="mole-grid" id="moleGrid"></div>
+  </div>
+</div>
+
+<div class="ad-placeholder ad-bottom"><span data-i18n="ad_area">광고 영역</span></div>
+
+<!-- Result overlay -->
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-card">
+    <div class="result-emoji" id="resultEmoji">🏆</div>
+    <div class="result-rating" id="resultRating"></div>
+    <div style="font-size:14px;color:#94a3b8;margin-bottom:4px" id="resultMode"></div>
+    <div class="result-stats" id="resultStats"></div>
+    <div class="result-best" id="resultBest"></div>
+    <div class="result-btns">
+      <button class="result-btn secondary" onclick="backToMenu()" id="btnMenu"></button>
+      <button class="result-btn secondary" onclick="shareResult()" id="btnShare"></button>
+      <button class="result-btn primary" onclick="retryGame()" id="btnRetry"></button>
+    </div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+'use strict';
+
+// ===== Custom i18n =====
+const MOLE_I18N = {
+  ko: {
+    gameTitle: '두더지 잡기',
+    subtitle: '튀어나오는 두더지를 잡아라! 폭탄은 피하세요!',
+    easy: '쉬움',
+    easyDesc: '느린 속도, 폭탄 적음',
+    normal: '보통',
+    normalDesc: '균형 잡힌 난이도',
+    hard: '어려움',
+    hardDesc: '빠른 속도, 폭탄 많음',
+    score: '점수',
+    time: '시간',
+    combo: '콤보',
+    whacks: '잡은 수',
+    misses: '놓친 수',
+    maxCombo: '최대 콤보',
+    accuracy: '정확도',
+    best: '최고 기록',
+    newBest: '🎉 새 기록!',
+    menu: '메뉴',
+    share: '공유',
+    retry: '다시하기',
+    moleHunter: '두더지 헌터!',
+    moleMaster: '두더지 마스터!',
+    goodJob: '잘했어요!',
+    tryHarder: '분발하세요!',
+    ready: '준비!',
+    go: '시작!',
+  },
+  en: {
+    gameTitle: 'Whack-a-Mole',
+    subtitle: 'Whack the moles! Avoid the bombs!',
+    easy: 'Easy',
+    easyDesc: 'Slow speed, fewer bombs',
+    normal: 'Normal',
+    normalDesc: 'Balanced difficulty',
+    hard: 'Hard',
+    hardDesc: 'Fast speed, more bombs',
+    score: 'Score',
+    time: 'Time',
+    combo: 'Combo',
+    whacks: 'Whacks',
+    misses: 'Misses',
+    maxCombo: 'Max Combo',
+    accuracy: 'Accuracy',
+    best: 'Best',
+    newBest: '🎉 New Best!',
+    menu: 'Menu',
+    share: 'Share',
+    retry: 'Retry',
+    moleHunter: 'Mole Hunter!',
+    moleMaster: 'Mole Master!',
+    goodJob: 'Good Job!',
+    tryHarder: 'Try Harder!',
+    ready: 'Ready!',
+    go: 'Go!',
+  },
+  ja: {
+    gameTitle: 'もぐらたたき',
+    subtitle: '出てくるモグラを叩こう！爆弾に注意！',
+    easy: 'かんたん',
+    easyDesc: 'ゆっくり、爆弾少なめ',
+    normal: 'ふつう',
+    normalDesc: 'バランスの取れた難易度',
+    hard: 'むずかしい',
+    hardDesc: '高速、爆弾多め',
+    score: 'スコア',
+    time: '時間',
+    combo: 'コンボ',
+    whacks: '命中',
+    misses: 'ミス',
+    maxCombo: '最大コンボ',
+    accuracy: '精度',
+    best: 'ベスト',
+    newBest: '🎉 新記録！',
+    menu: 'メニュー',
+    share: 'シェア',
+    retry: 'もう一度',
+    moleHunter: 'モグラハンター！',
+    moleMaster: 'モグラマスター！',
+    goodJob: 'よくできました！',
+    tryHarder: 'もっと頑張って！',
+    ready: '準備！',
+    go: 'スタート！',
+  },
+  zh: {
+    gameTitle: '打地鼠',
+    subtitle: '打冒出来的地鼠！小心炸弹！',
+    easy: '简单',
+    easyDesc: '速度慢，炸弹少',
+    normal: '普通',
+    normalDesc: '均衡难度',
+    hard: '困难',
+    hardDesc: '速度快，炸弹多',
+    score: '分数',
+    time: '时间',
+    combo: '连击',
+    whacks: '命中',
+    misses: '失误',
+    maxCombo: '最大连击',
+    accuracy: '准确率',
+    best: '最高分',
+    newBest: '🎉 新纪录！',
+    menu: '菜单',
+    share: '分享',
+    retry: '再来',
+    moleHunter: '地鼠猎人！',
+    moleMaster: '地鼠大师！',
+    goodJob: '做得好！',
+    tryHarder: '继续加油！',
+    ready: '准备！',
+    go: '开始！',
+  },
+  es: {
+    gameTitle: 'Golpea al Topo',
+    subtitle: '¡Golpea los topos! ¡Evita las bombas!',
+    easy: 'Fácil',
+    easyDesc: 'Velocidad lenta, menos bombas',
+    normal: 'Normal',
+    normalDesc: 'Dificultad equilibrada',
+    hard: 'Difícil',
+    hardDesc: 'Velocidad rápida, más bombas',
+    score: 'Puntos',
+    time: 'Tiempo',
+    combo: 'Combo',
+    whacks: 'Golpes',
+    misses: 'Fallos',
+    maxCombo: 'Combo Máx',
+    accuracy: 'Precisión',
+    best: 'Mejor',
+    newBest: '🎉 ¡Nuevo récord!',
+    menu: 'Menú',
+    share: 'Compartir',
+    retry: 'Reintentar',
+    moleHunter: '¡Cazador de Topos!',
+    moleMaster: '¡Maestro de Topos!',
+    goodJob: '¡Buen trabajo!',
+    tryHarder: '¡Sigue intentando!',
+    ready: '¡Listo!',
+    go: '¡Ya!',
+  },
+};
+
+const lang = getGameLang();
+const t = getTranslations();
+const mt = MOLE_I18N[lang] || MOLE_I18N.ko;
+
+// ===== Audio engine =====
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function ensureAudio(){ if(!audioCtx) audioCtx = new AudioCtx(); }
+
+function playSound(type){
+  ensureAudio();
+  const ctx = audioCtx;
+  const now = ctx.currentTime;
+  const g = ctx.createGain();
+  g.connect(ctx.destination);
+
+  if(type === 'whack'){
+    const o = ctx.createOscillator();
+    o.type = 'square';
+    o.frequency.setValueAtTime(600, now);
+    o.frequency.exponentialRampToValueAtTime(200, now+.1);
+    g.gain.setValueAtTime(.2, now);
+    g.gain.exponentialRampToValueAtTime(.001, now+.15);
+    o.connect(g); o.start(now); o.stop(now+.15);
+  } else if(type === 'miss'){
+    const o = ctx.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(300, now);
+    o.frequency.exponentialRampToValueAtTime(100, now+.2);
+    g.gain.setValueAtTime(.1, now);
+    g.gain.exponentialRampToValueAtTime(.001, now+.2);
+    o.connect(g); o.start(now); o.stop(now+.2);
+  } else if(type === 'bomb'){
+    const o = ctx.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(150, now);
+    o.frequency.exponentialRampToValueAtTime(40, now+.4);
+    g.gain.setValueAtTime(.25, now);
+    g.gain.exponentialRampToValueAtTime(.001, now+.4);
+    o.connect(g); o.start(now); o.stop(now+.4);
+    // noise burst
+    const buf = ctx.createBuffer(1, ctx.sampleRate*.15, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1)*.5;
+    const n = ctx.createBufferSource(); n.buffer = buf;
+    const ng = ctx.createGain(); ng.gain.setValueAtTime(.15, now); ng.gain.exponentialRampToValueAtTime(.001, now+.15);
+    n.connect(ng); ng.connect(ctx.destination); n.start(now); n.stop(now+.15);
+  } else if(type === 'golden'){
+    [800,1000,1200].forEach((f,i)=>{
+      const o = ctx.createOscillator();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(f, now+i*.08);
+      const gg = ctx.createGain();
+      gg.gain.setValueAtTime(.15, now+i*.08);
+      gg.gain.exponentialRampToValueAtTime(.001, now+i*.08+.2);
+      o.connect(gg); gg.connect(ctx.destination);
+      o.start(now+i*.08); o.stop(now+i*.08+.2);
+    });
+  } else if(type === 'start'){
+    [523,659,784].forEach((f,i)=>{
+      const o = ctx.createOscillator();
+      o.type = 'square';
+      o.frequency.setValueAtTime(f, now+i*.1);
+      const gg = ctx.createGain();
+      gg.gain.setValueAtTime(.1, now+i*.1);
+      gg.gain.exponentialRampToValueAtTime(.001, now+i*.1+.15);
+      o.connect(gg); gg.connect(ctx.destination);
+      o.start(now+i*.1); o.stop(now+i*.1+.15);
+    });
+  } else if(type === 'end'){
+    [784,659,523,392].forEach((f,i)=>{
+      const o = ctx.createOscillator();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(f, now+i*.15);
+      const gg = ctx.createGain();
+      gg.gain.setValueAtTime(.12, now+i*.15);
+      gg.gain.exponentialRampToValueAtTime(.001, now+i*.15+.3);
+      o.connect(gg); gg.connect(ctx.destination);
+      o.start(now+i*.15); o.stop(now+i*.15+.3);
+    });
+  } else if(type === 'helmet'){
+    const o = ctx.createOscillator();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(400, now);
+    o.frequency.setValueAtTime(500, now+.05);
+    g.gain.setValueAtTime(.15, now);
+    g.gain.exponentialRampToValueAtTime(.001, now+.12);
+    o.connect(g); o.start(now); o.stop(now+.12);
+  }
+}
+
+// ===== Game state =====
+let currentMode = 'normal';
+let score = 0;
+let combo = 0;
+let maxCombo = 0;
+let whacks = 0;
+let misses = 0;
+let timeLeft = 30;
+let gameActive = false;
+let gameTimer = null;
+let spawnTimer = null;
+let holes = [];
+let helmetHits = {}; // track helmet mole hits per hole index
+
+const DIFFICULTY = {
+  easy:   { spawnInterval: 1200, upTime: 1800, goldenUpTime: 900, bombChance: .05, goldenChance: .08, helmetChance: .06, speedFactor: .92 },
+  normal: { spawnInterval: 900,  upTime: 1400, goldenUpTime: 700, bombChance: .12, goldenChance: .1,  helmetChance: .1,  speedFactor: .88 },
+  hard:   { spawnInterval: 650,  upTime: 1000, goldenUpTime: 500, bombChance: .2,  goldenChance: .12, helmetChance: .12, speedFactor: .84 },
+};
+
+// ===== Init UI =====
+function initUI(){
+  document.getElementById('gameTitle').textContent = mt.gameTitle;
+  document.getElementById('modeTitle').textContent = mt.gameTitle;
+  document.getElementById('modeSubtitle').textContent = mt.subtitle;
+  document.getElementById('easyName').textContent = '🟢 ' + mt.easy;
+  document.getElementById('easyDesc').textContent = mt.easyDesc;
+  document.getElementById('normalName').textContent = '🟡 ' + mt.normal;
+  document.getElementById('normalDesc').textContent = mt.normalDesc;
+  document.getElementById('hardName').textContent = '🔴 ' + mt.hard;
+  document.getElementById('hardDesc').textContent = mt.hardDesc;
+  document.getElementById('labelScore').textContent = mt.score;
+  document.getElementById('labelTime').textContent = mt.time;
+  document.getElementById('labelCombo').textContent = mt.combo;
+  document.getElementById('btnMenu').textContent = mt.menu;
+  document.getElementById('btnShare').textContent = mt.share;
+  document.getElementById('btnRetry').textContent = mt.retry;
+  applyGameI18n();
+  updateBestScores();
+}
+
+function updateBestScores(){
+  ['easy','normal','hard'].forEach(mode => {
+    const best = localStorage.getItem('whackMole_best_' + mode);
+    const el = document.getElementById(mode + 'Best');
+    if(best) el.textContent = mt.best + ': ' + best;
+    else el.textContent = '';
+  });
+}
+
+// ===== Build grid =====
+function buildGrid(){
+  const grid = document.getElementById('moleGrid');
+  grid.innerHTML = '';
+  holes = [];
+  helmetHits = {};
+  for(let i=0;i<9;i++){
+    const hole = document.createElement('div');
+    hole.className = 'hole';
+    hole.innerHTML = '<div class="mole-wrapper"><div class="mole" data-index="'+i+'"></div></div><div class="helmet-badge">1</div><div class="hole-bg"></div>';
+    hole.querySelector('.mole').addEventListener('click', (e) => onMoleClick(i, e));
+    hole.querySelector('.mole').addEventListener('touchstart', (e) => { e.preventDefault(); onMoleClick(i, e); }, {passive:false});
+    grid.appendChild(hole);
+    holes.push({ el: hole, moleEl: hole.querySelector('.mole'), active: false, type: null, timeout: null });
+  }
+}
+
+// ===== Start game =====
+function startGame(mode){
+  ensureAudio();
+  currentMode = mode;
+  score = 0;
+  combo = 0;
+  maxCombo = 0;
+  whacks = 0;
+  misses = 0;
+  timeLeft = 30;
+  gameActive = false;
+  helmetHits = {};
+
+  document.getElementById('modeSelect').style.display = 'none';
+  const ui = document.getElementById('gameUI');
+  ui.style.display = 'flex';
+  document.getElementById('statScore').textContent = '0';
+  document.getElementById('statTime').textContent = '30';
+  document.getElementById('statCombo').textContent = 'x0';
+  document.getElementById('timerFill').style.width = '100%';
+
+  buildGrid();
+  showCountdown();
+}
+
+function showCountdown(){
+  const overlay = document.createElement('div');
+  overlay.className = 'countdown-overlay';
+  overlay.id = 'countdown';
+  document.body.appendChild(overlay);
+
+  let count = 3;
+  function tick(){
+    if(count > 0){
+      overlay.innerHTML = '<span>' + count + '</span>';
+      count--;
+      setTimeout(tick, 700);
+    } else {
+      overlay.innerHTML = '<span>' + mt.go + '</span>';
+      playSound('start');
+      setTimeout(() => {
+        overlay.remove();
+        beginRound();
+      }, 500);
+    }
+  }
+  tick();
+}
+
+function beginRound(){
+  gameActive = true;
+  startTimer();
+  scheduleSpawn();
+}
+
+// ===== Timer =====
+function startTimer(){
+  gameTimer = setInterval(() => {
+    timeLeft--;
+    document.getElementById('statTime').textContent = timeLeft;
+    document.getElementById('timerFill').style.width = (timeLeft/30*100) + '%';
+    if(timeLeft <= 0){
+      endGame();
+    }
+  }, 1000);
+}
+
+// ===== Spawning =====
+function scheduleSpawn(){
+  if(!gameActive) return;
+  const diff = DIFFICULTY[currentMode];
+  // Speed increases over time: factor applied per elapsed 5 seconds
+  const elapsed = 30 - timeLeft;
+  const speedMult = Math.pow(diff.speedFactor, Math.floor(elapsed/5));
+  const interval = diff.spawnInterval * speedMult;
+
+  spawnTimer = setTimeout(() => {
+    if(!gameActive) return;
+    spawnMole();
+    scheduleSpawn();
+  }, interval + Math.random() * 300);
+}
+
+function spawnMole(){
+  // Find available holes
+  const available = holes.map((h,i) => ({h,i})).filter(x => !x.h.active);
+  if(available.length === 0) return;
+
+  const pick = available[Math.floor(Math.random() * available.length)];
+  const diff = DIFFICULTY[currentMode];
+  const elapsed = 30 - timeLeft;
+  const speedMult = Math.pow(diff.speedFactor, Math.floor(elapsed/5));
+
+  // Determine type
+  let type = 'normal';
+  const roll = Math.random();
+  if(roll < diff.bombChance) type = 'bomb';
+  else if(roll < diff.bombChance + diff.goldenChance) type = 'golden';
+  else if(roll < diff.bombChance + diff.goldenChance + diff.helmetChance) type = 'helmet';
+
+  const emojis = { normal: '🐹', golden: '👑', bomb: '💣', helmet: '🪖' };
+  const hole = pick.h;
+  const idx = pick.i;
+
+  hole.active = true;
+  hole.type = type;
+  hole.moleEl.textContent = emojis[type];
+  hole.moleEl.className = 'mole up';
+  hole.el.classList.remove('show-badge');
+
+  if(type === 'helmet'){
+    helmetHits[idx] = 0;
+    hole.el.classList.add('show-badge');
+    hole.el.querySelector('.helmet-badge').textContent = '2';
+  }
+
+  const upTime = type === 'golden' ? diff.goldenUpTime * speedMult : diff.upTime * speedMult;
+
+  hole.timeout = setTimeout(() => {
+    if(hole.active && gameActive){
+      // Missed
+      hideMole(idx, 'missed');
+      if(type !== 'bomb') misses++;
+    }
+  }, upTime);
+}
+
+function hideMole(idx, animClass){
+  const hole = holes[idx];
+  if(!hole.active) return;
+  hole.active = false;
+  hole.type = null;
+  hole.el.classList.remove('show-badge');
+  if(hole.timeout){ clearTimeout(hole.timeout); hole.timeout = null; }
+  hole.moleEl.classList.remove('up');
+  hole.moleEl.classList.add(animClass);
+  setTimeout(() => {
+    hole.moleEl.className = 'mole';
+    hole.moleEl.textContent = '';
+  }, 350);
+}
+
+// ===== Click handler =====
+function onMoleClick(idx, e){
+  if(!gameActive) return;
+  const hole = holes[idx];
+  if(!hole.active) return;
+
+  const type = hole.type;
+
+  if(type === 'bomb'){
+    // Hit a bomb!
+    score = Math.max(0, score - 30);
+    combo = 0;
+    playSound('bomb');
+    showScorePopup(idx, '-30', 'negative');
+    hideMole(idx, 'whacked');
+    // Flash effect
+    hole.el.style.boxShadow = '0 0 30px rgba(239,68,68,.6)';
+    setTimeout(() => hole.el.style.boxShadow = '', 300);
+  } else if(type === 'helmet'){
+    helmetHits[idx] = (helmetHits[idx] || 0) + 1;
+    if(helmetHits[idx] >= 2){
+      // Fully whacked
+      score += 25;
+      combo++;
+      whacks++;
+      playSound('whack');
+      showScorePopup(idx, '+25', 'positive');
+      showWhackStars(idx);
+      hideMole(idx, 'whacked');
+    } else {
+      // First hit - shake and update badge
+      playSound('helmet');
+      hole.moleEl.classList.add('helmet-hit');
+      hole.el.querySelector('.helmet-badge').textContent = '1';
+      setTimeout(() => hole.moleEl.classList.remove('helmet-hit'), 300);
+      return; // Don't update combo display yet
+    }
+  } else if(type === 'golden'){
+    score += 50;
+    combo++;
+    whacks++;
+    playSound('golden');
+    showScorePopup(idx, '+50', 'golden');
+    showWhackStars(idx);
+    hideMole(idx, 'whacked');
+    // Golden flash
+    hole.el.style.boxShadow = '0 0 30px rgba(251,191,36,.6)';
+    setTimeout(() => hole.el.style.boxShadow = '', 300);
+  } else {
+    // Normal mole
+    score += 10;
+    combo++;
+    whacks++;
+    playSound('whack');
+    showScorePopup(idx, '+10', 'positive');
+    showWhackStars(idx);
+    hideMole(idx, 'whacked');
+  }
+
+  if(combo > maxCombo) maxCombo = combo;
+
+  // Combo bonus
+  if(combo > 0 && combo % 5 === 0){
+    const bonusPts = combo * 2;
+    score += bonusPts;
+    showComboPopup(combo);
+  }
+
+  updateStats();
+}
+
+function updateStats(){
+  document.getElementById('statScore').textContent = score;
+  document.getElementById('statCombo').textContent = 'x' + combo;
+}
+
+// ===== Visual effects =====
+function showScorePopup(idx, text, cls){
+  const hole = holes[idx].el;
+  const popup = document.createElement('div');
+  popup.className = 'score-popup ' + cls;
+  popup.textContent = text;
+  hole.appendChild(popup);
+  setTimeout(() => popup.remove(), 800);
+}
+
+function showWhackStars(idx){
+  const hole = holes[idx].el;
+  const stars = document.createElement('div');
+  stars.className = 'whack-stars';
+  stars.textContent = '✨⭐✨';
+  hole.appendChild(stars);
+  setTimeout(() => stars.remove(), 500);
+}
+
+function showComboPopup(c){
+  const popup = document.createElement('div');
+  popup.className = 'combo-popup';
+  popup.textContent = c + 'x ' + mt.combo + '!';
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 700);
+}
+
+// ===== End game =====
+function endGame(){
+  gameActive = false;
+  clearInterval(gameTimer);
+  clearTimeout(spawnTimer);
+
+  // Clear all active moles
+  holes.forEach((h,i) => {
+    if(h.active) hideMole(i, 'missed');
+  });
+
+  playSound('end');
+
+  setTimeout(() => showResult(), 600);
+}
+
+function showResult(){
+  const total = whacks + misses;
+  const accuracy = total > 0 ? Math.round(whacks/total*100) : 0;
+
+  // Rating
+  let rating, emoji;
+  if(score >= 500){ rating = mt.moleHunter; emoji = '🏆'; }
+  else if(score >= 250){ rating = mt.moleMaster; emoji = '🥇'; }
+  else if(score >= 100){ rating = mt.goodJob; emoji = '👍'; }
+  else { rating = mt.tryHarder; emoji = '💪'; }
+
+  // Best score
+  const bestKey = 'whackMole_best_' + currentMode;
+  const prevBest = parseInt(localStorage.getItem(bestKey)) || 0;
+  const isNewBest = score > prevBest;
+  if(isNewBest) localStorage.setItem(bestKey, score);
+
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultRating').textContent = rating;
+  document.getElementById('resultMode').textContent = mt[currentMode] || currentMode;
+
+  const statsHTML = `
+    <div class="result-stat"><div class="result-stat-label">${mt.score}</div><div class="result-stat-value">${score}</div></div>
+    <div class="result-stat"><div class="result-stat-label">${mt.whacks}</div><div class="result-stat-value">${whacks}</div></div>
+    <div class="result-stat"><div class="result-stat-label">${mt.maxCombo}</div><div class="result-stat-value">${maxCombo}x</div></div>
+    <div class="result-stat"><div class="result-stat-label">${mt.accuracy}</div><div class="result-stat-value">${accuracy}%</div></div>
+  `;
+  document.getElementById('resultStats').innerHTML = statsHTML;
+  document.getElementById('resultBest').textContent = isNewBest ? mt.newBest : mt.best + ': ' + Math.max(prevBest, score);
+
+  const overlay = document.getElementById('resultOverlay');
+  overlay.classList.add('show');
+
+  // Share modal
+  try {
+    PuzzleShare.showShareModal({
+      title: mt.gameTitle,
+      score: score,
+      message: `${mt.whacks}: ${whacks} | ${mt.maxCombo}: ${maxCombo}x | ${mt.accuracy}: ${accuracy}%`,
+      lang: lang,
+      gameName: 'Whack-a-Mole',
+    });
+  } catch(e){}
+}
+
+function backToMenu(){
+  document.getElementById('resultOverlay').classList.remove('show');
+  document.getElementById('gameUI').style.display = 'none';
+  document.getElementById('modeSelect').style.display = 'flex';
+  updateBestScores();
+}
+
+function retryGame(){
+  document.getElementById('resultOverlay').classList.remove('show');
+  startGame(currentMode);
+}
+
+function shareResult(){
+  const total = whacks + misses;
+  const accuracy = total > 0 ? Math.round(whacks/total*100) : 0;
+  try {
+    PuzzleShare.showShareModal({
+      title: mt.gameTitle,
+      score: score,
+      message: `${mt.whacks}: ${whacks} | ${mt.maxCombo}: ${maxCombo}x | ${mt.accuracy}: ${accuracy}%`,
+      lang: lang,
+      gameName: 'Whack-a-Mole',
+    });
+  } catch(e){}
+}
+
+// ===== Init =====
+initUI();
+</script>
+</body>
+</html>

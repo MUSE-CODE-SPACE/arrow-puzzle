@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Math Speed Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif;background:#0a0a1a;color:#e2e8f0}
+body{display:flex;flex-direction:column;align-items:center}
+
+.ad-placeholder{width:100%;max-width:480px;height:50px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);font-size:12px;letter-spacing:1px;flex-shrink:0}
+.ad-top{border-radius:0 0 8px 8px}
+.ad-bottom{border-radius:8px 8px 0 0;margin-top:auto}
+
+.header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;flex-shrink:0}
+.back-link{color:#94a3b8;text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;transition:color .2s}
+.back-link:hover{color:#e2e8f0}
+.title{font-size:18px;font-weight:800;background:linear-gradient(135deg,#ec4899,#a855f7,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.score-bar{width:100%;max-width:480px;display:flex;justify-content:space-around;padding:6px 16px;flex-shrink:0}
+.score-box{text-align:center}
+.score-label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.score-value{font-size:22px;font-weight:900;color:#f1f5f9;line-height:1.1}
+.score-value.streak{color:#fbbf24}
+.score-value.best{color:#a855f7}
+.score-value.acc{color:#34d399}
+
+/* Timer bar */
+.timer-wrap{width:100%;max-width:480px;padding:0 16px;flex-shrink:0;margin:4px 0}
+.timer-bar-bg{width:100%;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;position:relative}
+.timer-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#a855f7,#ec4899);transition:width .1s linear;width:100%}
+.timer-bar-fill.urgent{background:linear-gradient(90deg,#ef4444,#f97316);animation:timerPulse .5s ease-in-out infinite}
+@keyframes timerPulse{0%,100%{opacity:1}50%{opacity:.6}}
+.timer-text{text-align:center;font-size:14px;font-weight:700;color:#94a3b8;margin-top:2px}
+.timer-text.urgent{color:#ef4444;animation:timerPulse .5s ease-in-out infinite}
+
+/* Game area */
+.game-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:480px;padding:8px 16px;min-height:0;gap:12px}
+
+.question-box{width:100%;background:rgba(255,255,255,.04);border-radius:16px;border:1px solid rgba(255,255,255,.08);padding:24px 16px;text-align:center;position:relative;overflow:hidden}
+.question-box::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(168,85,247,.05),rgba(236,72,153,.05));pointer-events:none}
+.question-text{font-size:36px;font-weight:900;color:#f1f5f9;min-height:50px;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+.question-text.correct-flash{animation:correctFlash .3s ease-out}
+.question-text.wrong-flash{animation:wrongFlash .3s ease-out}
+@keyframes correctFlash{0%{color:#22c55e;transform:scale(1.1)}100%{color:#f1f5f9;transform:scale(1)}}
+@keyframes wrongFlash{0%{color:#ef4444;transform:scale(.95)}100%{color:#f1f5f9;transform:scale(1)}}
+
+.answers-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.answer-btn{background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.1);border-radius:14px;padding:16px 8px;font-size:22px;font-weight:800;font-family:'Outfit',sans-serif;color:#e2e8f0;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.answer-btn:hover{background:rgba(168,85,247,.15);border-color:rgba(168,85,247,.4)}
+.answer-btn:active{transform:scale(.95)}
+.answer-btn.correct{background:rgba(34,197,94,.2);border-color:#22c55e;color:#22c55e;animation:btnPop .3s ease-out}
+.answer-btn.wrong{background:rgba(239,68,68,.15);border-color:#ef4444;color:#ef4444;animation:btnShake .3s ease-out}
+@keyframes btnPop{0%{transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes btnShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* Streak display */
+.streak-display{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:100;opacity:0;font-weight:900;text-align:center;white-space:nowrap}
+.streak-display.show{animation:streakIn .7s ease-out forwards}
+@keyframes streakIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}30%{transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-55%) scale(1.1)}}
+
+/* Combo indicator */
+.combo-bar{width:100%;display:flex;align-items:center;gap:8px;padding:0 4px;min-height:28px}
+.combo-label{font-size:13px;font-weight:700;color:#fbbf24;white-space:nowrap}
+.combo-fire{font-size:20px;transition:font-size .2s;line-height:1}
+.combo-multiplier{font-size:16px;font-weight:900;color:#fbbf24;text-shadow:0 0 10px rgba(251,191,36,.5)}
+
+/* Mode selection overlay */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;visibility:hidden;transition:all .3s}
+.overlay.show{opacity:1;visibility:visible}
+.overlay-box{background:#1a1a2e;border-radius:20px;padding:32px;text-align:center;max-width:340px;width:90%;border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.overlay-box h2{font-size:28px;font-weight:900;margin-bottom:4px;background:linear-gradient(135deg,#ec4899,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.overlay-box .subtitle{font-size:14px;color:#94a3b8;margin-bottom:20px}
+.overlay-box .final-score{font-size:56px;font-weight:900;color:#fbbf24;margin:8px 0;text-shadow:0 0 30px rgba(251,191,36,.3)}
+.overlay-box .stat-row{display:flex;justify-content:space-around;margin:16px 0;gap:8px}
+.overlay-box .stat-item{text-align:center}
+.overlay-box .stat-val{font-size:22px;font-weight:800;color:#f1f5f9}
+.overlay-box .stat-lbl{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase}
+.overlay-box .best-label{font-size:14px;color:#a855f7;margin-bottom:16px;font-weight:600}
+
+.mode-buttons{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.mode-btn{background:linear-gradient(135deg,rgba(168,85,247,.2),rgba(236,72,153,.2));border:1px solid rgba(168,85,247,.3);color:#e2e8f0;padding:14px 20px;border-radius:12px;font-size:15px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .15s;text-align:left;display:flex;justify-content:space-between;align-items:center}
+.mode-btn:hover{background:linear-gradient(135deg,rgba(168,85,247,.3),rgba(236,72,153,.3));transform:translateY(-1px)}
+.mode-btn:active{transform:scale(.98)}
+.mode-btn .mode-diff{font-size:12px;color:#94a3b8;font-weight:600}
+.mode-btn.easy{border-color:rgba(34,197,94,.3)}.mode-btn.easy:hover{border-color:rgba(34,197,94,.5)}
+.mode-btn.medium{border-color:rgba(251,191,36,.3)}.mode-btn.medium:hover{border-color:rgba(251,191,36,.5)}
+.mode-btn.hard{border-color:rgba(239,68,68,.3)}.mode-btn.hard:hover{border-color:rgba(239,68,68,.5)}
+
+.primary-btn{background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;border:none;padding:14px 40px;border-radius:12px;font-size:16px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px rgba(168,85,247,.4);margin-top:8px}
+.primary-btn:hover{transform:scale(1.05)}
+.primary-btn:active{transform:scale(.97)}
+
+.share-btn{background:transparent;border:1px solid rgba(255,255,255,.15);color:#94a3b8;padding:10px 24px;border-radius:10px;font-size:14px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;margin-top:6px;transition:all .15s}
+.share-btn:hover{border-color:rgba(255,255,255,.3);color:#e2e8f0}
+
+/* Sparkle canvas */
+#sparkleCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+
+/* Countdown pre-game */
+.countdown-num{font-size:72px;font-weight:900;background:linear-gradient(135deg,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:countPop .8s ease-out}
+@keyframes countPop{0%{transform:scale(2);opacity:0}30%{transform:scale(1);opacity:1}100%{opacity:1}}
+
+@media(max-height:640px){
+  .question-text{font-size:28px;min-height:40px}
+  .answer-btn{padding:12px 6px;font-size:18px}
+  .overlay-box{padding:20px}
+  .overlay-box .final-score{font-size:42px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="sparkleCanvas"></canvas>
+
+<div class="ad-placeholder ad-top">AD SPACE</div>
+
+<div class="header">
+  <a href="../index.html" class="back-link" id="backLink">← 메인으로</a>
+  <div class="title" id="gameTitle">수학 스피드 퀴즈</div>
+</div>
+
+<div class="score-bar">
+  <div class="score-box"><div class="score-label" id="scoreLbl">점수</div><div class="score-value" id="scoreDisplay">0</div></div>
+  <div class="score-box"><div class="score-label" id="streakLbl">연속</div><div class="score-value streak" id="streakDisplay">0</div></div>
+  <div class="score-box"><div class="score-label" id="bestLbl">최고</div><div class="score-value best" id="bestDisplay">0</div></div>
+</div>
+
+<div class="timer-wrap">
+  <div class="timer-bar-bg"><div class="timer-bar-fill" id="timerFill"></div></div>
+  <div class="timer-text" id="timerText">30.0s</div>
+</div>
+
+<div class="game-area">
+  <div class="combo-bar" id="comboBar" style="visibility:hidden">
+    <span class="combo-fire" id="comboFire"></span>
+    <span class="combo-multiplier" id="comboMult">x1</span>
+  </div>
+  <div class="question-box">
+    <div class="question-text" id="questionText">-</div>
+  </div>
+  <div class="answers-grid" id="answersGrid">
+    <button class="answer-btn" id="ans0">-</button>
+    <button class="answer-btn" id="ans1">-</button>
+    <button class="answer-btn" id="ans2">-</button>
+    <button class="answer-btn" id="ans3">-</button>
+  </div>
+</div>
+
+<div class="ad-placeholder ad-bottom">AD SPACE</div>
+
+<div class="streak-display" id="streakPopup"></div>
+
+<!-- Mode Selection -->
+<div class="overlay show" id="modeOverlay">
+  <div class="overlay-box">
+    <h2 id="modeTitle">수학 스피드 퀴즈</h2>
+    <div class="subtitle" id="modeSubtitle">난이도를 선택하세요</div>
+    <div class="mode-buttons">
+      <button class="mode-btn easy" onclick="game.startGame('easy')">
+        <span id="modeEasyLabel">쉬움 - 덧셈 / 뺄셈</span>
+        <span class="mode-diff" id="modeEasyDiff">+  −</span>
+      </button>
+      <button class="mode-btn medium" onclick="game.startGame('medium')">
+        <span id="modeMedLabel">보통 - 곱셈 / 나눗셈</span>
+        <span class="mode-diff" id="modeMedDiff">×  ÷</span>
+      </button>
+      <button class="mode-btn hard" onclick="game.startGame('hard')">
+        <span id="modeHardLabel">어려움 - 혼합 (큰 수)</span>
+        <span class="mode-diff" id="modeHardDiff">+ − × ÷</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Game Over -->
+<div class="overlay" id="gameOverOverlay">
+  <div class="overlay-box">
+    <h2 id="goTitle">타임 업!</h2>
+    <div class="final-score" id="finalScore">0</div>
+    <div class="stat-row">
+      <div class="stat-item"><div class="stat-val" id="goAnswered">0</div><div class="stat-lbl" id="goAnsweredLbl">정답</div></div>
+      <div class="stat-item"><div class="stat-val" id="goAccuracy">0%</div><div class="stat-lbl" id="goAccLbl">정확도</div></div>
+      <div class="stat-item"><div class="stat-val" id="goMaxStreak">0</div><div class="stat-lbl" id="goStreakLbl">최대 연속</div></div>
+    </div>
+    <div class="best-label" id="goBestLabel">최고 기록: 0</div>
+    <button class="primary-btn" onclick="game.showModeSelect()" id="goRetryBtn">다시 도전</button>
+    <br>
+    <button class="share-btn" onclick="game.shareResult()" id="goShareBtn">결과 공유</button>
+  </div>
+</div>
+
+<!-- Countdown -->
+<div class="overlay" id="countdownOverlay">
+  <div class="overlay-box" style="background:transparent;border:none;box-shadow:none">
+    <div class="countdown-num" id="countdownNum">3</div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+// ===== GAME-SPECIFIC TRANSLATIONS =====
+const MATH_I18N = {
+  ko: {
+    title: '수학 스피드 퀴즈',
+    select_mode: '난이도를 선택하세요',
+    easy: '쉬움 - 덧셈 / 뺄셈',
+    medium: '보통 - 곱셈 / 나눗셈',
+    hard: '어려움 - 혼합 (큰 수)',
+    score: '점수',
+    streak: '연속',
+    best: '최고',
+    times_up: '타임 업!',
+    correct_count: '정답',
+    accuracy: '정확도',
+    max_streak: '최대 연속',
+    best_record: '최고 기록',
+    try_again: '다시 도전',
+    share: '결과 공유',
+    go: 'GO!',
+    back: '← 메인으로',
+  },
+  en: {
+    title: 'Math Speed Quiz',
+    select_mode: 'Select difficulty',
+    easy: 'Easy - Add / Subtract',
+    medium: 'Medium - Multiply / Divide',
+    hard: 'Hard - Mixed (Big Numbers)',
+    score: 'Score',
+    streak: 'Streak',
+    best: 'Best',
+    times_up: "Time's Up!",
+    correct_count: 'Correct',
+    accuracy: 'Accuracy',
+    max_streak: 'Max Streak',
+    best_record: 'Best Score',
+    try_again: 'Try Again',
+    share: 'Share Result',
+    go: 'GO!',
+    back: '← Back',
+  },
+  ja: {
+    title: '算数スピードクイズ',
+    select_mode: '難易度を選んでください',
+    easy: '簡単 - 足し算 / 引き算',
+    medium: '普通 - 掛け算 / 割り算',
+    hard: '難しい - ミックス（大きい数）',
+    score: 'スコア',
+    streak: '連続',
+    best: 'ベスト',
+    times_up: 'タイムアップ！',
+    correct_count: '正解',
+    accuracy: '正確度',
+    max_streak: '最大連続',
+    best_record: 'ハイスコア',
+    try_again: 'もう一度',
+    share: '結果をシェア',
+    go: 'GO!',
+    back: '← メインへ',
+  },
+  zh: {
+    title: '数学速算',
+    select_mode: '选择难度',
+    easy: '简单 - 加法 / 减法',
+    medium: '中等 - 乘法 / 除法',
+    hard: '困难 - 混合（大数字）',
+    score: '分数',
+    streak: '连续',
+    best: '最高',
+    times_up: '时间到！',
+    correct_count: '正确',
+    accuracy: '准确率',
+    max_streak: '最大连续',
+    best_record: '最高纪录',
+    try_again: '再试一次',
+    share: '分享结果',
+    go: 'GO!',
+    back: '← 返回',
+  },
+  es: {
+    title: 'Quiz Matemático',
+    select_mode: 'Elige la dificultad',
+    easy: 'Fácil - Sumar / Restar',
+    medium: 'Medio - Multiplicar / Dividir',
+    hard: 'Difícil - Mixto (Números grandes)',
+    score: 'Puntos',
+    streak: 'Racha',
+    best: 'Mejor',
+    times_up: '¡Se acabó el tiempo!',
+    correct_count: 'Correctas',
+    accuracy: 'Precisión',
+    max_streak: 'Racha máx.',
+    best_record: 'Mejor puntuación',
+    try_again: 'Intentar de nuevo',
+    share: 'Compartir resultado',
+    go: '¡YA!',
+    back: '← Volver',
+  }
+};
+
+function mt() {
+  const lang = (typeof getGameLang === 'function') ? getGameLang() : 'ko';
+  return MATH_I18N[lang] || MATH_I18N.ko;
+}
+
+// ===== APPLY TRANSLATIONS =====
+function applyTranslations() {
+  const t = mt();
+  document.getElementById('gameTitle').textContent = t.title;
+  document.getElementById('backLink').textContent = t.back;
+  document.getElementById('scoreLbl').textContent = t.score;
+  document.getElementById('streakLbl').textContent = t.streak;
+  document.getElementById('bestLbl').textContent = t.best;
+  document.getElementById('modeTitle').textContent = t.title;
+  document.getElementById('modeSubtitle').textContent = t.select_mode;
+  document.getElementById('modeEasyLabel').textContent = t.easy;
+  document.getElementById('modeMedLabel').textContent = t.medium;
+  document.getElementById('modeHardLabel').textContent = t.hard;
+  document.getElementById('goTitle').textContent = t.times_up;
+  document.getElementById('goAnsweredLbl').textContent = t.correct_count;
+  document.getElementById('goAccLbl').textContent = t.accuracy;
+  document.getElementById('goStreakLbl').textContent = t.max_streak;
+  document.getElementById('goRetryBtn').textContent = t.try_again;
+  document.getElementById('goShareBtn').textContent = t.share;
+  document.title = t.title;
+}
+
+// ===== WEB AUDIO SOUND ENGINE =====
+const AudioEngine = {
+  ctx: null,
+  init() { if (this.ctx) return; this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+  resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
+  _play(fn) { this.init(); this.resume(); try { fn(this.ctx); } catch(e) {} },
+
+  correct() {
+    this._play(ctx => {
+      const t = ctx.currentTime;
+      [880, 1108].forEach((f, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(f, t + i * 0.08);
+        g.gain.setValueAtTime(0.12, t + i * 0.08);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.15);
+        o.start(t + i * 0.08); o.stop(t + i * 0.08 + 0.15);
+      });
+    });
+  },
+
+  wrong() {
+    this._play(ctx => {
+      const t = ctx.currentTime;
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(150, t);
+      o.frequency.linearRampToValueAtTime(100, t + 0.2);
+      g.gain.setValueAtTime(0.1, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      o.start(t); o.stop(t + 0.25);
+    });
+  },
+
+  tick() {
+    this._play(ctx => {
+      const t = ctx.currentTime;
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine';
+      o.frequency.setValueAtTime(1000, t);
+      g.gain.setValueAtTime(0.04, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+      o.start(t); o.stop(t + 0.05);
+    });
+  },
+
+  timesUp() {
+    this._play(ctx => {
+      const t = ctx.currentTime;
+      [600, 500, 400, 300].forEach((f, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'square';
+        o.frequency.setValueAtTime(f, t + i * 0.12);
+        g.gain.setValueAtTime(0.08, t + i * 0.12);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.12 + 0.25);
+        o.start(t + i * 0.12); o.stop(t + i * 0.12 + 0.25);
+      });
+    });
+  },
+
+  streak(level) {
+    this._play(ctx => {
+      const t = ctx.currentTime;
+      const notes = [523, 659, 784, 1047];
+      notes.forEach((f, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(f * (1 + level * 0.08), t + i * 0.06);
+        g.gain.setValueAtTime(0.1, t + i * 0.06);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.18);
+        o.start(t + i * 0.06); o.stop(t + i * 0.06 + 0.18);
+      });
+    });
+  },
+
+  countdown() {
+    this._play(ctx => {
+      const t = ctx.currentTime;
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine'; o.frequency.setValueAtTime(660, t);
+      g.gain.setValueAtTime(0.12, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+      o.start(t); o.stop(t + 0.15);
+    });
+  },
+
+  countdownGo() {
+    this._play(ctx => {
+      const t = ctx.currentTime;
+      [523, 784, 1047].forEach((f, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(f, t + i * 0.08);
+        g.gain.setValueAtTime(0.15, t + i * 0.08);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.2);
+        o.start(t + i * 0.08); o.stop(t + i * 0.08 + 0.2);
+      });
+    });
+  }
+};
+
+// ===== SPARKLE BACKGROUND =====
+const sparkleCanvas = document.getElementById('sparkleCanvas');
+const sparkleCtx = sparkleCanvas.getContext('2d');
+let sparkles = [];
+
+function resizeSparkle() {
+  sparkleCanvas.width = window.innerWidth;
+  sparkleCanvas.height = window.innerHeight;
+}
+resizeSparkle();
+window.addEventListener('resize', resizeSparkle);
+
+for (let i = 0; i < 25; i++) {
+  sparkles.push({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    size: Math.random() * 2 + 0.5,
+    speed: Math.random() * 0.3 + 0.1,
+    phase: Math.random() * Math.PI * 2,
+  });
+}
+
+function drawSparkles(time) {
+  sparkleCtx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
+  sparkles.forEach(s => {
+    s.y -= s.speed;
+    s.phase += 0.02;
+    if (s.y < -5) { s.y = sparkleCanvas.height + 5; s.x = Math.random() * sparkleCanvas.width; }
+    const a = (Math.sin(s.phase) * 0.5 + 0.5) * 0.35;
+    sparkleCtx.beginPath();
+    sparkleCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+    sparkleCtx.fillStyle = `rgba(168,130,255,${a})`;
+    sparkleCtx.fill();
+  });
+}
+
+// ===== QUESTION GENERATION =====
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function generateQuestion(mode) {
+  let a, b, op, answer, text;
+
+  if (mode === 'easy') {
+    op = Math.random() < 0.5 ? '+' : '-';
+    a = randInt(1, 50);
+    b = randInt(1, 50);
+    if (op === '-' && b > a) [a, b] = [b, a];
+    answer = op === '+' ? a + b : a - b;
+    text = `${a} ${op === '+' ? '+' : '−'} ${b}`;
+  } else if (mode === 'medium') {
+    op = Math.random() < 0.5 ? '*' : '/';
+    if (op === '*') {
+      a = randInt(2, 12);
+      b = randInt(2, 12);
+      answer = a * b;
+      text = `${a} × ${b}`;
+    } else {
+      b = randInt(2, 12);
+      answer = randInt(2, 12);
+      a = b * answer;
+      text = `${a} ÷ ${b}`;
+    }
+  } else {
+    const ops = ['+', '-', '*', '/'];
+    op = ops[randInt(0, 3)];
+    if (op === '+') {
+      a = randInt(10, 200);
+      b = randInt(10, 200);
+      answer = a + b;
+      text = `${a} + ${b}`;
+    } else if (op === '-') {
+      a = randInt(50, 300);
+      b = randInt(10, a);
+      answer = a - b;
+      text = `${a} − ${b}`;
+    } else if (op === '*') {
+      a = randInt(3, 25);
+      b = randInt(3, 15);
+      answer = a * b;
+      text = `${a} × ${b}`;
+    } else {
+      b = randInt(3, 15);
+      answer = randInt(3, 25);
+      a = b * answer;
+      text = `${a} ÷ ${b}`;
+    }
+  }
+
+  // Generate wrong answers
+  const choices = new Set([answer]);
+  let attempts = 0;
+  while (choices.size < 4 && attempts < 100) {
+    attempts++;
+    let wrong;
+    const offset = randInt(1, Math.max(5, Math.abs(answer) > 10 ? Math.ceil(Math.abs(answer) * 0.3) : 5));
+    const sign = Math.random() < 0.5 ? 1 : -1;
+    wrong = answer + offset * sign;
+    // Additional variety
+    if (choices.has(wrong)) {
+      wrong = answer + randInt(1, 20) * (Math.random() < 0.5 ? 1 : -1);
+    }
+    if (wrong !== answer) choices.add(wrong);
+  }
+
+  const choicesArr = [...choices];
+  // Shuffle
+  for (let i = choicesArr.length - 1; i > 0; i--) {
+    const j = randInt(0, i);
+    [choicesArr[i], choicesArr[j]] = [choicesArr[j], choicesArr[i]];
+  }
+
+  return { text, answer, choices: choicesArr };
+}
+
+// ===== MAIN GAME =====
+const ROUND_TIME = 30;
+
+const game = {
+  mode: 'easy',
+  score: 0,
+  displayScore: 0,
+  currentStreak: 0,
+  maxStreak: 0,
+  totalAnswered: 0,
+  correctCount: 0,
+  timeLeft: ROUND_TIME,
+  running: false,
+  currentQuestion: null,
+  timerInterval: null,
+  lastTickSecond: -1,
+  animFrame: null,
+
+  getBestKey() { return `mathQuizBest_${this.mode}`; },
+  getBest() { return parseInt(localStorage.getItem(this.getBestKey()) || '0'); },
+  setBest(v) { localStorage.setItem(this.getBestKey(), v); },
+
+  showModeSelect() {
+    document.getElementById('gameOverOverlay').classList.remove('show');
+    document.getElementById('modeOverlay').classList.add('show');
+  },
+
+  startGame(mode) {
+    AudioEngine.init();
+    AudioEngine.resume();
+    this.mode = mode;
+    this.score = 0;
+    this.displayScore = 0;
+    this.currentStreak = 0;
+    this.maxStreak = 0;
+    this.totalAnswered = 0;
+    this.correctCount = 0;
+    this.timeLeft = ROUND_TIME;
+    this.running = false;
+    this.lastTickSecond = -1;
+
+    document.getElementById('scoreDisplay').textContent = '0';
+    document.getElementById('streakDisplay').textContent = '0';
+    document.getElementById('bestDisplay').textContent = this.getBest();
+    document.getElementById('timerFill').style.width = '100%';
+    document.getElementById('timerFill').classList.remove('urgent');
+    document.getElementById('timerText').classList.remove('urgent');
+    document.getElementById('timerText').textContent = ROUND_TIME.toFixed(1) + 's';
+    document.getElementById('comboBar').style.visibility = 'hidden';
+    document.getElementById('modeOverlay').classList.remove('show');
+    document.getElementById('gameOverOverlay').classList.remove('show');
+
+    this.doCountdown();
+  },
+
+  doCountdown() {
+    const overlay = document.getElementById('countdownOverlay');
+    const numEl = document.getElementById('countdownNum');
+    overlay.classList.add('show');
+    let count = 3;
+    numEl.textContent = count;
+    AudioEngine.countdown();
+
+    const iv = setInterval(() => {
+      count--;
+      if (count > 0) {
+        numEl.textContent = count;
+        numEl.style.animation = 'none';
+        void numEl.offsetWidth;
+        numEl.style.animation = '';
+        AudioEngine.countdown();
+      } else {
+        numEl.textContent = mt().go;
+        numEl.style.animation = 'none';
+        void numEl.offsetWidth;
+        numEl.style.animation = '';
+        AudioEngine.countdownGo();
+        clearInterval(iv);
+        setTimeout(() => {
+          overlay.classList.remove('show');
+          this.beginRound();
+        }, 500);
+      }
+    }, 800);
+  },
+
+  beginRound() {
+    this.running = true;
+    this.nextQuestion();
+    this.startTimer();
+    this.animLoop();
+  },
+
+  startTimer() {
+    const start = performance.now();
+    const duration = ROUND_TIME * 1000;
+
+    const tick = () => {
+      if (!this.running) return;
+      const elapsed = performance.now() - start;
+      this.timeLeft = Math.max(0, (duration - elapsed) / 1000);
+
+      const pct = (this.timeLeft / ROUND_TIME) * 100;
+      const fill = document.getElementById('timerFill');
+      const text = document.getElementById('timerText');
+      fill.style.width = pct + '%';
+      text.textContent = this.timeLeft.toFixed(1) + 's';
+
+      if (this.timeLeft <= 5) {
+        fill.classList.add('urgent');
+        text.classList.add('urgent');
+        const sec = Math.ceil(this.timeLeft);
+        if (sec !== this.lastTickSecond && sec > 0) {
+          this.lastTickSecond = sec;
+          AudioEngine.tick();
+        }
+      }
+
+      if (this.timeLeft <= 0) {
+        this.endGame();
+        return;
+      }
+      this.timerInterval = requestAnimationFrame(tick);
+    };
+    this.timerInterval = requestAnimationFrame(tick);
+  },
+
+  nextQuestion() {
+    this.currentQuestion = generateQuestion(this.mode);
+    const qEl = document.getElementById('questionText');
+    qEl.textContent = this.currentQuestion.text + ' = ?';
+    qEl.classList.remove('correct-flash', 'wrong-flash');
+
+    this.currentQuestion.choices.forEach((c, i) => {
+      const btn = document.getElementById('ans' + i);
+      btn.textContent = c;
+      btn.className = 'answer-btn';
+      btn.disabled = false;
+    });
+  },
+
+  answer(idx) {
+    if (!this.running || !this.currentQuestion) return;
+    AudioEngine.init();
+    AudioEngine.resume();
+
+    const chosen = this.currentQuestion.choices[idx];
+    const correct = chosen === this.currentQuestion.answer;
+    this.totalAnswered++;
+
+    const btn = document.getElementById('ans' + idx);
+    const qEl = document.getElementById('questionText');
+
+    // Disable all buttons briefly
+    for (let i = 0; i < 4; i++) document.getElementById('ans' + i).disabled = true;
+
+    if (correct) {
+      this.correctCount++;
+      this.currentStreak++;
+      if (this.currentStreak > this.maxStreak) this.maxStreak = this.currentStreak;
+
+      const multiplier = this.getMultiplier();
+      const base = 10;
+      const points = Math.round(base * multiplier);
+      this.score += points;
+
+      btn.classList.add('correct');
+      qEl.classList.add('correct-flash');
+      AudioEngine.correct();
+
+      // Update streak display
+      document.getElementById('streakDisplay').textContent = this.currentStreak;
+      this.updateComboBar();
+
+      // Show streak popup at milestones
+      if (this.currentStreak > 0 && this.currentStreak % 5 === 0) {
+        this.showStreakPopup();
+        AudioEngine.streak(Math.floor(this.currentStreak / 5));
+      }
+
+      // Update best
+      if (this.score > this.getBest()) {
+        this.setBest(this.score);
+        document.getElementById('bestDisplay').textContent = this.score;
+      }
+    } else {
+      this.currentStreak = 0;
+      btn.classList.add('wrong');
+      qEl.classList.add('wrong-flash');
+      AudioEngine.wrong();
+
+      // Highlight correct answer
+      this.currentQuestion.choices.forEach((c, i) => {
+        if (c === this.currentQuestion.answer) {
+          document.getElementById('ans' + i).classList.add('correct');
+        }
+      });
+
+      document.getElementById('streakDisplay').textContent = '0';
+      this.updateComboBar();
+    }
+
+    // Next question after brief delay
+    setTimeout(() => {
+      if (this.running) this.nextQuestion();
+    }, correct ? 200 : 500);
+  },
+
+  getMultiplier() {
+    const s = this.currentStreak;
+    if (s < 3) return 1;
+    if (s < 5) return 1.5;
+    if (s < 10) return 2;
+    if (s < 15) return 3;
+    if (s < 20) return 4;
+    return 5;
+  },
+
+  updateComboBar() {
+    const bar = document.getElementById('comboBar');
+    const fire = document.getElementById('comboFire');
+    const mult = document.getElementById('comboMult');
+    const m = this.getMultiplier();
+
+    if (this.currentStreak < 3) {
+      bar.style.visibility = 'hidden';
+      return;
+    }
+
+    bar.style.visibility = 'visible';
+    mult.textContent = `x${m}`;
+
+    // Fire emojis scale with streak
+    const fireCount = Math.min(Math.floor(this.currentStreak / 3), 7);
+    let fireStr = '';
+    for (let i = 0; i < fireCount; i++) fireStr += '\uD83D\uDD25';
+    fire.textContent = fireStr;
+    fire.style.fontSize = (20 + Math.min(this.currentStreak, 20)) + 'px';
+  },
+
+  showStreakPopup() {
+    const el = document.getElementById('streakPopup');
+    const m = this.getMultiplier();
+    el.innerHTML = `<div style="font-size:${32 + this.currentStreak}px">\uD83D\uDD25</div><div style="font-size:28px;color:#fbbf24;text-shadow:0 0 20px rgba(251,191,36,.6)">${this.currentStreak} STREAK! x${m}</div>`;
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 700);
+  },
+
+  endGame() {
+    this.running = false;
+    if (this.timerInterval) cancelAnimationFrame(this.timerInterval);
+    AudioEngine.timesUp();
+
+    const t = mt();
+    const accuracy = this.totalAnswered > 0 ? Math.round((this.correctCount / this.totalAnswered) * 100) : 0;
+
+    document.getElementById('finalScore').textContent = this.score;
+    document.getElementById('goAnswered').textContent = this.correctCount;
+    document.getElementById('goAccuracy').textContent = accuracy + '%';
+    document.getElementById('goMaxStreak').textContent = this.maxStreak;
+    document.getElementById('goBestLabel').textContent = `${t.best_record}: ${this.getBest()}`;
+
+    // Animate score counter
+    const scoreEl = document.getElementById('finalScore');
+    let displayed = 0;
+    const target = this.score;
+    const step = Math.max(1, Math.floor(target / 30));
+    const counterIv = setInterval(() => {
+      displayed = Math.min(displayed + step, target);
+      scoreEl.textContent = displayed;
+      if (displayed >= target) clearInterval(counterIv);
+    }, 30);
+
+    setTimeout(() => {
+      document.getElementById('gameOverOverlay').classList.add('show');
+    }, 400);
+
+    // Call share modal if available
+    if (typeof PuzzleShare !== 'undefined' && PuzzleShare.showShareModal) {
+      try { PuzzleShare.showShareModal({ game: 'math-quiz', score: this.score, mode: this.mode }); } catch(e) {}
+    }
+  },
+
+  shareResult() {
+    const t = mt();
+    const accuracy = this.totalAnswered > 0 ? Math.round((this.correctCount / this.totalAnswered) * 100) : 0;
+    const text = `${t.title} (${this.mode})\n${t.score}: ${this.score}\n${t.correct_count}: ${this.correctCount} | ${t.accuracy}: ${accuracy}%\n${t.max_streak}: ${this.maxStreak}\npuzzlearcade.app`;
+    if (navigator.share) {
+      navigator.share({ text }).catch(() => {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('goShareBtn');
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => btn.textContent = orig, 1500);
+      }).catch(() => {});
+    }
+  },
+
+  animLoop() {
+    if (!this.running && this.displayScore >= this.score) return;
+
+    // Smooth score counter during play
+    if (this.displayScore < this.score) {
+      this.displayScore += Math.max(1, Math.ceil((this.score - this.displayScore) * 0.2));
+      if (this.displayScore > this.score) this.displayScore = this.score;
+      document.getElementById('scoreDisplay').textContent = this.displayScore;
+    }
+
+    drawSparkles(performance.now());
+    this.animFrame = requestAnimationFrame(() => this.animLoop());
+  }
+};
+
+// ===== INPUT =====
+for (let i = 0; i < 4; i++) {
+  const btn = document.getElementById('ans' + i);
+  btn.addEventListener('click', () => game.answer(i));
+  btn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    AudioEngine.init();
+    AudioEngine.resume();
+    game.answer(i);
+  }, { passive: false });
+}
+
+// Keyboard support (1-4 keys)
+document.addEventListener('keydown', (e) => {
+  AudioEngine.init();
+  AudioEngine.resume();
+  const k = e.key;
+  if (k >= '1' && k <= '4') game.answer(parseInt(k) - 1);
+});
+
+// ===== BG SPARKLE LOOP =====
+function bgLoop() {
+  drawSparkles(performance.now());
+  requestAnimationFrame(bgLoop);
+}
+bgLoop();
+
+// ===== INIT =====
+applyTranslations();
+document.getElementById('bestDisplay').textContent = game.getBest();
+</script>
+</body>
+</html>

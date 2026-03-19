@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>RPS Battle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif;background:#0a0a1a;color:#e2e8f0}
+body{display:flex;flex-direction:column;align-items:center}
+
+.ad-placeholder{width:100%;max-width:480px;height:50px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);font-size:12px;letter-spacing:1px;flex-shrink:0}
+.ad-top{border-radius:0 0 8px 8px}
+.ad-bottom{border-radius:8px 8px 0 0;margin-top:auto}
+
+.header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;flex-shrink:0}
+.back-link{color:#94a3b8;text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;transition:color .2s}
+.back-link:hover{color:#e2e8f0}
+.title{font-size:18px;font-weight:800;background:linear-gradient(135deg,#ec4899,#a855f7,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.game-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:480px;padding:12px 16px;position:relative;min-height:0;overflow-y:auto;gap:8px}
+
+/* Mode Select */
+.mode-select{display:flex;flex-direction:column;gap:12px;width:100%;max-width:360px}
+.mode-btn{padding:18px 20px;border-radius:16px;border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:#e2e8f0;cursor:pointer;text-align:left;transition:all .2s;font-family:'Outfit',sans-serif}
+.mode-btn:hover{border-color:rgba(168,85,247,.4);background:rgba(168,85,247,.06);transform:translateY(-2px)}
+.mode-btn .mode-title{font-size:18px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.mode-btn .mode-desc{font-size:13px;color:#64748b;font-weight:500}
+.mode-btn.locked{opacity:.45;pointer-events:none}
+.mode-btn.locked .mode-title::after{content:'🔒';font-size:14px}
+
+/* Stats bar */
+.stats-bar{width:100%;display:flex;justify-content:space-around;padding:8px 0;flex-shrink:0}
+.stat-box{text-align:center}
+.stat-label{font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.stat-value{font-size:18px;font-weight:900;color:#f1f5f9;line-height:1.2}
+
+/* Battle Arena */
+.arena{width:100%;max-width:400px;display:flex;flex-direction:column;align-items:center;gap:8px}
+
+.opponent-bar{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);width:100%}
+.opp-avatar{font-size:36px;line-height:1}
+.opp-info{flex:1}
+.opp-name{font-size:15px;font-weight:700}
+.opp-style{font-size:11px;color:#64748b;font-weight:500}
+.score-display{font-size:16px;font-weight:800;color:#a855f7}
+
+/* Round pips */
+.round-pips{display:flex;gap:6px;justify-content:center}
+.pip{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.08);transition:all .3s}
+.pip.win{background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,.4)}
+.pip.lose{background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,.4)}
+.pip.draw{background:#eab308;box-shadow:0 0 8px rgba(234,179,8,.4)}
+
+/* Battle display */
+.battle-display{display:flex;align-items:center;justify-content:center;gap:24px;width:100%;padding:16px 0}
+.fighter{display:flex;flex-direction:column;align-items:center;gap:4px}
+.fighter-label{font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px}
+.fighter-emoji{font-size:72px;line-height:1;transition:transform .3s;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))}
+.fighter-emoji.shake{animation:fistShake .4s ease-in-out infinite}
+@keyframes fistShake{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.vs-text{font-size:28px;font-weight:900;color:rgba(255,255,255,.15)}
+
+/* Countdown overlay */
+.countdown-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,10,26,.92);z-index:10;pointer-events:none;opacity:0;transition:opacity .2s}
+.countdown-overlay.active{opacity:1;pointer-events:auto}
+.countdown-num{font-size:120px;font-weight:900;background:linear-gradient(135deg,#ec4899,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:countPop .35s cubic-bezier(.36,1.1,.2,1)}
+@keyframes countPop{0%{transform:scale(2.5);opacity:0}60%{transform:scale(.9)}100%{transform:scale(1);opacity:1}}
+
+/* Result flash */
+.result-flash{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:11;pointer-events:none;opacity:0;transition:opacity .3s}
+.result-flash.active{opacity:1;pointer-events:auto}
+.result-flash .result-text{font-size:48px;font-weight:900;text-transform:uppercase;letter-spacing:4px;text-shadow:0 4px 30px rgba(0,0,0,.5)}
+.result-flash .result-text.win{color:#22c55e;animation:resultWin .5s ease-out}
+.result-flash .result-text.lose{color:#ef4444;animation:resultLose .5s ease-out}
+.result-flash .result-text.draw{color:#eab308;animation:resultDraw .5s ease-out}
+@keyframes resultWin{0%{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.2) rotate(3deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes resultLose{0%{transform:translateY(-40px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes resultDraw{0%{transform:scale(1.5);opacity:0}100%{transform:scale(1);opacity:1}}
+.result-flash .result-emoji{font-size:64px;margin-top:12px}
+
+/* Choice buttons */
+.choices{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.choice-btn{width:80px;height:80px;border-radius:20px;border:2px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);font-size:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;position:relative}
+.choice-btn:hover{border-color:rgba(168,85,247,.5);background:rgba(168,85,247,.08);transform:translateY(-4px);box-shadow:0 8px 24px rgba(168,85,247,.15)}
+.choice-btn:active{transform:scale(.92)}
+.choice-btn.selected{border-color:#a855f7;background:rgba(168,85,247,.15);box-shadow:0 0 20px rgba(168,85,247,.2)}
+.choice-btn.disabled{pointer-events:none;opacity:.3}
+
+/* Speed timer */
+.speed-timer{font-size:48px;font-weight:900;color:#ec4899;font-variant-numeric:tabular-nums}
+.speed-score{font-size:14px;font-weight:700;color:#64748b}
+
+/* Achievement toast */
+.achievement-toast{position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);background:linear-gradient(135deg,#1e1b4b,#312e81);border:1px solid rgba(168,85,247,.4);border-radius:14px;padding:12px 20px;display:flex;align-items:center;gap:10px;z-index:100;opacity:0;transition:all .4s cubic-bezier(.22,1,.36,1);box-shadow:0 12px 40px rgba(0,0,0,.5);pointer-events:none}
+.achievement-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.achievement-toast .ach-icon{font-size:28px}
+.achievement-toast .ach-text{font-size:13px;font-weight:700;color:#e2e8f0}
+.achievement-toast .ach-name{font-size:11px;color:#a855f7;font-weight:600}
+
+/* Game over panel */
+.game-over-panel{display:flex;flex-direction:column;align-items:center;gap:16px;padding:24px;border-radius:20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);width:100%;max-width:380px}
+.go-title{font-size:28px;font-weight:900}
+.go-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;width:100%}
+.go-stat{text-align:center;padding:10px;border-radius:12px;background:rgba(255,255,255,.03)}
+.go-stat-val{font-size:22px;font-weight:900;color:#a855f7}
+.go-stat-label{font-size:11px;color:#64748b;font-weight:600}
+.go-buttons{display:flex;gap:10px;width:100%}
+.go-btn{flex:1;padding:14px;border-radius:14px;border:none;font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s}
+.go-btn-primary{background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff}
+.go-btn-primary:hover{filter:brightness(1.1);transform:translateY(-2px)}
+.go-btn-secondary{background:rgba(255,255,255,.06);color:#e2e8f0;border:1px solid rgba(255,255,255,.1)}
+.go-btn-secondary:hover{background:rgba(255,255,255,.1)}
+
+/* Tournament bracket */
+.bracket-display{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.bracket-opp{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .3s}
+.bracket-opp.current{border-color:#a855f7;box-shadow:0 0 12px rgba(168,85,247,.3);transform:scale(1.15)}
+.bracket-opp.beaten{border-color:#22c55e;background:rgba(34,197,94,.1)}
+.bracket-opp.lost{border-color:#ef4444;background:rgba(239,68,68,.1);opacity:.5}
+
+/* Animations */
+@keyframes slideUp{0%{transform:translateY(30px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.slide-up{animation:slideUp .4s ease-out}
+
+/* Win streak glow */
+.streak-glow{position:absolute;inset:0;pointer-events:none;border-radius:20px;opacity:0;transition:opacity .5s}
+.streak-glow.active{opacity:1;background:radial-gradient(ellipse at center,rgba(168,85,247,.08) 0%,transparent 70%);animation:pulse 2s ease-in-out infinite}
+
+/* Screen transitions */
+.screen{display:none;flex-direction:column;align-items:center;gap:12px;width:100%}
+.screen.active{display:flex;animation:slideUp .3s ease-out}
+
+@media(max-width:380px){
+  .fighter-emoji{font-size:56px}
+  .choice-btn{width:64px;height:64px;font-size:32px;border-radius:16px}
+  .countdown-num{font-size:90px}
+  .result-flash .result-text{font-size:36px}
+  .go-title{font-size:22px}
+}
+@media(min-height:800px){
+  .battle-display{padding:24px 0}
+}
+</style>
+</head>
+<body>
+
+<div class="ad-placeholder ad-top"><span data-i18n="ad_area">광고 영역</span></div>
+
+<div class="header">
+  <a class="back-link" href="../index.html" data-i18n="back">← 메인으로</a>
+  <div class="title">⚔️ RPS Battle</div>
+</div>
+
+<div class="game-area" id="gameArea">
+  <!-- MENU SCREEN -->
+  <div class="screen active" id="menuScreen">
+    <div style="font-size:64px;margin-bottom:4px">⚔️</div>
+    <div style="font-size:24px;font-weight:900;background:linear-gradient(135deg,#ec4899,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text" id="menuTitle">RPS Battle</div>
+    <div class="stats-bar" id="menuStats"></div>
+    <div class="mode-select" id="modeSelect"></div>
+  </div>
+
+  <!-- BATTLE SCREEN -->
+  <div class="screen" id="battleScreen">
+    <div class="opponent-bar" id="oppBar">
+      <div class="opp-avatar" id="oppAvatar">🤖</div>
+      <div class="opp-info">
+        <div class="opp-name" id="oppName">Opponent</div>
+        <div class="opp-style" id="oppStyle">Random</div>
+      </div>
+      <div class="score-display" id="scoreDisplay">0 - 0</div>
+    </div>
+    <div class="round-pips" id="roundPips"></div>
+    <div class="arena" id="arena">
+      <div class="battle-display">
+        <div class="fighter">
+          <div class="fighter-label" id="youLabel">YOU</div>
+          <div class="fighter-emoji" id="playerEmoji">❓</div>
+        </div>
+        <div class="vs-text">VS</div>
+        <div class="fighter">
+          <div class="fighter-label" id="aiLabel">AI</div>
+          <div class="fighter-emoji" id="aiEmoji">❓</div>
+        </div>
+      </div>
+      <div class="choices" id="choices"></div>
+      <div class="streak-glow" id="streakGlow"></div>
+    </div>
+    <div class="countdown-overlay" id="countdownOverlay">
+      <div class="countdown-num" id="countdownNum">3</div>
+    </div>
+    <div class="result-flash" id="resultFlash">
+      <div class="result-text" id="resultText">WIN</div>
+      <div class="result-emoji" id="resultEmoji">🎉</div>
+    </div>
+  </div>
+
+  <!-- TOURNAMENT SCREEN -->
+  <div class="screen" id="tournamentScreen">
+    <div style="font-size:20px;font-weight:800" id="tournamentTitle">Tournament</div>
+    <div class="bracket-display" id="bracketDisplay"></div>
+  </div>
+
+  <!-- SPEED MODE HUD -->
+  <div class="screen" id="speedScreen">
+    <div class="speed-timer" id="speedTimer">15</div>
+    <div class="speed-score" id="speedScore">0 wins</div>
+    <div class="battle-display">
+      <div class="fighter">
+        <div class="fighter-label" id="speedYouLabel">YOU</div>
+        <div class="fighter-emoji" id="speedPlayerEmoji">❓</div>
+      </div>
+      <div class="vs-text">VS</div>
+      <div class="fighter">
+        <div class="fighter-label" id="speedAiLabel">AI</div>
+        <div class="fighter-emoji" id="speedAiEmoji">❓</div>
+      </div>
+    </div>
+    <div class="choices" id="speedChoices"></div>
+    <div class="result-flash" id="speedResultFlash">
+      <div class="result-text" id="speedResultText">WIN</div>
+    </div>
+  </div>
+
+  <!-- GAME OVER SCREEN -->
+  <div class="screen" id="gameOverScreen">
+    <div class="game-over-panel">
+      <div class="go-title" id="goTitle">🎉</div>
+      <div class="go-stats" id="goStats"></div>
+      <div class="go-buttons">
+        <button class="go-btn go-btn-secondary" id="goMenuBtn">Menu</button>
+        <button class="go-btn go-btn-primary" id="goShareBtn">Share</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ad-placeholder ad-bottom"><span data-i18n="ad_area">광고 영역</span></div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+(function(){
+'use strict';
+
+// ── i18n ──
+const RPS_I18N = {
+  ko: {
+    title: 'RPS 배틀',
+    classic: '클래식',
+    classicDesc: 'AI와 5판 3선승',
+    tournament: '토너먼트',
+    tournamentDesc: '7명의 상대를 연속으로 물리쳐라',
+    speed: '스피드',
+    speedDesc: '15초 안에 최대한 많이 승리하라',
+    extended: '확장 모드',
+    extendedDesc: '가위바위보 도마뱀 스팍!',
+    unlockExtended: '토너먼트 우승 후 해금',
+    you: 'YOU',
+    ai: 'AI',
+    win: '승리!',
+    lose: '패배!',
+    draw: '무승부!',
+    wins: '승',
+    losses: '패',
+    draws: '무',
+    winRate: '승률',
+    streak: '연승',
+    round: '라운드',
+    opponent: '상대',
+    tournamentWin: '🏆 토너먼트 우승!',
+    tournamentLose: '토너먼트 패배',
+    speedResult: '스피드 결과',
+    winsCount: '{n}승',
+    totalStats: '전체 통계',
+    playAgain: '다시 하기',
+    menu: '메뉴',
+    share: '공유',
+    gameName: 'RPS 배틀',
+    ready: '준비!',
+    chooseNow: '선택하세요!',
+    timeUp: '시간 종료!',
+    random: '랜덤',
+    copycat: '따라쟁이',
+    counter: '카운터',
+    pattern: '패턴',
+    aggressive: '공격적',
+    defensive: '방어적',
+    adaptive: '적응형',
+    champion: '챔피언',
+  },
+  en: {
+    title: 'RPS Battle',
+    classic: 'Classic',
+    classicDesc: 'Best of 5 against AI',
+    tournament: 'Tournament',
+    tournamentDesc: 'Beat 7 opponents in a row',
+    speed: 'Speed',
+    speedDesc: '15 seconds, win as many as you can',
+    extended: 'Extended',
+    extendedDesc: 'Rock Paper Scissors Lizard Spock!',
+    unlockExtended: 'Win tournament to unlock',
+    you: 'YOU',
+    ai: 'AI',
+    win: 'WIN!',
+    lose: 'LOSE!',
+    draw: 'DRAW!',
+    wins: 'W',
+    losses: 'L',
+    draws: 'D',
+    winRate: 'Win%',
+    streak: 'Streak',
+    round: 'Round',
+    opponent: 'Opponent',
+    tournamentWin: '🏆 Tournament Champion!',
+    tournamentLose: 'Tournament Over',
+    speedResult: 'Speed Result',
+    winsCount: '{n} wins',
+    totalStats: 'Total Stats',
+    playAgain: 'Play Again',
+    menu: 'Menu',
+    share: 'Share',
+    gameName: 'RPS Battle',
+    ready: 'Ready!',
+    chooseNow: 'Choose now!',
+    timeUp: "Time's up!",
+    random: 'Random',
+    copycat: 'Copycat',
+    counter: 'Counter',
+    pattern: 'Pattern',
+    aggressive: 'Aggressive',
+    defensive: 'Defensive',
+    adaptive: 'Adaptive',
+    champion: 'Champion',
+  },
+  ja: {
+    title: 'RPS バトル',
+    classic: 'クラシック',
+    classicDesc: 'AIと5本勝負',
+    tournament: 'トーナメント',
+    tournamentDesc: '7人の対戦相手を連続で倒せ',
+    speed: 'スピード',
+    speedDesc: '15秒で最大限勝利しろ',
+    extended: '拡張モード',
+    extendedDesc: 'じゃんけん トカゲ スポック！',
+    unlockExtended: 'トーナメント優勝で解放',
+    you: 'あなた',
+    ai: 'AI',
+    win: '勝利！',
+    lose: '敗北！',
+    draw: '引き分け！',
+    wins: '勝',
+    losses: '敗',
+    draws: '分',
+    winRate: '勝率',
+    streak: '連勝',
+    round: 'ラウンド',
+    opponent: '対戦相手',
+    tournamentWin: '🏆 トーナメント優勝！',
+    tournamentLose: 'トーナメント敗退',
+    speedResult: 'スピード結果',
+    winsCount: '{n}勝',
+    totalStats: '通算成績',
+    playAgain: 'もう一度',
+    menu: 'メニュー',
+    share: 'シェア',
+    gameName: 'RPS バトル',
+    ready: '準備！',
+    chooseNow: '選んでください！',
+    timeUp: '時間切れ！',
+    random: 'ランダム',
+    copycat: 'コピーキャット',
+    counter: 'カウンター',
+    pattern: 'パターン',
+    aggressive: 'アグレッシブ',
+    defensive: 'ディフェンシブ',
+    adaptive: 'アダプティブ',
+    champion: 'チャンピオン',
+  },
+  zh: {
+    title: 'RPS 对战',
+    classic: '经典',
+    classicDesc: '与AI进行五局三胜',
+    tournament: '锦标赛',
+    tournamentDesc: '连续击败7个对手',
+    speed: '速度',
+    speedDesc: '15秒内尽可能多地获胜',
+    extended: '扩展模式',
+    extendedDesc: '石头剪刀布蜥蜴史波克！',
+    unlockExtended: '赢得锦标赛后解锁',
+    you: '你',
+    ai: 'AI',
+    win: '胜利！',
+    lose: '失败！',
+    draw: '平局！',
+    wins: '胜',
+    losses: '负',
+    draws: '平',
+    winRate: '胜率',
+    streak: '连胜',
+    round: '回合',
+    opponent: '对手',
+    tournamentWin: '🏆 锦标赛冠军！',
+    tournamentLose: '锦标赛结束',
+    speedResult: '速度结果',
+    winsCount: '{n}胜',
+    totalStats: '总体统计',
+    playAgain: '再来一次',
+    menu: '菜单',
+    share: '分享',
+    gameName: 'RPS 对战',
+    ready: '准备！',
+    chooseNow: '请选择！',
+    timeUp: '时间到！',
+    random: '随机',
+    copycat: '模仿者',
+    counter: '反击者',
+    pattern: '模式',
+    aggressive: '进攻型',
+    defensive: '防守型',
+    adaptive: '适应型',
+    champion: '冠军',
+  },
+  es: {
+    title: 'RPS Batalla',
+    classic: 'Clásico',
+    classicDesc: 'Mejor de 5 contra IA',
+    tournament: 'Torneo',
+    tournamentDesc: 'Vence a 7 oponentes seguidos',
+    speed: 'Velocidad',
+    speedDesc: '15 segundos, gana todo lo que puedas',
+    extended: 'Extendido',
+    extendedDesc: '¡Piedra Papel Tijera Lagarto Spock!',
+    unlockExtended: 'Gana el torneo para desbloquear',
+    you: 'TÚ',
+    ai: 'IA',
+    win: '¡VICTORIA!',
+    lose: '¡DERROTA!',
+    draw: '¡EMPATE!',
+    wins: 'V',
+    losses: 'D',
+    draws: 'E',
+    winRate: '%Vic',
+    streak: 'Racha',
+    round: 'Ronda',
+    opponent: 'Oponente',
+    tournamentWin: '🏆 ¡Campeón del torneo!',
+    tournamentLose: 'Torneo terminado',
+    speedResult: 'Resultado velocidad',
+    winsCount: '{n} victorias',
+    totalStats: 'Estadísticas totales',
+    playAgain: 'Jugar de nuevo',
+    menu: 'Menú',
+    share: 'Compartir',
+    gameName: 'RPS Batalla',
+    ready: '¡Listo!',
+    chooseNow: '¡Elige ahora!',
+    timeUp: '¡Tiempo!',
+    random: 'Aleatorio',
+    copycat: 'Imitador',
+    counter: 'Contra',
+    pattern: 'Patrón',
+    aggressive: 'Agresivo',
+    defensive: 'Defensivo',
+    adaptive: 'Adaptable',
+    champion: 'Campeón',
+  }
+};
+
+const lang = getGameLang();
+const gt = getTranslations();
+const t = Object.assign({}, gt, RPS_I18N[lang] || RPS_I18N.ko);
+
+// Apply shared i18n
+applyGameI18n();
+
+// ── Audio ──
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function ensureAudio(){ if(!audioCtx) audioCtx = new AudioCtx(); }
+
+function playSound(type){
+  ensureAudio();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  gain.gain.setValueAtTime(0.15, now);
+
+  switch(type){
+    case 'countdown':
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.setValueAtTime(520, now + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc.start(now); osc.stop(now + 0.15);
+      break;
+    case 'reveal':
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(330, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      osc.start(now); osc.stop(now + 0.2);
+      break;
+    case 'win':
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523, now);
+      osc.frequency.setValueAtTime(659, now + 0.1);
+      osc.frequency.setValueAtTime(784, now + 0.2);
+      osc.frequency.setValueAtTime(1047, now + 0.3);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+      osc.start(now); osc.stop(now + 0.5);
+      break;
+    case 'lose':
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(400, now);
+      osc.frequency.exponentialRampToValueAtTime(150, now + 0.4);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      osc.start(now); osc.stop(now + 0.4);
+      break;
+    case 'draw':
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.setValueAtTime(440, now + 0.15);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.start(now); osc.stop(now + 0.25);
+      break;
+    case 'select':
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.start(now); osc.stop(now + 0.08);
+      break;
+    case 'achievement':
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(659, now);
+      osc.frequency.setValueAtTime(784, now + 0.12);
+      osc.frequency.setValueAtTime(1047, now + 0.24);
+      osc.frequency.setValueAtTime(1319, now + 0.36);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      osc.start(now); osc.stop(now + 0.6);
+      break;
+  }
+}
+
+// ── Game Data ──
+const CHOICES_BASIC = [
+  { id: 'rock', emoji: '✊', beats: ['scissors'] },
+  { id: 'paper', emoji: '✋', beats: ['rock'] },
+  { id: 'scissors', emoji: '✌️', beats: ['paper'] },
+];
+const CHOICES_EXTENDED = [
+  { id: 'rock', emoji: '✊', beats: ['scissors','lizard'] },
+  { id: 'paper', emoji: '✋', beats: ['rock','spock'] },
+  { id: 'scissors', emoji: '✌️', beats: ['paper','lizard'] },
+  { id: 'lizard', emoji: '🦎', beats: ['paper','spock'] },
+  { id: 'spock', emoji: '🖖', beats: ['rock','scissors'] },
+];
+
+const OPPONENTS = [
+  { name: 'Rocky', avatar: '😀', styleKey: 'random', strategy: 'random' },
+  { name: 'Mimi', avatar: '😺', styleKey: 'copycat', strategy: 'copycat' },
+  { name: 'Blaze', avatar: '😈', styleKey: 'aggressive', strategy: 'aggressive' },
+  { name: 'Shield', avatar: '🛡️', styleKey: 'defensive', strategy: 'defensive' },
+  { name: 'Echo', avatar: '🔮', styleKey: 'pattern', strategy: 'pattern' },
+  { name: 'Nova', avatar: '⚡', styleKey: 'counter', strategy: 'counter' },
+  { name: 'Omega', avatar: '👑', styleKey: 'champion', strategy: 'adaptive' },
+];
+
+const ACHIEVEMENTS = [
+  { id: 'first_win', icon: '🏅', check: s => s.totalWins >= 1 },
+  { id: 'streak_3', icon: '🔥', check: s => s.bestStreak >= 3 },
+  { id: 'streak_5', icon: '💥', check: s => s.bestStreak >= 5 },
+  { id: 'streak_10', icon: '⚡', check: s => s.bestStreak >= 10 },
+  { id: 'tournament_champ', icon: '🏆', check: s => s.tournamentWins >= 1 },
+  { id: 'speed_demon', icon: '⏱️', check: s => s.bestSpeed >= 10 },
+  { id: 'veteran', icon: '🎖️', check: s => s.totalGames >= 50 },
+  { id: 'master', icon: '👑', check: s => s.totalWins >= 100 },
+];
+
+const ACH_NAMES = {
+  ko: { first_win:'첫 승리', streak_3:'3연승', streak_5:'5연승', streak_10:'10연승', tournament_champ:'토너먼트 챔피언', speed_demon:'스피드 데몬', veteran:'베테랑', master:'마스터' },
+  en: { first_win:'First Win', streak_3:'3 Win Streak', streak_5:'5 Win Streak', streak_10:'10 Win Streak', tournament_champ:'Tournament Champion', speed_demon:'Speed Demon', veteran:'Veteran', master:'Master' },
+  ja: { first_win:'初勝利', streak_3:'3連勝', streak_5:'5連勝', streak_10:'10連勝', tournament_champ:'トーナメント王者', speed_demon:'スピードデーモン', veteran:'ベテラン', master:'マスター' },
+  zh: { first_win:'首胜', streak_3:'3连胜', streak_5:'5连胜', streak_10:'10连胜', tournament_champ:'锦标赛冠军', speed_demon:'速度恶魔', veteran:'老兵', master:'大师' },
+  es: { first_win:'Primera victoria', streak_3:'Racha de 3', streak_5:'Racha de 5', streak_10:'Racha de 10', tournament_champ:'Campeón del torneo', speed_demon:'Demonio veloz', veteran:'Veterano', master:'Maestro' },
+};
+
+// ── State ──
+let stats = loadStats();
+let currentMode = null; // 'classic','tournament','speed','extended'
+let useExtended = false;
+let choices = CHOICES_BASIC;
+let playerScore = 0, aiScore = 0;
+let currentRound = 0, maxRounds = 5;
+let roundResults = [];
+let currentStreak = 0;
+let tournamentIndex = 0;
+let playerHistory = [];
+let speedWins = 0, speedTimer = null, speedTimeLeft = 15;
+let isAnimating = false;
+
+// ── DOM ──
+const $ = id => document.getElementById(id);
+
+// ── Stats persistence ──
+function loadStats(){
+  try {
+    const d = JSON.parse(localStorage.getItem('rpsBattleStats'));
+    if(d) return d;
+  } catch(e){}
+  return { totalWins:0, totalLosses:0, totalDraws:0, totalGames:0, bestStreak:0, currentStreak:0, tournamentWins:0, bestSpeed:0, achievements:[], extendedUnlocked:false };
+}
+function saveStats(){ localStorage.setItem('rpsBattleStats', JSON.stringify(stats)); }
+
+// ── Screens ──
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+// ── Menu ──
+function renderMenu(){
+  showScreen('menuScreen');
+  $('menuTitle').textContent = t.title;
+
+  // Stats
+  const total = stats.totalWins + stats.totalLosses + stats.totalDraws;
+  const wr = total > 0 ? Math.round(stats.totalWins/total*100) : 0;
+  $('menuStats').innerHTML = `
+    <div class="stat-box"><div class="stat-label">${t.wins}</div><div class="stat-value">${stats.totalWins}</div></div>
+    <div class="stat-box"><div class="stat-label">${t.losses}</div><div class="stat-value">${stats.totalLosses}</div></div>
+    <div class="stat-box"><div class="stat-label">${t.draws}</div><div class="stat-value">${stats.totalDraws}</div></div>
+    <div class="stat-box"><div class="stat-label">${t.winRate}</div><div class="stat-value">${wr}%</div></div>
+  `;
+
+  const extLocked = !stats.extendedUnlocked;
+  $('modeSelect').innerHTML = `
+    <button class="mode-btn" data-mode="classic">
+      <div class="mode-title">⚔️ ${t.classic}</div>
+      <div class="mode-desc">${t.classicDesc}</div>
+    </button>
+    <button class="mode-btn" data-mode="tournament">
+      <div class="mode-title">🏆 ${t.tournament}</div>
+      <div class="mode-desc">${t.tournamentDesc}</div>
+    </button>
+    <button class="mode-btn" data-mode="speed">
+      <div class="mode-title">⚡ ${t.speed}</div>
+      <div class="mode-desc">${t.speedDesc}</div>
+    </button>
+    <button class="mode-btn ${extLocked?'locked':''}" data-mode="extended">
+      <div class="mode-title">🦎 ${t.extended}</div>
+      <div class="mode-desc">${extLocked ? t.unlockExtended : t.extendedDesc}</div>
+    </button>
+  `;
+
+  $('modeSelect').querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      playSound('select');
+      startMode(btn.dataset.mode);
+    });
+  });
+}
+
+// ── Start Mode ──
+function startMode(mode){
+  currentMode = mode;
+  playerScore = 0; aiScore = 0; currentRound = 0; roundResults = [];
+  playerHistory = []; currentStreak = 0;
+  useExtended = mode === 'extended';
+  choices = useExtended ? CHOICES_EXTENDED : CHOICES_BASIC;
+
+  if(mode === 'classic' || mode === 'extended'){
+    maxRounds = 5;
+    setupBattle(OPPONENTS[0]);
+  } else if(mode === 'tournament'){
+    tournamentIndex = 0;
+    showTournamentBracket();
+  } else if(mode === 'speed'){
+    startSpeedMode();
+  }
+}
+
+// ── Tournament Bracket ──
+function showTournamentBracket(){
+  showScreen('tournamentScreen');
+  $('tournamentTitle').textContent = `${t.tournament} - ${t.opponent} ${tournamentIndex+1}/7`;
+  let html = '';
+  OPPONENTS.forEach((opp,i) => {
+    let cls = '';
+    if(i < tournamentIndex) cls = 'beaten';
+    else if(i === tournamentIndex) cls = 'current';
+    html += `<div class="bracket-opp ${cls}">${opp.avatar}</div>`;
+  });
+  $('bracketDisplay').innerHTML = html;
+
+  setTimeout(() => {
+    playerScore = 0; aiScore = 0; currentRound = 0; roundResults = [];
+    maxRounds = 5;
+    setupBattle(OPPONENTS[tournamentIndex]);
+  }, 1200);
+}
+
+// ── Battle Setup ──
+function setupBattle(opponent){
+  showScreen('battleScreen');
+  $('oppAvatar').textContent = opponent.avatar;
+  $('oppName').textContent = opponent.name;
+  $('oppStyle').textContent = t[opponent.styleKey] || opponent.styleKey;
+  $('scoreDisplay').textContent = `${playerScore} - ${aiScore}`;
+  $('youLabel').textContent = t.you;
+  $('aiLabel').textContent = t.ai;
+  $('playerEmoji').textContent = '❓';
+  $('aiEmoji').textContent = '❓';
+  $('playerEmoji').classList.remove('shake');
+  $('aiEmoji').classList.remove('shake');
+  $('streakGlow').classList.remove('active');
+
+  renderPips();
+  renderChoices('choices', opponent);
+}
+
+function renderPips(){
+  let html = '';
+  for(let i = 0; i < maxRounds; i++){
+    let cls = '';
+    if(roundResults[i]) cls = roundResults[i];
+    html += `<div class="pip ${cls}"></div>`;
+  }
+  $('roundPips').innerHTML = html;
+}
+
+function renderChoices(containerId, opponent){
+  const container = $(containerId);
+  container.innerHTML = '';
+  choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c.emoji;
+    btn.dataset.choice = c.id;
+    btn.addEventListener('click', () => {
+      if(isAnimating) return;
+      playSound('select');
+      if(containerId === 'speedChoices'){
+        handleSpeedChoice(c.id);
+      } else {
+        handleChoice(c.id, opponent);
+      }
+    });
+    container.appendChild(btn);
+  });
+}
+
+// ── AI Strategy ──
+function getAIChoice(strategy){
+  const pool = choices;
+  const ids = pool.map(c => c.id);
+
+  switch(strategy){
+    case 'copycat':
+      // copies player's last move
+      if(playerHistory.length > 0) return playerHistory[playerHistory.length-1];
+      return ids[Math.floor(Math.random()*ids.length)];
+
+    case 'counter':
+      // tries to counter player's last move
+      if(playerHistory.length > 0){
+        const last = playerHistory[playerHistory.length-1];
+        const beaters = pool.filter(c => c.beats.includes(last));
+        if(beaters.length) return beaters[Math.floor(Math.random()*beaters.length)].id;
+      }
+      return ids[Math.floor(Math.random()*ids.length)];
+
+    case 'aggressive':
+      // favors rock heavily
+      return Math.random() < 0.5 ? 'rock' : ids[Math.floor(Math.random()*ids.length)];
+
+    case 'defensive':
+      // favors paper
+      return Math.random() < 0.5 ? 'paper' : ids[Math.floor(Math.random()*ids.length)];
+
+    case 'pattern':
+      // cycles through choices
+      return ids[currentRound % ids.length];
+
+    case 'adaptive':
+      // analyzes player tendencies and counters most frequent
+      if(playerHistory.length >= 3){
+        const freq = {};
+        playerHistory.forEach(m => { freq[m] = (freq[m]||0) + 1; });
+        let most = ids[0], max = 0;
+        Object.keys(freq).forEach(k => { if(freq[k] > max){ max=freq[k]; most=k; } });
+        const beaters = pool.filter(c => c.beats.includes(most));
+        if(beaters.length) return beaters[Math.floor(Math.random()*beaters.length)].id;
+      }
+      return ids[Math.floor(Math.random()*ids.length)];
+
+    default: // random
+      return ids[Math.floor(Math.random()*ids.length)];
+  }
+}
+
+function getResult(playerId, aiId){
+  const playerChoice = choices.find(c => c.id === playerId);
+  if(playerId === aiId) return 'draw';
+  if(playerChoice.beats.includes(aiId)) return 'win';
+  return 'lose';
+}
+
+function getEmoji(id){ return (choices.find(c=>c.id===id)||{emoji:'❓'}).emoji; }
+
+// ── Handle Choice (Classic/Tournament/Extended) ──
+function handleChoice(playerId, opponent){
+  isAnimating = true;
+  playerHistory.push(playerId);
+
+  // Disable buttons
+  $('choices').querySelectorAll('.choice-btn').forEach(b => b.classList.add('disabled'));
+
+  // Show player choice, AI hidden
+  $('playerEmoji').textContent = getEmoji(playerId);
+  $('aiEmoji').textContent = '❓';
+  $('playerEmoji').classList.add('shake');
+  $('aiEmoji').classList.add('shake');
+
+  // Countdown: 3, 2, 1
+  const overlay = $('countdownOverlay');
+  const numEl = $('countdownNum');
+  let count = 3;
+
+  function doCount(){
+    if(count > 0){
+      overlay.classList.add('active');
+      numEl.textContent = count;
+      numEl.style.animation = 'none';
+      void numEl.offsetWidth;
+      numEl.style.animation = '';
+      playSound('countdown');
+      count--;
+      setTimeout(doCount, 500);
+    } else {
+      overlay.classList.remove('active');
+      revealResult(playerId, opponent);
+    }
+  }
+  doCount();
+}
+
+function revealResult(playerId, opponent){
+  const aiId = getAIChoice(opponent.strategy);
+  const result = getResult(playerId, aiId);
+
+  // Reveal AI
+  $('aiEmoji').textContent = getEmoji(aiId);
+  $('playerEmoji').classList.remove('shake');
+  $('aiEmoji').classList.remove('shake');
+  playSound('reveal');
+
+  // Update scores
+  if(result === 'win'){ playerScore++; currentStreak++; }
+  else if(result === 'lose'){ aiScore++; currentStreak = 0; }
+  roundResults.push(result);
+  currentRound++;
+
+  $('scoreDisplay').textContent = `${playerScore} - ${aiScore}`;
+  renderPips();
+
+  // Streak glow
+  if(currentStreak >= 3) $('streakGlow').classList.add('active');
+  else $('streakGlow').classList.remove('active');
+
+  // Show result flash
+  setTimeout(() => {
+    const flash = $('resultFlash');
+    const rText = $('resultText');
+    const rEmoji = $('resultEmoji');
+    rText.className = 'result-text ' + result;
+    rText.textContent = t[result];
+    rEmoji.textContent = result === 'win' ? '🎉' : result === 'lose' ? '💀' : '🤝';
+    flash.classList.add('active');
+    playSound(result);
+
+    // Update global stats
+    if(result === 'win') stats.totalWins++;
+    else if(result === 'lose') stats.totalLosses++;
+    else stats.totalDraws++;
+    stats.totalGames++;
+    if(currentStreak > stats.bestStreak) stats.bestStreak = currentStreak;
+    stats.currentStreak = currentStreak;
+    saveStats();
+    checkAchievements();
+
+    setTimeout(() => {
+      flash.classList.remove('active');
+
+      // Check if match is over (best of 5 = first to 3)
+      const neededWins = Math.ceil(maxRounds/2);
+      if(playerScore >= neededWins || aiScore >= neededWins || currentRound >= maxRounds){
+        handleMatchEnd(opponent);
+      } else {
+        // Next round
+        isAnimating = false;
+        $('playerEmoji').textContent = '❓';
+        $('aiEmoji').textContent = '❓';
+        $('choices').querySelectorAll('.choice-btn').forEach(b => b.classList.remove('disabled'));
+      }
+    }, 1200);
+  }, 400);
+}
+
+function handleMatchEnd(opponent){
+  isAnimating = false;
+  const won = playerScore > aiScore;
+
+  if(currentMode === 'tournament'){
+    if(won){
+      tournamentIndex++;
+      if(tournamentIndex >= OPPONENTS.length){
+        // Tournament champion!
+        stats.tournamentWins++;
+        stats.extendedUnlocked = true;
+        saveStats();
+        checkAchievements();
+        showGameOver(t.tournamentWin, true);
+      } else {
+        showTournamentBracket();
+      }
+    } else {
+      showGameOver(t.tournamentLose, false);
+    }
+  } else {
+    showGameOver(won ? t.win : (playerScore===aiScore ? t.draw : t.lose), won);
+  }
+}
+
+// ── Speed Mode ──
+function startSpeedMode(){
+  showScreen('speedScreen');
+  speedWins = 0;
+  speedTimeLeft = 15;
+  $('speedTimer').textContent = speedTimeLeft;
+  $('speedScore').textContent = t.winsCount.replace('{n}', 0);
+  $('speedPlayerEmoji').textContent = '❓';
+  $('speedAiEmoji').textContent = '❓';
+  $('speedYouLabel').textContent = t.you;
+  $('speedAiLabel').textContent = t.ai;
+  $('speedResultFlash').classList.remove('active');
+  isAnimating = false;
+
+  renderChoices('speedChoices', { strategy: 'random' });
+
+  speedTimer = setInterval(() => {
+    speedTimeLeft--;
+    $('speedTimer').textContent = speedTimeLeft;
+    if(speedTimeLeft <= 0){
+      clearInterval(speedTimer);
+      speedTimer = null;
+      endSpeedMode();
+    }
+  }, 1000);
+}
+
+function handleSpeedChoice(playerId){
+  if(speedTimeLeft <= 0) return;
+  const aiId = getAIChoice('random');
+  const result = getResult(playerId, aiId);
+
+  $('speedPlayerEmoji').textContent = getEmoji(playerId);
+  $('speedAiEmoji').textContent = getEmoji(aiId);
+
+  if(result === 'win'){
+    speedWins++;
+    stats.totalWins++;
+    currentStreak++;
+  } else if(result === 'lose'){
+    stats.totalLosses++;
+    currentStreak = 0;
+  } else {
+    stats.totalDraws++;
+  }
+  stats.totalGames++;
+  if(currentStreak > stats.bestStreak) stats.bestStreak = currentStreak;
+  saveStats();
+
+  $('speedScore').textContent = t.winsCount.replace('{n}', speedWins);
+
+  // Quick flash
+  const flash = $('speedResultFlash');
+  const rText = $('speedResultText');
+  rText.className = 'result-text ' + result;
+  rText.textContent = t[result];
+  flash.classList.add('active');
+  playSound(result === 'win' ? 'win' : result === 'lose' ? 'lose' : 'draw');
+
+  setTimeout(() => {
+    flash.classList.remove('active');
+    $('speedPlayerEmoji').textContent = '❓';
+    $('speedAiEmoji').textContent = '❓';
+  }, 400);
+
+  checkAchievements();
+}
+
+function endSpeedMode(){
+  isAnimating = true;
+  $('speedChoices').querySelectorAll('.choice-btn').forEach(b => b.classList.add('disabled'));
+  if(speedWins > stats.bestSpeed){
+    stats.bestSpeed = speedWins;
+    saveStats();
+  }
+  checkAchievements();
+  setTimeout(() => {
+    showGameOver(`${t.speedResult}: ${t.winsCount.replace('{n}', speedWins)}`, speedWins >= 5);
+  }, 800);
+}
+
+// ── Game Over ──
+function showGameOver(titleText, isWin){
+  showScreen('gameOverScreen');
+  $('goTitle').textContent = titleText;
+  $('goTitle').style.color = isWin ? '#22c55e' : '#ef4444';
+
+  const total = stats.totalWins + stats.totalLosses + stats.totalDraws;
+  const wr = total > 0 ? Math.round(stats.totalWins/total*100) : 0;
+  $('goStats').innerHTML = `
+    <div class="go-stat"><div class="go-stat-val">${stats.totalWins}</div><div class="go-stat-label">${t.wins}</div></div>
+    <div class="go-stat"><div class="go-stat-val">${stats.totalLosses}</div><div class="go-stat-label">${t.losses}</div></div>
+    <div class="go-stat"><div class="go-stat-val">${wr}%</div><div class="go-stat-label">${t.winRate}</div></div>
+    <div class="go-stat"><div class="go-stat-val">${stats.bestStreak}</div><div class="go-stat-label">${t.streak}</div></div>
+    <div class="go-stat"><div class="go-stat-val">${stats.totalDraws}</div><div class="go-stat-label">${t.draws}</div></div>
+    <div class="go-stat"><div class="go-stat-val">${stats.totalGames}</div><div class="go-stat-label">Total</div></div>
+  `;
+
+  $('goMenuBtn').textContent = t.menu;
+  $('goShareBtn').textContent = t.share;
+
+  $('goMenuBtn').onclick = () => { playSound('select'); renderMenu(); };
+  $('goShareBtn').onclick = () => {
+    playSound('select');
+    let msg = titleText;
+    if(currentMode === 'speed') msg = t.winsCount.replace('{n}', speedWins);
+    PuzzleShare.showShareModal({
+      gameName: t.gameName,
+      title: t.title,
+      score: currentMode === 'speed' ? speedWins : playerScore,
+      message: msg,
+      lang: lang,
+    });
+  };
+}
+
+// ── Achievements ──
+function checkAchievements(){
+  const achNames = ACH_NAMES[lang] || ACH_NAMES.en;
+  ACHIEVEMENTS.forEach(ach => {
+    if(!stats.achievements.includes(ach.id) && ach.check(stats)){
+      stats.achievements.push(ach.id);
+      saveStats();
+      showAchievement(ach.icon, achNames[ach.id] || ach.id);
+    }
+  });
+}
+
+function showAchievement(icon, name){
+  playSound('achievement');
+  const toast = document.createElement('div');
+  toast.className = 'achievement-toast';
+  toast.innerHTML = `<div class="ach-icon">${icon}</div><div><div class="ach-text">Achievement!</div><div class="ach-name">${name}</div></div>`;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 400);
+  }, 2500);
+}
+
+// ── Init ──
+renderMenu();
+
+})();
+</script>
+</body>
+</html>

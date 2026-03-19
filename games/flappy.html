@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Flappy Rocket - Puzzle Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;touch-action:none}
+body{background:#0a0a1a;color:#fff;font-family:'Outfit',sans-serif;display:flex;flex-direction:column;align-items:center;user-select:none;-webkit-user-select:none}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at 30% 20%,rgba(99,102,241,.06) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(168,85,247,.05) 0%,transparent 50%);z-index:-1;pointer-events:none}
+
+.back-link{position:absolute;top:16px;left:16px;color:#666;text-decoration:none;font-size:.9rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:color .2s;z-index:10}
+.back-link:hover{color:#818cf8}
+
+.ad-banner{background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.08);border-radius:10px;padding:12px;text-align:center;color:#444;font-size:.75rem;width:100%;max-width:480px;margin:8px auto 0;flex-shrink:0}
+.ad-label{font-size:.65rem;color:#333;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+
+.game-wrapper{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;width:100%;max-width:480px;padding:8px 16px 16px;gap:8px;min-height:0}
+
+.header{display:flex;align-items:center;justify-content:space-between;width:100%;gap:12px}
+.title{font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,#818cf8,#a78bfa,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-1px;line-height:1}
+.scores{display:flex;gap:8px}
+.score-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:6px 14px;text-align:center;min-width:70px}
+.score-box .label{font-size:.65rem;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.score-box .value{font-size:1.2rem;font-weight:800;color:#fff;transition:transform .15s}
+.score-box .value.bump{animation:scoreBump .3s ease}
+@keyframes scoreBump{0%{transform:scale(1)}40%{transform:scale(1.3)}100%{transform:scale(1)}}
+
+.skin-row{display:flex;gap:6px;width:100%}
+.skin-btn{flex:1;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.04);color:#888;font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;text-align:center}
+.skin-btn:hover{border-color:rgba(129,140,248,.3);color:#fff}
+.skin-btn.active{border-color:rgba(129,140,248,.4);color:#818cf8;background:rgba(129,140,248,.12)}
+.skin-btn.locked{opacity:.4;cursor:not-allowed}
+.skin-btn .unlock-hint{font-size:.6rem;display:block;color:#666;margin-top:2px}
+
+.canvas-container{position:relative;width:100%;aspect-ratio:3/4;max-height:min(65vh,520px);flex-shrink:1;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+canvas{width:100%;height:100%;display:block;border-radius:16px}
+
+.overlay{position:absolute;inset:0;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:20;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.show{opacity:1;pointer-events:auto}
+.overlay-bg{position:absolute;inset:0;border-radius:16px;background:rgba(10,10,26,.88);backdrop-filter:blur(6px)}
+.overlay-content{position:relative;z-index:1;text-align:center;padding:20px}
+.overlay-title{font-size:2rem;font-weight:900;margin-bottom:8px}
+.overlay-title.go{color:#ef4444}
+.overlay-title.start{background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.overlay-score{font-size:1rem;color:#888;margin-bottom:16px}
+.overlay-ad{background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.08);border-radius:10px;padding:16px 24px;color:#444;font-size:.75rem;margin-bottom:16px;min-width:200px}
+.overlay-btn{padding:12px 32px;border:none;border-radius:12px;font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s;margin:4px}
+.overlay-btn:active{transform:scale(.95)}
+.btn-primary{background:linear-gradient(135deg,#818cf8,#a78bfa);color:#fff}
+.btn-primary:hover{box-shadow:0 0 20px rgba(129,140,248,.3)}
+.btn-secondary{background:rgba(255,255,255,.08);color:#ccc;border:1px solid rgba(255,255,255,.1)}
+
+.tap-hint{font-size:.85rem;color:#666;margin-top:4px;text-align:center}
+
+@media (max-width:600px){
+  .game-wrapper{padding:4px 12px 10px;gap:6px}
+  .header{gap:8px}
+  .title{font-size:1.4rem}
+  .score-box{padding:4px 10px;min-width:56px}
+  .score-box .value{font-size:1rem}
+  .canvas-container{max-height:min(55vh,420px)}
+}
+@media (max-width:380px){
+  .title{font-size:1.2rem}
+  .skin-btn{font-size:.75rem;padding:6px}
+}
+</style>
+</head>
+<body>
+
+<a class="back-link" href="../index.html" data-i18n="back"></a>
+
+<!-- Top ad banner -->
+<div class="ad-banner">
+  <div class="ad-label" data-i18n="ad_area"></div>
+  <div style="height:50px;display:flex;align-items:center;justify-content:center;color:#333">320 x 50</div>
+</div>
+
+<div class="game-wrapper">
+  <div class="header">
+    <div class="title" id="gameTitle">Flappy Rocket</div>
+    <div class="scores">
+      <div class="score-box">
+        <div class="label" data-i18n="score"></div>
+        <div class="value" id="scoreVal">0</div>
+      </div>
+      <div class="score-box">
+        <div class="label" data-i18n="best"></div>
+        <div class="value" id="bestVal">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rocket skins -->
+  <div class="skin-row" id="skinRow"></div>
+
+  <div class="canvas-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Start overlay -->
+    <div class="overlay show" id="startOverlay">
+      <div class="overlay-bg"></div>
+      <div class="overlay-content">
+        <div class="overlay-title start" id="startTitle">Flappy Rocket</div>
+        <div class="overlay-score" id="startHint"></div>
+        <button class="overlay-btn btn-primary" id="startBtn"></button>
+      </div>
+    </div>
+
+    <!-- Game Over overlay -->
+    <div class="overlay" id="overOverlay">
+      <div class="overlay-bg"></div>
+      <div class="overlay-content">
+        <div class="overlay-title go" id="overTitle"></div>
+        <div class="overlay-score" id="overScore"></div>
+        <div class="overlay-ad">
+          <div class="ad-label" data-i18n="ad_area"></div>
+          <div style="height:60px;display:flex;align-items:center;justify-content:center;color:#333">300 x 250</div>
+        </div>
+        <button class="overlay-btn btn-primary" id="retryBtn"></button>
+        <button class="overlay-btn btn-secondary" id="shareBtn"></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tap-hint" id="tapHint"></div>
+</div>
+
+<!-- Bottom ad banner -->
+<div class="ad-banner">
+  <div class="ad-label" data-i18n="ad_area"></div>
+  <div style="height:50px;display:flex;align-items:center;justify-content:center;color:#333">320 x 50</div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+(function(){
+'use strict';
+
+// ── Custom i18n ──
+const FLAPPY_I18N = {
+  ko: {
+    title: 'Flappy Rocket',
+    tap_to_start: '탭하여 시작',
+    tap_hint: '탭 또는 스페이스바로 부스트',
+    game_over: '게임 오버',
+    final_score: '점수: {score} | 최고: {best}',
+    retry: '다시 도전',
+    share: '결과 공유',
+    new_best: '새 최고 기록!',
+    skin_classic: '기본',
+    skin_flame: '화염',
+    skin_neon: '네온',
+    unlock_at: '{n}점 달성 시 해제',
+  },
+  en: {
+    title: 'Flappy Rocket',
+    tap_to_start: 'Tap to Start',
+    tap_hint: 'Tap or press Space to boost',
+    game_over: 'Game Over',
+    final_score: 'Score: {score} | Best: {best}',
+    retry: 'Try Again',
+    share: 'Share Result',
+    new_best: 'New High Score!',
+    skin_classic: 'Classic',
+    skin_flame: 'Flame',
+    skin_neon: 'Neon',
+    unlock_at: 'Unlock at {n}',
+  },
+  ja: {
+    title: 'Flappy Rocket',
+    tap_to_start: 'タップして開始',
+    tap_hint: 'タップまたはスペースでブースト',
+    game_over: 'ゲームオーバー',
+    final_score: 'スコア: {score} | ベスト: {best}',
+    retry: 'もう一度',
+    share: '結果をシェア',
+    new_best: '新記録!',
+    skin_classic: 'クラシック',
+    skin_flame: 'フレイム',
+    skin_neon: 'ネオン',
+    unlock_at: '{n}点で解放',
+  },
+  zh: {
+    title: 'Flappy Rocket',
+    tap_to_start: '点击开始',
+    tap_hint: '点击或按空格键加速',
+    game_over: '游戏结束',
+    final_score: '分数: {score} | 最高: {best}',
+    retry: '再试一次',
+    share: '分享结果',
+    new_best: '新纪录!',
+    skin_classic: '经典',
+    skin_flame: '火焰',
+    skin_neon: '霓虹',
+    unlock_at: '{n}分解锁',
+  },
+  es: {
+    title: 'Flappy Rocket',
+    tap_to_start: 'Toca para empezar',
+    tap_hint: 'Toca o pulsa Espacio para impulsar',
+    game_over: 'Fin del juego',
+    final_score: 'Puntos: {score} | Mejor: {best}',
+    retry: 'Intentar de nuevo',
+    share: 'Compartir resultado',
+    new_best: 'Nuevo record!',
+    skin_classic: 'Clasico',
+    skin_flame: 'Llama',
+    skin_neon: 'Neon',
+    unlock_at: 'Desbloquear en {n}',
+  },
+};
+
+const lang = getGameLang();
+const t = getTranslations();
+const ft = FLAPPY_I18N[lang] || FLAPPY_I18N.ko;
+
+// Apply shared i18n
+applyGameI18n();
+
+// ── DOM refs ──
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('scoreVal');
+const bestEl = document.getElementById('bestVal');
+const startOverlay = document.getElementById('startOverlay');
+const overOverlay = document.getElementById('overOverlay');
+
+// Set text
+document.getElementById('gameTitle').textContent = ft.title;
+document.getElementById('startTitle').textContent = ft.title;
+document.getElementById('startHint').textContent = ft.tap_to_start;
+document.getElementById('startBtn').textContent = ft.tap_to_start;
+document.getElementById('tapHint').textContent = ft.tap_hint;
+
+// ── Rocket Skins ──
+const SKINS = [
+  { id: 'classic', emoji: '\u{1F680}', unlock: 0 },
+  { id: 'flame', emoji: '\u{1F525}\u{1F680}', unlock: 10 },
+  { id: 'neon', emoji: '\u{1F31F}\u{1F680}', unlock: 25 },
+];
+let currentSkin = 0;
+let bestScore = parseInt(localStorage.getItem('flappyRocket_best') || '0');
+bestEl.textContent = bestScore;
+
+function buildSkinRow() {
+  const row = document.getElementById('skinRow');
+  row.innerHTML = '';
+  SKINS.forEach((s, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'skin-btn' + (i === currentSkin ? ' active' : '') + (bestScore < s.unlock ? ' locked' : '');
+    const nameKey = 'skin_' + s.id;
+    btn.innerHTML = s.emoji + ' ' + (ft[nameKey] || s.id);
+    if (bestScore < s.unlock) {
+      btn.innerHTML += '<span class="unlock-hint">' + ft.unlock_at.replace('{n}', s.unlock) + '</span>';
+    }
+    btn.addEventListener('click', () => {
+      if (bestScore < s.unlock) return;
+      currentSkin = i;
+      buildSkinRow();
+    });
+    row.appendChild(btn);
+  });
+}
+buildSkinRow();
+
+// ── Audio (Web Audio API) ──
+let audioCtx;
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function playSound(type) {
+  ensureAudio();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  const now = audioCtx.currentTime;
+  switch(type) {
+    case 'boost':
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(400, now);
+      osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc.start(now); osc.stop(now + 0.15);
+      break;
+    case 'pass':
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.exponentialRampToValueAtTime(900, now + 0.08);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc.start(now); osc.stop(now + 0.12);
+      break;
+    case 'crash':
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(200, now);
+      osc.frequency.exponentialRampToValueAtTime(50, now + 0.4);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      osc.start(now); osc.stop(now + 0.4);
+      break;
+    case 'star':
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, now);
+      osc.frequency.exponentialRampToValueAtTime(1200, now + 0.05);
+      osc.frequency.exponentialRampToValueAtTime(1600, now + 0.1);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      osc.start(now); osc.stop(now + 0.18);
+      break;
+  }
+}
+
+// ── Canvas sizing ──
+let W, H, scale;
+function resize() {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  W = 360;
+  H = 480;
+  scale = rect.width / W;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ── Parallax stars ──
+const bgStars = [];
+for (let i = 0; i < 80; i++) {
+  bgStars.push({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    r: Math.random() * 1.5 + 0.3,
+    speed: Math.random() * 0.5 + 0.1,
+    alpha: Math.random() * 0.6 + 0.2,
+  });
+}
+const bgStars2 = [];
+for (let i = 0; i < 30; i++) {
+  bgStars2.push({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    r: Math.random() * 2 + 1,
+    speed: Math.random() * 1 + 0.5,
+    alpha: Math.random() * 0.3 + 0.1,
+  });
+}
+
+function drawStarfield() {
+  const spd = gameState === 'playing' ? gameSpeed : 0.3;
+  [bgStars, bgStars2].forEach(layer => {
+    layer.forEach(s => {
+      s.x -= s.speed * spd;
+      if (s.x < -2) { s.x = W + 2; s.y = Math.random() * H; }
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,' + s.alpha + ')';
+      ctx.fill();
+    });
+  });
+}
+
+// ── Game state ──
+const GRAVITY = 0.55;
+const BOOST = -7.5;
+const PIPE_WIDTH = 50;
+const PIPE_GAP_INITIAL = 140;
+const PIPE_GAP_MIN = 90;
+const PIPE_SPACING = 180;
+const ROCKET_SIZE = 28;
+
+let rocket, pipes, stars, score, gameSpeed, gameState, animId, lastTime;
+// gameState: 'idle' | 'playing' | 'over'
+
+function initGame() {
+  rocket = {
+    x: 80,
+    y: H / 2,
+    vy: 0,
+    angle: 0,
+    trail: [],
+  };
+  pipes = [];
+  stars = [];
+  score = 0;
+  gameSpeed = 1;
+  scoreEl.textContent = '0';
+}
+
+function getGap() {
+  return Math.max(PIPE_GAP_MIN, PIPE_GAP_INITIAL - score * 2.5);
+}
+
+function spawnPipe() {
+  const gap = getGap();
+  const minTop = 60;
+  const maxTop = H - gap - 60;
+  const topH = Math.random() * (maxTop - minTop) + minTop;
+  const lastX = pipes.length > 0 ? pipes[pipes.length - 1].x : W;
+  const x = Math.max(lastX + PIPE_SPACING, W + 20);
+  pipes.push({
+    x: x,
+    topH: topH,
+    gap: gap,
+    passed: false,
+  });
+  // Chance to spawn a star in the gap
+  if (Math.random() < 0.5) {
+    stars.push({
+      x: x + PIPE_WIDTH / 2,
+      y: topH + gap / 2,
+      collected: false,
+      pulse: 0,
+    });
+  }
+}
+
+function boost() {
+  if (gameState === 'idle') {
+    gameState = 'playing';
+    startOverlay.classList.remove('show');
+    lastTime = performance.now();
+    initGame();
+    rocket.vy = BOOST;
+    playSound('boost');
+    loop();
+    return;
+  }
+  if (gameState === 'playing') {
+    rocket.vy = BOOST;
+    playSound('boost');
+  }
+}
+
+// ── Main loop ──
+function loop() {
+  const now = performance.now();
+  const dt = Math.min((now - lastTime) / 1000, 0.05);
+  lastTime = now;
+
+  if (gameState !== 'playing') return;
+
+  update(dt);
+  draw(dt);
+  animId = requestAnimationFrame(loop);
+}
+
+function update(dt) {
+  // Speed ramp
+  gameSpeed = 1 + score * 0.015;
+
+  // Rocket physics (fixed 60fps timestep simulation)
+  const steps = Math.round(dt * 60);
+  for (let s = 0; s < Math.max(1, steps); s++) {
+    rocket.vy += GRAVITY;
+    rocket.y += rocket.vy;
+  }
+  rocket.angle = Math.max(-30, Math.min(45, rocket.vy * 3));
+
+  // Trail
+  rocket.trail.push({ x: rocket.x - 10, y: rocket.y, alpha: 1 });
+  if (rocket.trail.length > 15) rocket.trail.shift();
+  rocket.trail.forEach(p => { p.alpha -= 0.07; });
+
+  // Pipes
+  const scrollSpeed = 2.5 * gameSpeed * Math.max(1, steps);
+  if (pipes.length === 0 || pipes[pipes.length - 1].x < W - PIPE_SPACING) {
+    spawnPipe();
+  }
+
+  for (let i = pipes.length - 1; i >= 0; i--) {
+    const p = pipes[i];
+    p.x -= scrollSpeed;
+
+    // Passed?
+    if (!p.passed && p.x + PIPE_WIDTH < rocket.x) {
+      p.passed = true;
+      score++;
+      scoreEl.textContent = score;
+      // bump anim
+      scoreEl.classList.remove('bump');
+      void scoreEl.offsetWidth;
+      scoreEl.classList.add('bump');
+      playSound('pass');
+    }
+
+    // Collision
+    const rx = rocket.x, ry = rocket.y, rr = ROCKET_SIZE / 2 - 2;
+    if (rx + rr > p.x && rx - rr < p.x + PIPE_WIDTH) {
+      if (ry - rr < p.topH || ry + rr > p.topH + p.gap) {
+        gameOver();
+        return;
+      }
+    }
+
+    // Remove off-screen
+    if (p.x + PIPE_WIDTH < -10) {
+      pipes.splice(i, 1);
+    }
+  }
+
+  // Stars
+  for (let i = stars.length - 1; i >= 0; i--) {
+    const s = stars[i];
+    s.x -= scrollSpeed;
+    s.pulse += 0.08;
+    if (!s.collected) {
+      const dx = rocket.x - s.x, dy = rocket.y - s.y;
+      if (Math.sqrt(dx*dx + dy*dy) < ROCKET_SIZE / 2 + 10) {
+        s.collected = true;
+        score += 2;
+        scoreEl.textContent = score;
+        scoreEl.classList.remove('bump');
+        void scoreEl.offsetWidth;
+        scoreEl.classList.add('bump');
+        playSound('star');
+      }
+    }
+    if (s.x < -20) stars.splice(i, 1);
+  }
+
+  // Boundary collision
+  if (rocket.y < ROCKET_SIZE / 2 || rocket.y > H - ROCKET_SIZE / 2) {
+    rocket.y = Math.max(ROCKET_SIZE / 2, Math.min(H - ROCKET_SIZE / 2, rocket.y));
+    gameOver();
+  }
+}
+
+function draw(dt) {
+  // Clear
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fillRect(0, 0, W, H);
+
+  // Starfield
+  drawStarfield();
+
+  // Pipes (asteroids)
+  pipes.forEach(p => {
+    drawPipe(p);
+  });
+
+  // Stars
+  stars.forEach(s => {
+    if (s.collected) return;
+    const sz = 12 + Math.sin(s.pulse) * 3;
+    ctx.save();
+    ctx.font = sz + 'px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = '#fbbf24';
+    ctx.shadowBlur = 10;
+    ctx.fillText('\u2B50', s.x, s.y);
+    ctx.restore();
+  });
+
+  // Trail
+  rocket.trail.forEach(p => {
+    if (p.alpha <= 0) return;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(251,146,60,' + Math.max(0, p.alpha) + ')';
+    ctx.fill();
+  });
+
+  // Rocket
+  ctx.save();
+  ctx.translate(rocket.x, rocket.y);
+  ctx.rotate(rocket.angle * Math.PI / 180);
+  const skin = SKINS[currentSkin];
+  ctx.font = ROCKET_SIZE + 'px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  // Glow
+  ctx.shadowColor = currentSkin === 2 ? '#c084fc' : currentSkin === 1 ? '#fb923c' : '#60a5fa';
+  ctx.shadowBlur = 12;
+  ctx.fillText(skin.emoji.includes('\u{1F680}') ? '\u{1F680}' : skin.emoji, 0, 0);
+  // Extra effect for flame skin
+  if (currentSkin === 1) {
+    ctx.font = (ROCKET_SIZE * 0.6) + 'px serif';
+    ctx.fillText('\u{1F525}', -ROCKET_SIZE * 0.7, 4);
+  }
+  // Neon glow for neon skin
+  if (currentSkin === 2) {
+    ctx.shadowColor = '#c084fc';
+    ctx.shadowBlur = 20;
+    ctx.font = (ROCKET_SIZE * 0.5) + 'px serif';
+    ctx.fillText('\u{1F31F}', -ROCKET_SIZE * 0.7, -4);
+  }
+  ctx.restore();
+
+  // Score in center (large, faded)
+  ctx.save();
+  ctx.font = '900 80px Outfit, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+  ctx.fillText(score, W / 2, H / 2);
+  ctx.restore();
+}
+
+function drawPipe(p) {
+  // Top pipe (asteroid column)
+  const grad1 = ctx.createLinearGradient(p.x, 0, p.x + PIPE_WIDTH, 0);
+  grad1.addColorStop(0, '#374151');
+  grad1.addColorStop(0.5, '#4b5563');
+  grad1.addColorStop(1, '#374151');
+
+  // Top
+  ctx.fillStyle = grad1;
+  roundRect(ctx, p.x, -4, PIPE_WIDTH, p.topH + 4, 6);
+
+  // Bottom
+  const bottomY = p.topH + p.gap;
+  ctx.fillStyle = grad1;
+  roundRect(ctx, p.x, bottomY, PIPE_WIDTH, H - bottomY + 4, 6);
+
+  // Asteroid texture dots
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  const seed = Math.floor(p.x * 7);
+  for (let i = 0; i < 5; i++) {
+    const dx = ((seed + i * 37) % 40) + 5;
+    const dy1 = ((seed + i * 53) % Math.max(1, p.topH - 10)) + 5;
+    ctx.beginPath();
+    ctx.arc(p.x + dx % PIPE_WIDTH, dy1, 3, 0, Math.PI * 2);
+    ctx.fill();
+    const dy2 = bottomY + ((seed + i * 41) % Math.max(1, H - bottomY - 10)) + 5;
+    ctx.beginPath();
+    ctx.arc(p.x + (dx + 15) % PIPE_WIDTH, dy2, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Edge highlight
+  ctx.strokeStyle = 'rgba(129,140,248,0.15)';
+  ctx.lineWidth = 1;
+  // Top pipe bottom edge
+  ctx.beginPath();
+  ctx.moveTo(p.x, p.topH);
+  ctx.lineTo(p.x + PIPE_WIDTH, p.topH);
+  ctx.stroke();
+  // Bottom pipe top edge
+  ctx.beginPath();
+  ctx.moveTo(p.x, bottomY);
+  ctx.lineTo(p.x + PIPE_WIDTH, bottomY);
+  ctx.stroke();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function gameOver() {
+  gameState = 'over';
+  cancelAnimationFrame(animId);
+  playSound('crash');
+
+  let isNewBest = false;
+  if (score > bestScore) {
+    bestScore = score;
+    localStorage.setItem('flappyRocket_best', bestScore);
+    bestEl.textContent = bestScore;
+    isNewBest = true;
+    buildSkinRow(); // refresh unlocks
+  }
+
+  document.getElementById('overTitle').textContent = ft.game_over;
+  let scoreText = ft.final_score.replace('{score}', score).replace('{best}', bestScore);
+  if (isNewBest) scoreText += ' ' + ft.new_best;
+  document.getElementById('overScore').textContent = scoreText;
+  document.getElementById('retryBtn').textContent = ft.retry;
+  document.getElementById('shareBtn').textContent = ft.share;
+  overOverlay.classList.add('show');
+
+  // Draw final frame
+  draw(0);
+}
+
+function restart() {
+  overOverlay.classList.remove('show');
+  gameState = 'playing';
+  initGame();
+  rocket.vy = BOOST;
+  lastTime = performance.now();
+  playSound('boost');
+  loop();
+}
+
+// ── Input ──
+function handleTap(e) {
+  if (e) e.preventDefault();
+  if (gameState === 'over') return;
+  boost();
+}
+
+canvas.addEventListener('pointerdown', handleTap);
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.key === ' ') {
+    e.preventDefault();
+    if (gameState === 'over') return;
+    boost();
+  }
+});
+
+document.getElementById('startBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  boost();
+});
+document.getElementById('retryBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  restart();
+});
+document.getElementById('shareBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  PuzzleShare.showShareModal({
+    gameName: ft.title,
+    title: ft.title,
+    score: score,
+    lang: lang,
+  });
+});
+
+// ── Idle animation ──
+function idleDraw() {
+  if (gameState !== 'idle') return;
+  const dt = 1/60;
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fillRect(0, 0, W, H);
+  drawStarfield();
+
+  // Floating rocket
+  const t2 = performance.now() / 1000;
+  const iy = H / 2 + Math.sin(t2 * 2) * 15;
+  ctx.save();
+  ctx.translate(W / 3, iy);
+  ctx.rotate(Math.sin(t2 * 1.5) * 0.15);
+  ctx.font = '36px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = '#818cf8';
+  ctx.shadowBlur = 15;
+  ctx.fillText('\u{1F680}', 0, 0);
+  ctx.restore();
+
+  requestAnimationFrame(idleDraw);
+}
+
+// Init
+gameState = 'idle';
+initGame();
+idleDraw();
+
+})();
+</script>
+</body>
+</html>

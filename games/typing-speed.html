@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Typing Speed Test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif;background:#0a0a1a;color:#e2e8f0}
+body{display:flex;flex-direction:column;align-items:center}
+
+.ad-placeholder{width:100%;max-width:480px;height:50px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);font-size:12px;letter-spacing:1px;flex-shrink:0}
+.ad-top{border-radius:0 0 8px 8px}
+.ad-bottom{border-radius:8px 8px 0 0;margin-top:auto}
+
+.header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;flex-shrink:0}
+.back-link{color:#94a3b8;text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;transition:color .2s}
+.back-link:hover{color:#e2e8f0}
+.title{font-size:18px;font-weight:800;background:linear-gradient(135deg,#22d3ee,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.score-bar{width:100%;max-width:480px;display:flex;justify-content:space-around;padding:6px 16px;flex-shrink:0}
+.score-box{text-align:center}
+.score-label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.score-value{font-size:22px;font-weight:900;color:#f1f5f9;line-height:1.1}
+.score-value.wpm{color:#22d3ee}
+.score-value.acc{color:#a855f7}
+.score-value.best{color:#fbbf24}
+.score-value.time-val{color:#ec4899}
+
+.game-area{flex:1;display:flex;flex-direction:column;align-items:center;width:100%;max-width:480px;padding:8px 16px;min-height:0;overflow:hidden;position:relative}
+
+/* Mode select */
+.mode-select{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;height:100%;width:100%}
+.mode-select h2{font-size:24px;font-weight:900;background:linear-gradient(135deg,#22d3ee,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center}
+.mode-btn{width:100%;max-width:300px;padding:16px 24px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;color:#e2e8f0;font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;text-align:left;display:flex;align-items:center;gap:12px}
+.mode-btn:hover{background:rgba(255,255,255,.1);border-color:rgba(168,85,247,.4);transform:translateY(-2px);box-shadow:0 8px 24px rgba(168,85,247,.15)}
+.mode-btn:active{transform:scale(.97)}
+.mode-icon{font-size:28px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:rgba(168,85,247,.15);border-radius:10px}
+.mode-info{flex:1}
+.mode-info .mode-name{display:block;font-size:16px;font-weight:800}
+.mode-info .mode-desc{display:block;font-size:12px;color:#94a3b8;font-weight:400;margin-top:2px}
+.best-record{font-size:12px;color:#fbbf24;font-weight:600;margin-top:8px;text-align:center}
+
+/* Typing area */
+.typing-container{display:none;width:100%;flex:1;flex-direction:column;min-height:0}
+.typing-container.active{display:flex}
+
+.word-display{flex:1;display:flex;flex-wrap:wrap;align-content:flex-start;gap:8px 10px;padding:12px;background:rgba(255,255,255,.03);border-radius:14px;border:1px solid rgba(255,255,255,.06);overflow-y:auto;min-height:0;scrollbar-width:none;-ms-overflow-style:none}
+.word-display::-webkit-scrollbar{display:none}
+
+.word{font-size:18px;font-weight:600;color:#475569;transition:color .15s;line-height:1.4;letter-spacing:.5px;padding:2px 0}
+.word.current{color:#e2e8f0;position:relative}
+.word.current::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:linear-gradient(90deg,#22d3ee,#a855f7);border-radius:1px}
+.word.completed{color:#22c55e}
+.word.error{color:#ef4444}
+
+.word .char{transition:color .05s}
+.word .char.correct{color:#22c55e}
+.word .char.incorrect{color:#ef4444;text-decoration:underline}
+.word .char.cursor{border-left:2px solid #22d3ee;animation:blink 1s infinite;margin-left:-1px;padding-left:1px}
+
+@keyframes blink{0%,50%{border-color:#22d3ee}51%,100%{border-color:transparent}}
+
+/* Word rain canvas */
+#rainCanvas{display:none;width:100%;flex:1;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+#rainCanvas.active{display:block}
+
+.rain-lives{display:none;gap:6px;justify-content:center;padding:4px 0}
+.rain-lives.active{display:flex}
+.rain-heart{font-size:20px;transition:all .3s}
+.rain-heart.lost{opacity:.2;transform:scale(.7)}
+
+/* Input */
+.input-row{width:100%;padding:8px 0;flex-shrink:0}
+#typingInput{width:100%;padding:14px 16px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.1);border-radius:12px;color:#e2e8f0;font-family:'Outfit',sans-serif;font-size:18px;font-weight:600;outline:none;transition:border-color .2s;letter-spacing:.5px}
+#typingInput:focus{border-color:rgba(168,85,247,.5)}
+#typingInput::placeholder{color:#475569}
+
+/* Visual keyboard */
+.keyboard{width:100%;flex-shrink:0;padding:4px 0 2px;display:none}
+.keyboard.active{display:block}
+.kb-row{display:flex;justify-content:center;gap:3px;margin-bottom:3px}
+.kb-key{min-width:28px;height:34px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#64748b;transition:all .08s;text-transform:uppercase}
+.kb-key.pressed{background:rgba(168,85,247,.4);border-color:rgba(168,85,247,.6);color:#e2e8f0;transform:scale(.92);box-shadow:0 0 12px rgba(168,85,247,.3)}
+.kb-key.space{flex:1;max-width:180px}
+
+/* Overlay */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;visibility:hidden;transition:all .3s}
+.overlay.show{opacity:1;visibility:visible}
+.overlay-box{background:#1a1a2e;border-radius:20px;padding:32px;text-align:center;max-width:340px;width:90%;border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.overlay-box h2{font-size:28px;font-weight:900;margin-bottom:4px;background:linear-gradient(135deg,#22d3ee,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.overlay-box .rating{font-size:16px;color:#94a3b8;margin-bottom:12px}
+.overlay-box .final-score{font-size:56px;font-weight:900;color:#22d3ee;margin:8px 0}
+.overlay-box .final-score span{font-size:20px;color:#94a3b8;font-weight:600}
+.overlay-box .stats-row{display:flex;justify-content:space-around;margin:16px 0;padding:12px 0;border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06)}
+.overlay-box .stat{text-align:center}
+.overlay-box .stat-val{font-size:24px;font-weight:900;color:#f1f5f9}
+.overlay-box .stat-lbl{font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600}
+.overlay-box .best-label{font-size:14px;color:#fbbf24;margin-bottom:16px;font-weight:600}
+.overlay-box .btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn-primary{background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;border:none;padding:14px 32px;border-radius:12px;font-size:16px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px rgba(168,85,247,.4)}
+.btn-primary:hover{transform:scale(1.05)}
+.btn-primary:active{transform:scale(.97)}
+.btn-secondary{background:rgba(255,255,255,.08);color:#e2e8f0;border:1px solid rgba(255,255,255,.12);padding:14px 24px;border-radius:12px;font-size:16px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:transform .15s}
+.btn-secondary:hover{background:rgba(255,255,255,.12)}
+.btn-secondary:active{transform:scale(.97)}
+
+/* Countdown */
+.countdown-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:300;background:rgba(0,0,0,.5);opacity:0;visibility:hidden;transition:all .2s}
+.countdown-overlay.show{opacity:1;visibility:visible}
+.countdown-num{font-size:120px;font-weight:900;color:#22d3ee;text-shadow:0 0 60px rgba(34,211,238,.4);animation:countPop .5s ease-out}
+@keyframes countPop{0%{transform:scale(2);opacity:0}50%{transform:scale(.9);opacity:1}100%{transform:scale(1)}}
+
+@media(max-width:400px){
+  .word{font-size:16px}
+  .kb-key{min-width:24px;height:30px;font-size:10px}
+  .score-value{font-size:18px}
+}
+</style>
+</head>
+<body>
+
+<div class="ad-placeholder ad-top"><span data-i18n="ad_area">AD SPACE</span></div>
+
+<div class="header">
+  <a href="../index.html" class="back-link" id="backLink">← Back</a>
+  <div class="title" id="gameTitle">Typing Speed</div>
+</div>
+
+<div class="score-bar" id="scoreBar" style="display:none">
+  <div class="score-box"><div class="score-label" id="lblWpm">WPM</div><div class="score-value wpm" id="wpmDisplay">0</div></div>
+  <div class="score-box"><div class="score-label" id="lblAcc">ACC</div><div class="score-value acc" id="accDisplay">100%</div></div>
+  <div class="score-box"><div class="score-label" id="lblTime">TIME</div><div class="score-value time-val" id="timeDisplay">60</div></div>
+  <div class="score-box"><div class="score-label" id="lblBest">BEST</div><div class="score-value best" id="bestDisplay">0</div></div>
+</div>
+
+<div class="game-area" id="gameArea">
+  <!-- Mode select -->
+  <div class="mode-select" id="modeSelect">
+    <h2 id="selectTitle">Select Mode</h2>
+    <button class="mode-btn" onclick="game.startMode('30s')">
+      <div class="mode-icon">30</div>
+      <div class="mode-info"><span class="mode-name" id="mode30Name">30 Seconds</span><span class="mode-desc" id="mode30Desc">Quick speed burst</span></div>
+    </button>
+    <button class="mode-btn" onclick="game.startMode('60s')">
+      <div class="mode-icon">60</div>
+      <div class="mode-info"><span class="mode-name" id="mode60Name">60 Seconds</span><span class="mode-desc" id="mode60Desc">Standard typing test</span></div>
+    </button>
+    <button class="mode-btn" onclick="game.startMode('rain')">
+      <div class="mode-icon">&#9748;</div>
+      <div class="mode-info"><span class="mode-name" id="modeRainName">Word Rain</span><span class="mode-desc" id="modeRainDesc">Type falling words before they hit the ground!</span></div>
+    </button>
+    <div class="best-record" id="bestRecord"></div>
+  </div>
+
+  <!-- Typing game -->
+  <div class="typing-container" id="typingContainer">
+    <div class="word-display" id="wordDisplay"></div>
+    <canvas id="rainCanvas"></canvas>
+    <div class="rain-lives" id="rainLives">
+      <span class="rain-heart" id="heart0">&#10084;</span>
+      <span class="rain-heart" id="heart1">&#10084;</span>
+      <span class="rain-heart" id="heart2">&#10084;</span>
+    </div>
+    <div class="input-row">
+      <input type="text" id="typingInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="">
+    </div>
+  </div>
+</div>
+
+<div class="keyboard" id="keyboard"></div>
+
+<div class="ad-placeholder ad-bottom"><span data-i18n="ad_area">AD SPACE</span></div>
+
+<!-- Countdown -->
+<div class="countdown-overlay" id="countdownOverlay">
+  <div class="countdown-num" id="countdownNum">3</div>
+</div>
+
+<!-- Result overlay -->
+<div class="overlay" id="resultOverlay">
+  <div class="overlay-box">
+    <h2 id="resultTitle">Result</h2>
+    <div class="rating" id="resultRating"></div>
+    <div class="final-score" id="finalWpm">0 <span>WPM</span></div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val" id="finalAcc">0%</div><div class="stat-lbl" id="lblFinalAcc">Accuracy</div></div>
+      <div class="stat"><div class="stat-val" id="finalChars">0</div><div class="stat-lbl" id="lblFinalChars">Characters</div></div>
+      <div class="stat"><div class="stat-val" id="finalWords">0</div><div class="stat-lbl" id="lblFinalWords">Words</div></div>
+    </div>
+    <div class="best-label" id="bestLabel"></div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="game.backToMenu()" id="btnMenu">Menu</button>
+      <button class="btn-primary" onclick="game.retry()" id="btnRetry">Retry</button>
+    </div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+// ===== TRANSLATIONS =====
+const TYPING_I18N = {
+  ko: {
+    title: 'Typing Speed',
+    select_title: '모드 선택',
+    mode_30: '30초',
+    mode_30_desc: '빠른 스피드 버스트',
+    mode_60: '60초',
+    mode_60_desc: '표준 타이핑 테스트',
+    mode_rain: '워드 레인',
+    mode_rain_desc: '떨어지는 단어를 바닥에 닿기 전에 타이핑하세요!',
+    wpm: 'WPM',
+    acc: '정확도',
+    time: '시간',
+    best: '최고',
+    start_typing: '타이핑을 시작하세요...',
+    result: '결과',
+    accuracy: '정확도',
+    characters: '글자',
+    words: '단어',
+    menu: '메뉴',
+    retry: '다시하기',
+    new_best: '새 기록!',
+    best_wpm: '최고 기록: {wpm} WPM',
+    beginner: '초보자',
+    average: '평균',
+    fast: '빠름',
+    pro: '프로',
+    god: '타이핑 신',
+    rain_type: '단어를 입력하고 Enter',
+    game_over: '게임 오버',
+    words_cleared: '클리어한 단어',
+  },
+  en: {
+    title: 'Typing Speed',
+    select_title: 'Select Mode',
+    mode_30: '30 Seconds',
+    mode_30_desc: 'Quick speed burst',
+    mode_60: '60 Seconds',
+    mode_60_desc: 'Standard typing test',
+    mode_rain: 'Word Rain',
+    mode_rain_desc: 'Type falling words before they hit the ground!',
+    wpm: 'WPM',
+    acc: 'ACC',
+    time: 'TIME',
+    best: 'BEST',
+    start_typing: 'Start typing...',
+    result: 'Result',
+    accuracy: 'Accuracy',
+    characters: 'Characters',
+    words: 'Words',
+    menu: 'Menu',
+    retry: 'Retry',
+    new_best: 'New Best!',
+    best_wpm: 'Best: {wpm} WPM',
+    beginner: 'Beginner',
+    average: 'Average',
+    fast: 'Fast',
+    pro: 'Pro',
+    god: 'Typing God',
+    rain_type: 'Type word + Enter',
+    game_over: 'Game Over',
+    words_cleared: 'Words Cleared',
+  },
+  ja: {
+    title: 'Typing Speed',
+    select_title: 'モード選択',
+    mode_30: '30秒',
+    mode_30_desc: '短時間スピードバースト',
+    mode_60: '60秒',
+    mode_60_desc: 'スタンダードテスト',
+    mode_rain: 'ワードレイン',
+    mode_rain_desc: '落ちてくる単語を地面に着く前にタイプしよう！',
+    wpm: 'WPM',
+    acc: '精度',
+    time: '時間',
+    best: 'ベスト',
+    start_typing: 'タイピングを始めてください...',
+    result: '結果',
+    accuracy: '精度',
+    characters: '文字',
+    words: '単語',
+    menu: 'メニュー',
+    retry: 'リトライ',
+    new_best: '新記録！',
+    best_wpm: 'ベスト: {wpm} WPM',
+    beginner: '初心者',
+    average: '普通',
+    fast: '速い',
+    pro: 'プロ',
+    god: 'タイピングの神',
+    rain_type: '単語を入力してEnter',
+    game_over: 'ゲームオーバー',
+    words_cleared: 'クリアした単語',
+  },
+  zh: {
+    title: 'Typing Speed',
+    select_title: '选择模式',
+    mode_30: '30秒',
+    mode_30_desc: '快速冲刺',
+    mode_60: '60秒',
+    mode_60_desc: '标准打字测试',
+    mode_rain: '单词雨',
+    mode_rain_desc: '在单词落地前打出来！',
+    wpm: 'WPM',
+    acc: '准确率',
+    time: '时间',
+    best: '最佳',
+    start_typing: '开始输入...',
+    result: '结果',
+    accuracy: '准确率',
+    characters: '字符',
+    words: '单词',
+    menu: '菜单',
+    retry: '重试',
+    new_best: '新纪录！',
+    best_wpm: '最佳: {wpm} WPM',
+    beginner: '初学者',
+    average: '一般',
+    fast: '快速',
+    pro: '专业',
+    god: '打字之神',
+    rain_type: '输入单词并按Enter',
+    game_over: '游戏结束',
+    words_cleared: '消除的单词',
+  },
+  es: {
+    title: 'Typing Speed',
+    select_title: 'Elegir Modo',
+    mode_30: '30 Segundos',
+    mode_30_desc: 'Ráfaga de velocidad',
+    mode_60: '60 Segundos',
+    mode_60_desc: 'Prueba estándar',
+    mode_rain: 'Lluvia de Palabras',
+    mode_rain_desc: '¡Escribe las palabras antes de que toquen el suelo!',
+    wpm: 'PPM',
+    acc: 'PREC',
+    time: 'TIEMPO',
+    best: 'MEJOR',
+    start_typing: 'Empieza a escribir...',
+    result: 'Resultado',
+    accuracy: 'Precisión',
+    characters: 'Caracteres',
+    words: 'Palabras',
+    menu: 'Menú',
+    retry: 'Reintentar',
+    new_best: '¡Nuevo récord!',
+    best_wpm: 'Mejor: {wpm} PPM',
+    beginner: 'Principiante',
+    average: 'Promedio',
+    fast: 'Rápido',
+    pro: 'Pro',
+    god: 'Dios del Teclado',
+    rain_type: 'Escribe la palabra + Enter',
+    game_over: 'Fin del Juego',
+    words_cleared: 'Palabras Eliminadas',
+  }
+};
+
+function tt(key) {
+  const lang = getGameLang();
+  const dict = TYPING_I18N[lang] || TYPING_I18N.en;
+  return dict[key] || TYPING_I18N.en[key] || key;
+}
+
+// ===== WORD LIST (200+ common English words) =====
+const WORDS = [
+  'the','be','to','of','and','a','in','that','have','i','it','for','not','on','with','he','as','you',
+  'do','at','this','but','his','by','from','they','we','say','her','she','or','an','will','my','one',
+  'all','would','there','their','what','so','up','out','if','about','who','get','which','go','me',
+  'when','make','can','like','time','no','just','him','know','take','people','into','year','your',
+  'good','some','could','them','see','other','than','then','now','look','only','come','its','over',
+  'think','also','back','after','use','two','how','our','work','first','well','way','even','new',
+  'want','because','any','these','give','day','most','us','great','between','need','large','often',
+  'hand','high','place','hold','free','real','life','few','north','open','seem','together','next',
+  'white','begin','while','last','let','help','home','side','never','small','end','found','head',
+  'stand','own','page','should','door','long','ship','world','still','city','plan','group','case',
+  'keep','eye','fact','music','party','close','night','point','move','pay','power','play','part',
+  'house','number','school','write','under','water','room','mother','area','every','name','state',
+  'run','build','left','right','turn','light','read','change','earth','food','cover','story','call',
+  'child','early','line','body','three','word','short','form','much','follow','start','kind','hand',
+  'spell','air','away','animal','answer','learn','study','show','again','near','plant','below','hard',
+  'tree','cross','fire','rock','draw','paper','list','stop','watch','river','four','carry','far',
+  'ask','late','second','letter','table','north','blue','top','push','pull','color','face','book',
+  'south','east','west','warm','fast','five','step','six','cut','try','order','class','mile','pick',
+  'box','front','land','sun','check','fall','game','grow','fish','dark','talk','field','ready',
+  'round','test','main','girl','road','rain','best','cold','milk','egg','ride','care','voice',
+  'glad','snow','hear','town','less','done','idea','rest','unit','plain','star','hunt','drive','mark',
+  'love','note','farm','heart','team','match','system','reach','clear','type','speed','bright',
+  'program','simple','method','bring','meet','travel','final','result','basic','level','total'
+];
+
+// ===== WEB AUDIO SOUND ENGINE =====
+const AudioEngine = {
+  ctx: null,
+  init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  },
+  resume() {
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  _play(fn) {
+    this.init();
+    this.resume();
+    try { fn(this.ctx); } catch(e) {}
+  },
+  keystroke() {
+    this._play(ctx => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine';
+      o.frequency.setValueAtTime(800 + Math.random() * 200, ctx.currentTime);
+      g.gain.setValueAtTime(0.04, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.06);
+    });
+  },
+  wordComplete() {
+    this._play(ctx => {
+      [660, 880].forEach((f, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.06);
+        g.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.06);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.06 + 0.15);
+        o.start(ctx.currentTime + i * 0.06);
+        o.stop(ctx.currentTime + i * 0.06 + 0.15);
+      });
+    });
+  },
+  error() {
+    this._play(ctx => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(200, ctx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.15);
+      g.gain.setValueAtTime(0.06, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.15);
+    });
+  },
+  rainCatch() {
+    this._play(ctx => {
+      [523, 659, 784].forEach((f, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.05);
+        g.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.05);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.05 + 0.2);
+        o.start(ctx.currentTime + i * 0.05);
+        o.stop(ctx.currentTime + i * 0.05 + 0.2);
+      });
+    });
+  },
+  gameOver() {
+    this._play(ctx => {
+      [400, 350, 300, 200].forEach((f, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.15);
+        g.gain.setValueAtTime(0.06, ctx.currentTime + i * 0.15);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.3);
+        o.start(ctx.currentTime + i * 0.15);
+        o.stop(ctx.currentTime + i * 0.15 + 0.3);
+      });
+    });
+  }
+};
+
+// ===== BUILD VISUAL KEYBOARD =====
+function buildKeyboard() {
+  const rows = [
+    ['q','w','e','r','t','y','u','i','o','p'],
+    ['a','s','d','f','g','h','j','k','l'],
+    ['z','x','c','v','b','n','m']
+  ];
+  const kb = document.getElementById('keyboard');
+  rows.forEach(row => {
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'kb-row';
+    row.forEach(k => {
+      const key = document.createElement('div');
+      key.className = 'kb-key';
+      key.dataset.key = k;
+      key.textContent = k;
+      rowDiv.appendChild(key);
+    });
+    kb.appendChild(rowDiv);
+  });
+  // space row
+  const spaceRow = document.createElement('div');
+  spaceRow.className = 'kb-row';
+  const spaceKey = document.createElement('div');
+  spaceKey.className = 'kb-key space';
+  spaceKey.dataset.key = ' ';
+  spaceKey.textContent = '___';
+  spaceRow.appendChild(spaceKey);
+  kb.appendChild(spaceRow);
+}
+buildKeyboard();
+
+function highlightKey(key) {
+  const el = document.querySelector(`.kb-key[data-key="${key.toLowerCase()}"]`);
+  if (!el) return;
+  el.classList.add('pressed');
+  setTimeout(() => el.classList.remove('pressed'), 120);
+}
+
+// ===== GAME =====
+const game = {
+  mode: null,         // '30s', '60s', 'rain'
+  words: [],
+  wordIndex: 0,
+  charIndex: 0,
+  totalCharsTyped: 0,
+  correctChars: 0,
+  completedWords: 0,
+  timeLeft: 60,
+  totalTime: 60,
+  timer: null,
+  started: false,
+  finished: false,
+
+  // Rain mode
+  rainWords: [],
+  rainLives: 3,
+  rainSpeed: 1,
+  rainSpawnRate: 2000,
+  rainTimer: null,
+  rainAnimFrame: null,
+  rainScore: 0,
+  rainStartTime: 0,
+  rainCanvas: null,
+  rainCtx: null,
+
+  init() {
+    this.applyTranslations();
+    this.loadBests();
+    document.getElementById('typingInput').addEventListener('input', (e) => this.onInput(e));
+    document.getElementById('typingInput').addEventListener('keydown', (e) => this.onKeydown(e));
+    // Keep input focused on mobile
+    document.addEventListener('click', () => {
+      if (this.started && !this.finished) {
+        document.getElementById('typingInput').focus();
+      }
+    });
+  },
+
+  applyTranslations() {
+    const t = getTranslations();
+    document.getElementById('backLink').textContent = t.back || '← Back';
+    document.getElementById('gameTitle').textContent = tt('title');
+    document.getElementById('selectTitle').textContent = tt('select_title');
+    document.getElementById('mode30Name').textContent = tt('mode_30');
+    document.getElementById('mode30Desc').textContent = tt('mode_30_desc');
+    document.getElementById('mode60Name').textContent = tt('mode_60');
+    document.getElementById('mode60Desc').textContent = tt('mode_60_desc');
+    document.getElementById('modeRainName').textContent = tt('mode_rain');
+    document.getElementById('modeRainDesc').textContent = tt('mode_rain_desc');
+    document.getElementById('lblWpm').textContent = tt('wpm');
+    document.getElementById('lblAcc').textContent = tt('acc');
+    document.getElementById('lblTime').textContent = tt('time');
+    document.getElementById('lblBest').textContent = tt('best');
+    document.getElementById('btnMenu').textContent = tt('menu');
+    document.getElementById('btnRetry').textContent = tt('retry');
+    document.getElementById('resultTitle').textContent = tt('result');
+    document.getElementById('lblFinalAcc').textContent = tt('accuracy');
+    document.getElementById('lblFinalChars').textContent = tt('characters');
+    document.getElementById('lblFinalWords').textContent = tt('words');
+  },
+
+  loadBests() {
+    const b30 = localStorage.getItem('typing_best_30s') || 0;
+    const b60 = localStorage.getItem('typing_best_60s') || 0;
+    const bRain = localStorage.getItem('typing_best_rain') || 0;
+    const parts = [];
+    if (+b30) parts.push(`30s: ${b30} WPM`);
+    if (+b60) parts.push(`60s: ${b60} WPM`);
+    if (+bRain) parts.push(`Rain: ${bRain} WPM`);
+    document.getElementById('bestRecord').textContent = parts.length ? parts.join(' | ') : '';
+  },
+
+  getBest(mode) {
+    return +(localStorage.getItem(`typing_best_${mode}`) || 0);
+  },
+
+  saveBest(mode, wpm) {
+    const prev = this.getBest(mode);
+    if (wpm > prev) {
+      localStorage.setItem(`typing_best_${mode}`, wpm);
+      return true;
+    }
+    return false;
+  },
+
+  generateWords(count) {
+    const result = [];
+    for (let i = 0; i < count; i++) {
+      result.push(WORDS[Math.floor(Math.random() * WORDS.length)]);
+    }
+    return result;
+  },
+
+  async startMode(mode) {
+    AudioEngine.init();
+    this.mode = mode;
+    this.finished = false;
+    this.started = false;
+    this.wordIndex = 0;
+    this.charIndex = 0;
+    this.totalCharsTyped = 0;
+    this.correctChars = 0;
+    this.completedWords = 0;
+
+    document.getElementById('modeSelect').style.display = 'none';
+    document.getElementById('typingContainer').classList.add('active');
+    document.getElementById('scoreBar').style.display = 'flex';
+
+    // Show keyboard on desktop
+    if (window.innerWidth > 600) {
+      document.getElementById('keyboard').classList.add('active');
+    }
+
+    const input = document.getElementById('typingInput');
+
+    if (mode === '30s' || mode === '60s') {
+      this.totalTime = mode === '30s' ? 30 : 60;
+      this.timeLeft = this.totalTime;
+      this.words = this.generateWords(300);
+      document.getElementById('wordDisplay').style.display = 'flex';
+      document.getElementById('rainCanvas').classList.remove('active');
+      document.getElementById('rainLives').classList.remove('active');
+      document.getElementById('timeDisplay').textContent = this.timeLeft;
+      document.getElementById('bestDisplay').textContent = this.getBest(mode);
+      input.placeholder = tt('start_typing');
+      this.renderWords();
+      await this.countdown();
+      this.started = true;
+      input.value = '';
+      input.focus();
+      this.startTimer();
+    } else {
+      // Rain mode
+      this.rainWords = [];
+      this.rainLives = 3;
+      this.rainSpeed = 0.5;
+      this.rainSpawnRate = 2200;
+      this.rainScore = 0;
+      this.totalCharsTyped = 0;
+      this.correctChars = 0;
+      document.getElementById('wordDisplay').style.display = 'none';
+      document.getElementById('rainCanvas').classList.add('active');
+      document.getElementById('rainLives').classList.add('active');
+      document.getElementById('timeDisplay').textContent = '-';
+      document.getElementById('bestDisplay').textContent = this.getBest('rain');
+      input.placeholder = tt('rain_type');
+      for (let i = 0; i < 3; i++) {
+        document.getElementById('heart' + i).classList.remove('lost');
+      }
+      this.setupRainCanvas();
+      await this.countdown();
+      this.started = true;
+      this.rainStartTime = Date.now();
+      input.value = '';
+      input.focus();
+      this.startRain();
+    }
+  },
+
+  countdown() {
+    return new Promise(resolve => {
+      const overlay = document.getElementById('countdownOverlay');
+      const num = document.getElementById('countdownNum');
+      overlay.classList.add('show');
+      let count = 3;
+      num.textContent = count;
+
+      const tick = () => {
+        if (count <= 0) {
+          overlay.classList.remove('show');
+          resolve();
+          return;
+        }
+        num.textContent = count;
+        num.style.animation = 'none';
+        void num.offsetWidth;
+        num.style.animation = 'countPop .5s ease-out';
+        count--;
+        setTimeout(tick, 700);
+      };
+      tick();
+    });
+  },
+
+  renderWords() {
+    const display = document.getElementById('wordDisplay');
+    display.innerHTML = '';
+    // Render a window of words around current index
+    const start = Math.max(0, this.wordIndex - 5);
+    const end = Math.min(this.words.length, this.wordIndex + 60);
+    for (let i = start; i < end; i++) {
+      const span = document.createElement('span');
+      span.className = 'word';
+      if (i < this.wordIndex) {
+        span.classList.add('completed');
+        span.textContent = this.words[i];
+      } else if (i === this.wordIndex) {
+        span.classList.add('current');
+        // Render char by char
+        const word = this.words[i];
+        for (let c = 0; c < word.length; c++) {
+          const ch = document.createElement('span');
+          ch.className = 'char';
+          if (c < this.charIndex) {
+            const input = document.getElementById('typingInput');
+            const typed = input.value[c];
+            if (typed === word[c]) {
+              ch.classList.add('correct');
+            } else {
+              ch.classList.add('incorrect');
+            }
+          } else if (c === this.charIndex) {
+            ch.classList.add('cursor');
+          }
+          ch.textContent = word[c];
+          span.appendChild(ch);
+        }
+      } else {
+        span.textContent = this.words[i];
+      }
+      display.appendChild(span);
+    }
+    // Scroll current word into view
+    const cur = display.querySelector('.word.current');
+    if (cur) cur.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  },
+
+  startTimer() {
+    this.timer = setInterval(() => {
+      this.timeLeft--;
+      document.getElementById('timeDisplay').textContent = this.timeLeft;
+      this.updateWpm();
+      if (this.timeLeft <= 0) {
+        this.endGame();
+      }
+    }, 1000);
+  },
+
+  updateWpm() {
+    const elapsed = this.totalTime - this.timeLeft;
+    if (elapsed <= 0) {
+      document.getElementById('wpmDisplay').textContent = '0';
+      document.getElementById('accDisplay').textContent = '100%';
+      return;
+    }
+    const wpm = Math.round((this.correctChars / 5) / (elapsed / 60));
+    const acc = this.totalCharsTyped > 0 ? Math.round((this.correctChars / this.totalCharsTyped) * 100) : 100;
+    document.getElementById('wpmDisplay').textContent = wpm || 0;
+    document.getElementById('accDisplay').textContent = acc + '%';
+  },
+
+  onInput(e) {
+    if (!this.started || this.finished) return;
+    AudioEngine.keystroke();
+
+    if (this.mode === 'rain') {
+      // Rain mode: just let them type
+      highlightKey(e.data || '');
+      return;
+    }
+
+    const input = document.getElementById('typingInput');
+    const val = input.value;
+    const word = this.words[this.wordIndex];
+
+    highlightKey(val[val.length - 1] || '');
+
+    this.charIndex = val.length;
+    this.renderWords();
+  },
+
+  onKeydown(e) {
+    if (!this.started || this.finished) return;
+
+    if (this.mode === 'rain') {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.checkRainWord();
+      }
+      if (e.key === ' ') highlightKey(' ');
+      return;
+    }
+
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      const input = document.getElementById('typingInput');
+      const val = input.value.trim();
+      const word = this.words[this.wordIndex];
+
+      // Count chars
+      for (let i = 0; i < Math.max(val.length, word.length); i++) {
+        this.totalCharsTyped++;
+        if (i < val.length && i < word.length && val[i] === word[i]) {
+          this.correctChars++;
+        }
+      }
+
+      if (val === word) {
+        AudioEngine.wordComplete();
+      } else {
+        AudioEngine.error();
+      }
+
+      this.completedWords++;
+      this.wordIndex++;
+      this.charIndex = 0;
+      input.value = '';
+      this.renderWords();
+      this.updateWpm();
+      highlightKey(' ');
+    }
+  },
+
+  endGame() {
+    this.finished = true;
+    this.started = false;
+    clearInterval(this.timer);
+    AudioEngine.gameOver();
+
+    const elapsed = this.totalTime;
+    const wpm = Math.round((this.correctChars / 5) / (elapsed / 60)) || 0;
+    const acc = this.totalCharsTyped > 0 ? Math.round((this.correctChars / this.totalCharsTyped) * 100) : 0;
+    const isNew = this.saveBest(this.mode, wpm);
+
+    this.showResult(wpm, acc, this.totalCharsTyped, this.completedWords, isNew);
+  },
+
+  getRating(wpm) {
+    if (wpm >= 90) return tt('god');
+    if (wpm >= 70) return tt('pro');
+    if (wpm >= 50) return tt('fast');
+    if (wpm >= 30) return tt('average');
+    return tt('beginner');
+  },
+
+  showResult(wpm, acc, chars, words, isNewBest) {
+    document.getElementById('finalWpm').innerHTML = `${wpm} <span>WPM</span>`;
+    document.getElementById('finalAcc').textContent = acc + '%';
+    document.getElementById('finalChars').textContent = chars;
+    document.getElementById('finalWords').textContent = words;
+    document.getElementById('resultRating').textContent = this.getRating(wpm);
+    document.getElementById('bestLabel').textContent = isNewBest ? tt('new_best') : tt('best_wpm').replace('{wpm}', this.getBest(this.mode));
+    if (isNewBest) document.getElementById('bestLabel').style.color = '#22d3ee';
+    else document.getElementById('bestLabel').style.color = '#fbbf24';
+
+    // Update overlay title for rain mode
+    if (this.mode === 'rain') {
+      document.getElementById('lblFinalWords').textContent = tt('words_cleared');
+    } else {
+      document.getElementById('lblFinalWords').textContent = tt('words');
+    }
+
+    document.getElementById('resultOverlay').classList.add('show');
+
+    // Share
+    if (typeof PuzzleShare !== 'undefined' && PuzzleShare.showShareModal) {
+      setTimeout(() => {
+        PuzzleShare.showShareModal({
+          game: 'Typing Speed Test',
+          score: wpm,
+          label: 'WPM',
+          rating: this.getRating(wpm),
+          extra: `${acc}% accuracy`
+        });
+      }, 600);
+    }
+  },
+
+  retry() {
+    document.getElementById('resultOverlay').classList.remove('show');
+    this.startMode(this.mode);
+  },
+
+  backToMenu() {
+    document.getElementById('resultOverlay').classList.remove('show');
+    document.getElementById('typingContainer').classList.remove('active');
+    document.getElementById('scoreBar').style.display = 'none';
+    document.getElementById('keyboard').classList.remove('active');
+    document.getElementById('modeSelect').style.display = 'flex';
+    document.getElementById('rainCanvas').classList.remove('active');
+    document.getElementById('rainLives').classList.remove('active');
+    clearInterval(this.timer);
+    clearInterval(this.rainTimer);
+    cancelAnimationFrame(this.rainAnimFrame);
+    this.started = false;
+    this.finished = false;
+    this.loadBests();
+  },
+
+  // ===== RAIN MODE =====
+  setupRainCanvas() {
+    const canvas = document.getElementById('rainCanvas');
+    const container = document.getElementById('typingContainer');
+    this.rainCanvas = canvas;
+    this.rainCtx = canvas.getContext('2d');
+
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * devicePixelRatio;
+      canvas.height = rect.height * devicePixelRatio;
+      this.rainCtx.scale(devicePixelRatio, devicePixelRatio);
+    };
+    resize();
+    this._rainResize = resize;
+    window.addEventListener('resize', resize);
+  },
+
+  startRain() {
+    this.rainWords = [];
+    this.spawnRainWord();
+    this.rainTimer = setInterval(() => {
+      this.spawnRainWord();
+      // Increase difficulty
+      this.rainSpeed += 0.02;
+      if (this.rainSpawnRate > 800) this.rainSpawnRate -= 30;
+      clearInterval(this.rainTimer);
+      this.rainTimer = setInterval(() => this.spawnRainWord(), this.rainSpawnRate);
+    }, this.rainSpawnRate);
+
+    const animate = () => {
+      if (this.finished) return;
+      this.updateRain();
+      this.drawRain();
+      this.rainAnimFrame = requestAnimationFrame(animate);
+    };
+    animate();
+  },
+
+  spawnRainWord() {
+    if (this.finished) return;
+    const canvas = this.rainCanvas;
+    const w = canvas.getBoundingClientRect().width;
+    const word = WORDS[Math.floor(Math.random() * WORDS.length)];
+    const x = 20 + Math.random() * (w - 80);
+    this.rainWords.push({
+      text: word,
+      x: x,
+      y: -10,
+      speed: this.rainSpeed + Math.random() * 0.3,
+      alpha: 1
+    });
+  },
+
+  updateRain() {
+    const h = this.rainCanvas.getBoundingClientRect().height;
+    const elapsed = (Date.now() - this.rainStartTime) / 1000;
+    document.getElementById('timeDisplay').textContent = Math.floor(elapsed);
+
+    // Update WPM for rain
+    if (elapsed > 0) {
+      const wpm = Math.round((this.correctChars / 5) / (elapsed / 60)) || 0;
+      const acc = this.totalCharsTyped > 0 ? Math.round((this.correctChars / this.totalCharsTyped) * 100) : 100;
+      document.getElementById('wpmDisplay').textContent = wpm;
+      document.getElementById('accDisplay').textContent = acc + '%';
+    }
+
+    for (let i = this.rainWords.length - 1; i >= 0; i--) {
+      const rw = this.rainWords[i];
+      rw.y += rw.speed;
+      if (rw.y > h - 10) {
+        // Missed
+        this.rainWords.splice(i, 1);
+        this.rainLives--;
+        AudioEngine.error();
+        // Update hearts display
+        for (let j = 0; j < 3; j++) {
+          if (j >= this.rainLives) document.getElementById('heart' + (2 - j)).classList.add('lost');
+        }
+        if (this.rainLives <= 0) {
+          this.endRain();
+          return;
+        }
+      }
+    }
+  },
+
+  drawRain() {
+    const canvas = this.rainCanvas;
+    const ctx = this.rainCtx;
+    const w = canvas.getBoundingClientRect().width;
+    const h = canvas.getBoundingClientRect().height;
+    ctx.clearRect(0, 0, w, h);
+
+    // Draw ground line
+    ctx.strokeStyle = 'rgba(239,68,68,0.3)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(0, h - 6);
+    ctx.lineTo(w, h - 6);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Draw words
+    const input = document.getElementById('typingInput').value.trim().toLowerCase();
+    ctx.font = '700 16px Outfit, sans-serif';
+    ctx.textBaseline = 'middle';
+
+    this.rainWords.forEach(rw => {
+      const isTarget = rw.text.startsWith(input) && input.length > 0;
+      if (isTarget) {
+        // Highlight matching
+        ctx.fillStyle = '#22c55e';
+        ctx.fillText(rw.text.substring(0, input.length), rw.x, rw.y);
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillText(rw.text.substring(input.length), rw.x + ctx.measureText(rw.text.substring(0, input.length)).width, rw.y);
+        // Glow
+        ctx.shadowColor = '#22c55e';
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+      } else {
+        // Urgency coloring based on y position
+        const pct = rw.y / h;
+        if (pct > 0.75) ctx.fillStyle = '#ef4444';
+        else if (pct > 0.5) ctx.fillStyle = '#fbbf24';
+        else ctx.fillStyle = '#e2e8f0';
+        ctx.fillText(rw.text, rw.x, rw.y);
+      }
+    });
+  },
+
+  checkRainWord() {
+    const input = document.getElementById('typingInput');
+    const val = input.value.trim().toLowerCase();
+    if (!val) return;
+
+    this.totalCharsTyped += val.length;
+
+    // Find matching word (closest to bottom = most urgent)
+    let matchIdx = -1;
+    let bestY = -1;
+    for (let i = 0; i < this.rainWords.length; i++) {
+      if (this.rainWords[i].text === val && this.rainWords[i].y > bestY) {
+        matchIdx = i;
+        bestY = this.rainWords[i].y;
+      }
+    }
+
+    if (matchIdx >= 0) {
+      this.correctChars += val.length;
+      this.completedWords++;
+      this.rainScore++;
+      AudioEngine.rainCatch();
+      this.rainWords.splice(matchIdx, 1);
+    } else {
+      AudioEngine.error();
+    }
+
+    input.value = '';
+  },
+
+  endRain() {
+    this.finished = true;
+    this.started = false;
+    clearInterval(this.rainTimer);
+    cancelAnimationFrame(this.rainAnimFrame);
+    AudioEngine.gameOver();
+
+    const elapsed = (Date.now() - this.rainStartTime) / 1000;
+    const wpm = elapsed > 0 ? Math.round((this.correctChars / 5) / (elapsed / 60)) : 0;
+    const acc = this.totalCharsTyped > 0 ? Math.round((this.correctChars / this.totalCharsTyped) * 100) : 0;
+    const isNew = this.saveBest('rain', wpm);
+    this.showResult(wpm, acc, this.totalCharsTyped, this.completedWords, isNew);
+  },
+};
+
+// Init
+game.init();
+</script>
+</body>
+</html>

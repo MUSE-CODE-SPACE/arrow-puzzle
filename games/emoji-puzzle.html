@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Emoji Puzzle - Guess the Answer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif;background:#0a0a1a;color:#e2e8f0}
+body{display:flex;flex-direction:column;align-items:center}
+
+.ad-placeholder{width:100%;max-width:480px;height:50px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);font-size:12px;letter-spacing:1px;flex-shrink:0}
+.ad-top{border-radius:0 0 8px 8px}
+.ad-bottom{border-radius:8px 8px 0 0;margin-top:auto}
+
+.header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;flex-shrink:0}
+.back-link{color:#94a3b8;text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;transition:color .2s}
+.back-link:hover{color:#e2e8f0}
+.title{font-size:18px;font-weight:800;background:linear-gradient(135deg,#ec4899,#a855f7,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.score-bar{width:100%;max-width:480px;display:flex;justify-content:space-around;padding:6px 16px;flex-shrink:0}
+.score-box{text-align:center}
+.score-label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.score-value{font-size:22px;font-weight:900;color:#f1f5f9;line-height:1.1}
+.score-value.streak{color:#fbbf24}
+.score-value.best{color:#a855f7}
+.score-value.acc{color:#34d399}
+
+.timer-wrap{width:100%;max-width:480px;padding:0 16px;flex-shrink:0;margin:4px 0}
+.timer-bar-bg{width:100%;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;position:relative}
+.timer-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#a855f7,#ec4899);transition:width .1s linear;width:100%}
+.timer-bar-fill.urgent{background:linear-gradient(90deg,#ef4444,#f97316);animation:timerPulse .5s ease-in-out infinite}
+@keyframes timerPulse{0%,100%{opacity:1}50%{opacity:.6}}
+.timer-text{text-align:center;font-size:14px;font-weight:700;color:#94a3b8;margin-top:2px}
+.timer-text.urgent{color:#ef4444;animation:timerPulse .5s ease-in-out infinite}
+
+.progress-wrap{width:100%;max-width:480px;padding:0 16px;flex-shrink:0;margin:2px 0}
+.progress-bar-bg{width:100%;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#3b82f6,#a855f7);transition:width .3s ease;width:0%}
+.progress-text{text-align:center;font-size:12px;color:#64748b;font-weight:600;margin-top:2px}
+
+.game-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:480px;padding:8px 16px;min-height:0;gap:10px}
+
+.emoji-box{width:100%;background:rgba(255,255,255,.04);border-radius:20px;border:1px solid rgba(255,255,255,.08);padding:24px 16px;text-align:center;position:relative;overflow:hidden}
+.emoji-box::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(168,85,247,.05),rgba(59,130,246,.05));pointer-events:none}
+.emoji-display{font-size:4.5rem;line-height:1.3;display:inline-block;position:relative;z-index:1}
+.emoji-display.reveal{animation:emojiBounce .6s ease-out}
+.emoji-display.correct-bounce{animation:correctBounce .5s ease-out}
+.emoji-display.wrong-shake{animation:wrongShake .4s ease-out}
+@keyframes emojiBounce{0%{transform:scale(0) rotate(-10deg);opacity:0}50%{transform:scale(1.15) rotate(3deg);opacity:1}70%{transform:scale(.95) rotate(-1deg)}100%{transform:scale(1) rotate(0deg);opacity:1}}
+@keyframes correctBounce{0%{transform:scale(1)}30%{transform:scale(1.25)}60%{transform:scale(.95)}100%{transform:scale(1)}}
+@keyframes wrongShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+
+.category-badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;position:relative;z-index:1}
+.cat-movies{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+.cat-food{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.2)}
+.cat-animals{background:rgba(52,211,153,.15);color:#34d399;border:1px solid rgba(52,211,153,.2)}
+.cat-places{background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.2)}
+.cat-concepts{background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.2)}
+
+.hint-row{width:100%;display:flex;justify-content:center}
+.hint-btn{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);color:#fbbf24;padding:8px 20px;border-radius:10px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .15s}
+.hint-btn:hover{background:rgba(251,191,36,.2)}
+.hint-btn:active{transform:scale(.95)}
+.hint-btn:disabled{opacity:.3;cursor:default;pointer-events:none}
+
+.answers-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.answer-btn{background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.1);border-radius:14px;padding:14px 8px;font-size:15px;font-weight:700;font-family:'Outfit',sans-serif;color:#e2e8f0;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;min-height:52px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.2}
+.answer-btn:hover{background:rgba(168,85,247,.15);border-color:rgba(168,85,247,.4)}
+.answer-btn:active{transform:scale(.95)}
+.answer-btn.correct{background:rgba(34,197,94,.2);border-color:#22c55e;color:#22c55e;animation:btnPop .3s ease-out}
+.answer-btn.wrong{background:rgba(239,68,68,.15);border-color:#ef4444;color:#ef4444;animation:btnShake .3s ease-out}
+.answer-btn.reveal-correct{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.5);color:#22c55e}
+.answer-btn.hint-eliminated{opacity:.2;pointer-events:none;border-color:rgba(255,255,255,.03)}
+.answer-btn:disabled{cursor:default;pointer-events:none}
+@keyframes btnPop{0%{transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes btnShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+.streak-display{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:100;opacity:0;font-weight:900;text-align:center;white-space:nowrap}
+.streak-display.show{animation:streakIn .7s ease-out forwards}
+@keyframes streakIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}30%{transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-55%) scale(1.1)}}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;visibility:hidden;transition:all .3s}
+.overlay.show{opacity:1;visibility:visible}
+.overlay-box{background:#1a1a2e;border-radius:20px;padding:32px;text-align:center;max-width:360px;width:90%;border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto}
+.overlay-box h2{font-size:28px;font-weight:900;margin-bottom:4px;background:linear-gradient(135deg,#ec4899,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.overlay-box .subtitle{font-size:14px;color:#94a3b8;margin-bottom:20px}
+.overlay-box .final-score{font-size:56px;font-weight:900;color:#fbbf24;margin:8px 0;text-shadow:0 0 30px rgba(251,191,36,.3)}
+.overlay-box .stat-row{display:flex;justify-content:space-around;margin:16px 0;gap:8px}
+.overlay-box .stat-item{text-align:center}
+.overlay-box .stat-val{font-size:22px;font-weight:800;color:#f1f5f9}
+.overlay-box .stat-lbl{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase}
+.overlay-box .best-label{font-size:14px;color:#a855f7;margin-bottom:16px;font-weight:600}
+
+.mode-buttons{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.mode-btn{background:linear-gradient(135deg,rgba(168,85,247,.2),rgba(236,72,153,.2));border:1px solid rgba(168,85,247,.3);color:#e2e8f0;padding:14px 20px;border-radius:12px;font-size:15px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .15s;text-align:left;display:flex;justify-content:space-between;align-items:center}
+.mode-btn:hover{background:linear-gradient(135deg,rgba(168,85,247,.3),rgba(236,72,153,.3));transform:translateY(-1px)}
+.mode-btn:active{transform:scale(.98)}
+.mode-btn .mode-desc{font-size:12px;color:#94a3b8;font-weight:600}
+
+.primary-btn{background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;border:none;padding:14px 40px;border-radius:12px;font-size:16px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px rgba(168,85,247,.4);margin-top:8px}
+.primary-btn:hover{transform:scale(1.05)}
+.primary-btn:active{transform:scale(.97)}
+
+.share-btn{background:transparent;border:1px solid rgba(255,255,255,.15);color:#94a3b8;padding:10px 24px;border-radius:10px;font-size:14px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;margin-top:6px;transition:all .15s}
+.share-btn:hover{border-color:rgba(255,255,255,.3);color:#e2e8f0}
+
+/* Confetti canvas */
+#confettiCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:150}
+
+@media(max-width:380px){
+  .emoji-display{font-size:3.5rem}
+  .answer-btn{font-size:13px;padding:12px 6px}
+  .overlay-box{padding:24px 18px}
+}
+@media(min-width:480px){
+  .emoji-display{font-size:5rem}
+}
+</style>
+</head>
+<body>
+
+<canvas id="confettiCanvas"></canvas>
+
+<div class="ad-placeholder ad-top"><span data-i18n="ad_area">AD SPACE</span></div>
+
+<div class="header">
+  <a class="back-link" href="../index.html" data-i18n="back"></a>
+  <div class="title" id="gameTitle"></div>
+</div>
+
+<div class="score-bar" id="scoreBar">
+  <div class="score-box"><div class="score-label" data-i18n="score"></div><div class="score-value" id="scoreDisplay">0</div></div>
+  <div class="score-box"><div class="score-label" id="streakLabel"></div><div class="score-value streak" id="streakDisplay">0</div></div>
+  <div class="score-box"><div class="score-label" id="accuracyLabel"></div><div class="score-value acc" id="accuracyDisplay">0%</div></div>
+  <div class="score-box" id="bestBox"><div class="score-label" data-i18n="best"></div><div class="score-value best" id="bestDisplay">0</div></div>
+</div>
+
+<div class="timer-wrap" id="timerWrap" style="display:none">
+  <div class="timer-bar-bg"><div class="timer-bar-fill" id="timerFill"></div></div>
+  <div class="timer-text" id="timerText">30s</div>
+</div>
+
+<div class="progress-wrap" id="progressWrap" style="display:none">
+  <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+  <div class="progress-text" id="progressText"></div>
+</div>
+
+<div class="game-area">
+  <div class="emoji-box">
+    <div class="category-badge" id="categoryBadge"></div>
+    <div class="emoji-display" id="emojiDisplay"></div>
+  </div>
+  <div class="hint-row">
+    <button class="hint-btn" id="hintBtn" onclick="useHint()"></button>
+  </div>
+  <div class="answers-grid" id="answersGrid">
+    <button class="answer-btn" id="ans0"></button>
+    <button class="answer-btn" id="ans1"></button>
+    <button class="answer-btn" id="ans2"></button>
+    <button class="answer-btn" id="ans3"></button>
+  </div>
+</div>
+
+<div class="ad-placeholder ad-bottom"><span data-i18n="ad_area">AD SPACE</span></div>
+
+<!-- Streak popup -->
+<div class="streak-display" id="streakPopup"></div>
+
+<!-- Mode Select Overlay -->
+<div class="overlay show" id="modeOverlay">
+  <div class="overlay-box">
+    <h2 id="modeTitle"></h2>
+    <div class="subtitle" id="modeSubtitle"></div>
+    <div class="mode-buttons">
+      <button class="mode-btn" onclick="startGame('story')">
+        <span id="modeStoryLabel"></span>
+        <span class="mode-desc" id="modeStoryDesc"></span>
+      </button>
+      <button class="mode-btn" onclick="startGame('speed')">
+        <span id="modeSpeedLabel"></span>
+        <span class="mode-desc" id="modeSpeedDesc"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Result Overlay -->
+<div class="overlay" id="resultOverlay">
+  <div class="overlay-box">
+    <h2 id="resultTitle"></h2>
+    <div class="final-score" id="resultScore"></div>
+    <div class="stat-row">
+      <div class="stat-item"><div class="stat-val" id="resultCorrect">0</div><div class="stat-lbl" id="resultCorrectLabel"></div></div>
+      <div class="stat-item"><div class="stat-val" id="resultAccuracy">0%</div><div class="stat-lbl" id="resultAccuracyLabel"></div></div>
+      <div class="stat-item"><div class="stat-val" id="resultStreak">0</div><div class="stat-lbl" id="resultStreakLabel"></div></div>
+    </div>
+    <div class="best-label" id="resultBest"></div>
+    <button class="primary-btn" onclick="showModeSelect()" id="resultPlayAgain"></button>
+    <br>
+    <button class="share-btn" onclick="shareResult()" id="resultShare"></button>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+'use strict';
+
+// ===== PUZZLE DATA (40+ puzzles with 5-language answers) =====
+const PUZZLES = [
+  // --- Movies ---
+  { emoji:'👸❄️', cat:'movies', ko:'겨울왕국', en:'Frozen', ja:'アナと雪の女王', zh:'冰雪奇缘', es:'Frozen' },
+  { emoji:'🦁👑', cat:'movies', ko:'라이온 킹', en:'Lion King', ja:'ライオンキング', zh:'狮子王', es:'El Rey Leon' },
+  { emoji:'🕷️🕸️🧑', cat:'movies', ko:'스파이더맨', en:'Spider-Man', ja:'スパイダーマン', zh:'蜘蛛侠', es:'Spider-Man' },
+  { emoji:'🧙‍♂️💍', cat:'movies', ko:'반지의 제왕', en:'Lord of the Rings', ja:'ロード・オブ・ザ・リング', zh:'指环王', es:'El Senor de los Anillos' },
+  { emoji:'🦇🌃', cat:'movies', ko:'배트맨', en:'Batman', ja:'バットマン', zh:'蝙蝠侠', es:'Batman' },
+  { emoji:'🧊🚢', cat:'movies', ko:'타이타닉', en:'Titanic', ja:'タイタニック', zh:'泰坦尼克号', es:'Titanic' },
+  { emoji:'👽☎️🏠', cat:'movies', ko:'E.T.', en:'E.T.', ja:'E.T.', zh:'E.T.', es:'E.T.' },
+  { emoji:'🤖❤️🌱', cat:'movies', ko:'월-E', en:'WALL-E', ja:'ウォーリー', zh:'机器人总动员', es:'WALL-E' },
+  { emoji:'🐠🔍', cat:'movies', ko:'니모를 찾아서', en:'Finding Nemo', ja:'ファインディング・ニモ', zh:'海底总动员', es:'Buscando a Nemo' },
+  { emoji:'👻🔫', cat:'movies', ko:'고스트버스터즈', en:'Ghostbusters', ja:'ゴーストバスターズ', zh:'捉鬼敢死队', es:'Cazafantasmas' },
+  { emoji:'🏴‍☠️💀🗺️', cat:'movies', ko:'캐리비안의 해적', en:'Pirates of the Caribbean', ja:'パイレーツ・オブ・カリビアン', zh:'加勒比海盗', es:'Piratas del Caribe' },
+  { emoji:'🐉🏯👩', cat:'movies', ko:'뮬란', en:'Mulan', ja:'ムーラン', zh:'花木兰', es:'Mulan' },
+
+  // --- Food ---
+  { emoji:'🍕🇮🇹', cat:'food', ko:'이탈리아', en:'Italy', ja:'イタリア', zh:'意大利', es:'Italia' },
+  { emoji:'🍣🇯🇵', cat:'food', ko:'일본', en:'Japan', ja:'日本', zh:'日本', es:'Japon' },
+  { emoji:'🌮🇲🇽', cat:'food', ko:'멕시코', en:'Mexico', ja:'メキシコ', zh:'墨西哥', es:'Mexico' },
+  { emoji:'🥐🇫🇷', cat:'food', ko:'프랑스', en:'France', ja:'フランス', zh:'法国', es:'Francia' },
+  { emoji:'🍔🍟', cat:'food', ko:'패스트푸드', en:'Fast Food', ja:'ファストフード', zh:'快餐', es:'Comida rapida' },
+  { emoji:'🍦🍨', cat:'food', ko:'아이스크림', en:'Ice Cream', ja:'アイスクリーム', zh:'冰淇淋', es:'Helado' },
+  { emoji:'🧁🎂', cat:'food', ko:'생일 케이크', en:'Birthday Cake', ja:'バースデーケーキ', zh:'生日蛋糕', es:'Pastel de cumpleanos' },
+  { emoji:'🍫🥛', cat:'food', ko:'초콜릿 우유', en:'Chocolate Milk', ja:'チョコレートミルク', zh:'巧克力牛奶', es:'Leche con chocolate' },
+
+  // --- Animals ---
+  { emoji:'🐱🐟', cat:'animals', ko:'메기', en:'Catfish', ja:'ナマズ', zh:'鲶鱼', es:'Bagre' },
+  { emoji:'🐝🍯', cat:'animals', ko:'꿀벌', en:'Honeybee', ja:'ミツバチ', zh:'蜜蜂', es:'Abeja' },
+  { emoji:'🦊📖', cat:'animals', ko:'어린 왕자', en:'The Little Prince', ja:'星の王子さま', zh:'小王子', es:'El Principito' },
+  { emoji:'🐶🔥', cat:'animals', ko:'핫도그', en:'Hot Dog', ja:'ホットドッグ', zh:'热狗', es:'Perrito caliente' },
+  { emoji:'🐴🦄', cat:'animals', ko:'유니콘', en:'Unicorn', ja:'ユニコーン', zh:'独角兽', es:'Unicornio' },
+  { emoji:'🐧❄️🌊', cat:'animals', ko:'남극', en:'Antarctica', ja:'南極', zh:'南极', es:'Antartica' },
+  { emoji:'🦋🌸', cat:'animals', ko:'봄', en:'Spring', ja:'春', zh:'春天', es:'Primavera' },
+  { emoji:'🐢🥷', cat:'animals', ko:'닌자 거북이', en:'Ninja Turtles', ja:'ニンジャ・タートルズ', zh:'忍者神龟', es:'Tortugas Ninja' },
+
+  // --- Places ---
+  { emoji:'🗼🇫🇷', cat:'places', ko:'파리', en:'Paris', ja:'パリ', zh:'巴黎', es:'Paris' },
+  { emoji:'🗽🇺🇸', cat:'places', ko:'뉴욕', en:'New York', ja:'ニューヨーク', zh:'纽约', es:'Nueva York' },
+  { emoji:'🏯🗻', cat:'places', ko:'일본', en:'Japan', ja:'日本', zh:'日本', es:'Japon' },
+  { emoji:'🐨🦘', cat:'places', ko:'호주', en:'Australia', ja:'オーストラリア', zh:'澳大利亚', es:'Australia' },
+  { emoji:'🏖️🌴🍹', cat:'places', ko:'하와이', en:'Hawaii', ja:'ハワイ', zh:'夏威夷', es:'Hawai' },
+  { emoji:'🎰🌃🎲', cat:'places', ko:'라스베이거스', en:'Las Vegas', ja:'ラスベガス', zh:'拉斯维加斯', es:'Las Vegas' },
+  { emoji:'🏔️🧘', cat:'places', ko:'히말라야', en:'Himalayas', ja:'ヒマラヤ', zh:'喜马拉雅', es:'Himalaya' },
+  { emoji:'🐪🏜️🔺', cat:'places', ko:'이집트', en:'Egypt', ja:'エジプト', zh:'埃及', es:'Egipto' },
+
+  // --- Concepts ---
+  { emoji:'🎃👻', cat:'concepts', ko:'할로윈', en:'Halloween', ja:'ハロウィン', zh:'万圣节', es:'Halloween' },
+  { emoji:'☀️🌻', cat:'concepts', ko:'해바라기', en:'Sunflower', ja:'ひまわり', zh:'向日葵', es:'Girasol' },
+  { emoji:'🔥🚒', cat:'concepts', ko:'소방차', en:'Fire Truck', ja:'消防車', zh:'消防车', es:'Camion de bomberos' },
+  { emoji:'🌊🏄', cat:'concepts', ko:'서핑', en:'Surfing', ja:'サーフィン', zh:'冲浪', es:'Surf' },
+  { emoji:'🎂🎉', cat:'concepts', ko:'생일', en:'Birthday', ja:'誕生日', zh:'生日', es:'Cumpleanos' },
+  { emoji:'💤😴🌙', cat:'concepts', ko:'수면', en:'Sleep', ja:'睡眠', zh:'睡眠', es:'Dormir' },
+  { emoji:'📚🎓', cat:'concepts', ko:'졸업', en:'Graduation', ja:'卒業', zh:'毕业', es:'Graduacion' },
+  { emoji:'💌💘', cat:'concepts', ko:'발렌타인', en:'Valentine', ja:'バレンタイン', zh:'情人节', es:'San Valentin' },
+  { emoji:'🎄🎅', cat:'concepts', ko:'크리스마스', en:'Christmas', ja:'クリスマス', zh:'圣诞节', es:'Navidad' },
+  { emoji:'🌍♻️💚', cat:'concepts', ko:'환경보호', en:'Eco-friendly', ja:'エコ', zh:'环保', es:'Ecologico' },
+  { emoji:'🎵🎸🤘', cat:'concepts', ko:'록 음악', en:'Rock Music', ja:'ロック', zh:'摇滚乐', es:'Musica Rock' },
+  { emoji:'⚡🧙', cat:'concepts', ko:'해리 포터', en:'Harry Potter', ja:'ハリー・ポッター', zh:'哈利波特', es:'Harry Potter' },
+  { emoji:'🌈🦄✨', cat:'concepts', ko:'판타지', en:'Fantasy', ja:'ファンタジー', zh:'奇幻', es:'Fantasia' },
+  { emoji:'🧠💡', cat:'concepts', ko:'아이디어', en:'Idea', ja:'アイデア', zh:'创意', es:'Idea' },
+];
+
+// ===== Custom i18n =====
+const EMOJI_I18N = {
+  ko: {
+    gameTitle: '이모지 퍼즐',
+    modeTitle: '이모지 퍼즐',
+    modeSubtitle: '이모지 조합을 보고 정답을 맞혀보세요!',
+    story: '스토리 모드',
+    storyDesc: '40문제 도전',
+    speed: '스피드 모드',
+    speedDesc: '30초 제한',
+    streakLabel: '연속',
+    accuracyLabel: '정확도',
+    questionOf: '{0} / {1}',
+    timeLeft: '{0}초',
+    resultTitle: '결과',
+    correct: '정답',
+    accuracy: '정확도',
+    maxStreak: '최대 연속',
+    newBest: '새 최고 기록!',
+    bestRecord: '최고: {0}',
+    playAgain: '다시 하기',
+    shareResult: '결과 공유',
+    hintText: '💡 힌트 ({0})',
+    catMovies: '영화',
+    catFood: '음식',
+    catAnimals: '동물',
+    catPlaces: '장소',
+    catConcepts: '개념',
+  },
+  en: {
+    gameTitle: 'Emoji Puzzle',
+    modeTitle: 'Emoji Puzzle',
+    modeSubtitle: 'Guess the answer from emoji combos!',
+    story: 'Story Mode',
+    storyDesc: '40 Puzzles',
+    speed: 'Speed Mode',
+    speedDesc: '30 Seconds',
+    streakLabel: 'Streak',
+    accuracyLabel: 'Accuracy',
+    questionOf: '{0} / {1}',
+    timeLeft: '{0}s',
+    resultTitle: 'Results',
+    correct: 'Correct',
+    accuracy: 'Accuracy',
+    maxStreak: 'Best Streak',
+    newBest: 'New Best!',
+    bestRecord: 'Best: {0}',
+    playAgain: 'Play Again',
+    shareResult: 'Share Result',
+    hintText: '💡 Hint ({0})',
+    catMovies: 'Movies',
+    catFood: 'Food',
+    catAnimals: 'Animals',
+    catPlaces: 'Places',
+    catConcepts: 'Concepts',
+  },
+  ja: {
+    gameTitle: '絵文字パズル',
+    modeTitle: '絵文字パズル',
+    modeSubtitle: '絵文字の組み合わせから答えを当てよう！',
+    story: 'ストーリーモード',
+    storyDesc: '40問チャレンジ',
+    speed: 'スピードモード',
+    speedDesc: '30秒',
+    streakLabel: '連続',
+    accuracyLabel: '正確率',
+    questionOf: '{0} / {1}',
+    timeLeft: '{0}秒',
+    resultTitle: '結果',
+    correct: '正解',
+    accuracy: '正確率',
+    maxStreak: '最大連続',
+    newBest: '新記録！',
+    bestRecord: 'ベスト: {0}',
+    playAgain: 'もう一度',
+    shareResult: '結果をシェア',
+    hintText: '💡 ヒント ({0})',
+    catMovies: '映画',
+    catFood: '食べ物',
+    catAnimals: '動物',
+    catPlaces: '場所',
+    catConcepts: 'コンセプト',
+  },
+  zh: {
+    gameTitle: '表情猜猜',
+    modeTitle: '表情猜猜',
+    modeSubtitle: '看表情组合猜答案！',
+    story: '故事模式',
+    storyDesc: '40道挑战',
+    speed: '限时模式',
+    speedDesc: '30秒',
+    streakLabel: '连续',
+    accuracyLabel: '准确率',
+    questionOf: '{0} / {1}',
+    timeLeft: '{0}秒',
+    resultTitle: '结果',
+    correct: '正确',
+    accuracy: '准确率',
+    maxStreak: '最大连续',
+    newBest: '新纪录！',
+    bestRecord: '最佳: {0}',
+    playAgain: '再来一局',
+    shareResult: '分享结果',
+    hintText: '💡 提示 ({0})',
+    catMovies: '电影',
+    catFood: '美食',
+    catAnimals: '动物',
+    catPlaces: '地点',
+    catConcepts: '概念',
+  },
+  es: {
+    gameTitle: 'Emoji Puzzle',
+    modeTitle: 'Emoji Puzzle',
+    modeSubtitle: 'Adivina la respuesta con emojis!',
+    story: 'Modo Historia',
+    storyDesc: '40 Puzzles',
+    speed: 'Modo Velocidad',
+    speedDesc: '30 Segundos',
+    streakLabel: 'Racha',
+    accuracyLabel: 'Precision',
+    questionOf: '{0} / {1}',
+    timeLeft: '{0}s',
+    resultTitle: 'Resultados',
+    correct: 'Correcto',
+    accuracy: 'Precision',
+    maxStreak: 'Mejor Racha',
+    newBest: 'Nuevo Record!',
+    bestRecord: 'Mejor: {0}',
+    playAgain: 'Jugar de Nuevo',
+    shareResult: 'Compartir',
+    hintText: '💡 Pista ({0})',
+    catMovies: 'Peliculas',
+    catFood: 'Comida',
+    catAnimals: 'Animales',
+    catPlaces: 'Lugares',
+    catConcepts: 'Conceptos',
+  }
+};
+
+const CAT_CLASSES = { movies:'cat-movies', food:'cat-food', animals:'cat-animals', places:'cat-places', concepts:'cat-concepts' };
+
+// ===== Game State =====
+let lang, t, et;
+let mode = null;
+let score = 0, correctCount = 0, totalAnswered = 0, streak = 0, maxStreak = 0;
+let questionIndex = 0;
+const STORY_TOTAL = 40;
+const SPEED_TIME = 30;
+let timerInterval = null;
+let timeLeft = SPEED_TIME;
+let usedPuzzles = [];
+let currentOptions = [];
+let currentCorrect = null;
+let answering = false;
+let gameActive = false;
+let hintsLeft = 3;
+let hintUsedThisRound = false;
+
+// Audio
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playSound(type) {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    gain.gain.value = 0.15;
+
+    if (type === 'correct') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523, ctx.currentTime);
+      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.08);
+      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.16);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.35);
+    } else if (type === 'wrong') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(200, ctx.currentTime);
+      osc.frequency.setValueAtTime(150, ctx.currentTime + 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.3);
+    } else if (type === 'hint') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(600, ctx.currentTime);
+      osc.frequency.setValueAtTime(800, ctx.currentTime + 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.15);
+    } else if (type === 'end') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(392, ctx.currentTime);
+      osc.frequency.setValueAtTime(523, ctx.currentTime + 0.15);
+      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.3);
+      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.45);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.7);
+    }
+  } catch (e) {}
+}
+
+// ===== Confetti =====
+const confettiCanvas = document.getElementById('confettiCanvas');
+const confettiCtx = confettiCanvas.getContext('2d');
+let confettiPieces = [];
+let confettiAnim = null;
+
+function resizeConfetti() {
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeConfetti);
+resizeConfetti();
+
+function launchConfetti() {
+  confettiPieces = [];
+  const colors = ['#ec4899','#a855f7','#3b82f6','#22c55e','#fbbf24','#ef4444','#06b6d4'];
+  for (let i = 0; i < 80; i++) {
+    confettiPieces.push({
+      x: Math.random() * confettiCanvas.width,
+      y: -20 - Math.random() * 100,
+      w: 6 + Math.random() * 6,
+      h: 4 + Math.random() * 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      vx: (Math.random() - 0.5) * 6,
+      vy: 2 + Math.random() * 4,
+      rot: Math.random() * Math.PI * 2,
+      rv: (Math.random() - 0.5) * 0.2,
+      life: 1
+    });
+  }
+  if (!confettiAnim) animateConfetti();
+}
+
+function animateConfetti() {
+  confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  let alive = false;
+  for (const p of confettiPieces) {
+    if (p.life <= 0) continue;
+    alive = true;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.08;
+    p.rot += p.rv;
+    p.life -= 0.008;
+    confettiCtx.save();
+    confettiCtx.translate(p.x, p.y);
+    confettiCtx.rotate(p.rot);
+    confettiCtx.globalAlpha = Math.max(0, p.life);
+    confettiCtx.fillStyle = p.color;
+    confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+    confettiCtx.restore();
+  }
+  if (alive) {
+    confettiAnim = requestAnimationFrame(animateConfetti);
+  } else {
+    confettiAnim = null;
+    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  }
+}
+
+// ===== Helpers =====
+function getPuzzleAnswer(puzzle) {
+  return puzzle[lang] || puzzle.en;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getCatName(cat) {
+  const map = { movies:'catMovies', food:'catFood', animals:'catAnimals', places:'catPlaces', concepts:'catConcepts' };
+  return et[map[cat]] || cat;
+}
+
+// ===== Init =====
+function init() {
+  lang = getGameLang();
+  t = getTranslations();
+  et = EMOJI_I18N[lang] || EMOJI_I18N.ko;
+
+  applyGameI18n();
+
+  document.getElementById('gameTitle').textContent = et.gameTitle;
+  document.getElementById('modeTitle').textContent = et.modeTitle;
+  document.getElementById('modeSubtitle').textContent = et.modeSubtitle;
+  document.getElementById('modeStoryLabel').textContent = et.story;
+  document.getElementById('modeStoryDesc').textContent = et.storyDesc;
+  document.getElementById('modeSpeedLabel').textContent = et.speed;
+  document.getElementById('modeSpeedDesc').textContent = et.speedDesc;
+  document.getElementById('streakLabel').textContent = et.streakLabel;
+  document.getElementById('accuracyLabel').textContent = et.accuracyLabel;
+
+  // Load saved progress for story mode
+  loadProgress();
+
+  showModeSelect();
+}
+
+function showModeSelect() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  gameActive = false;
+  document.getElementById('modeOverlay').classList.add('show');
+  document.getElementById('resultOverlay').classList.remove('show');
+}
+
+function startGame(m) {
+  mode = m;
+  score = 0; correctCount = 0; totalAnswered = 0; streak = 0; maxStreak = 0;
+  questionIndex = 0;
+  timeLeft = SPEED_TIME;
+  usedPuzzles = [];
+  answering = false;
+  gameActive = true;
+  hintsLeft = 3;
+  hintUsedThisRound = false;
+
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+
+  document.getElementById('timerWrap').style.display = mode === 'speed' ? '' : 'none';
+  document.getElementById('progressWrap').style.display = mode === 'story' ? '' : 'none';
+
+  const best = getBest();
+  document.getElementById('bestDisplay').textContent = best;
+
+  updateScoreBar();
+  updateHintBtn();
+
+  if (mode === 'speed') {
+    document.getElementById('timerFill').style.width = '100%';
+    document.getElementById('timerFill').classList.remove('urgent');
+    document.getElementById('timerText').textContent = et.timeLeft.replace('{0}', SPEED_TIME);
+    document.getElementById('timerText').classList.remove('urgent');
+  }
+
+  document.getElementById('modeOverlay').classList.remove('show');
+  document.getElementById('resultOverlay').classList.remove('show');
+
+  if (mode === 'speed') {
+    timerInterval = setInterval(() => {
+      timeLeft -= 0.1;
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        clearInterval(timerInterval);
+        timerInterval = null;
+        gameActive = false;
+        endGame();
+        return;
+      }
+      const pct = (timeLeft / SPEED_TIME) * 100;
+      document.getElementById('timerFill').style.width = pct + '%';
+      const isUrgent = timeLeft <= 10;
+      document.getElementById('timerFill').classList.toggle('urgent', isUrgent);
+      document.getElementById('timerText').classList.toggle('urgent', isUrgent);
+      document.getElementById('timerText').textContent = et.timeLeft.replace('{0}', Math.ceil(timeLeft));
+    }, 100);
+  }
+
+  nextQuestion();
+}
+
+function nextQuestion() {
+  if (!gameActive) return;
+
+  if (mode === 'story' && questionIndex >= STORY_TOTAL) { endGame(); return; }
+
+  answering = false;
+  hintUsedThisRound = false;
+
+  // Pick puzzle not yet used
+  let available = PUZZLES.filter(p => !usedPuzzles.includes(p.emoji));
+  if (available.length < 4) {
+    usedPuzzles = [];
+    available = [...PUZZLES];
+  }
+
+  const correctIdx = Math.floor(Math.random() * available.length);
+  const correct = available[correctIdx];
+  usedPuzzles.push(correct.emoji);
+  currentCorrect = correct;
+
+  // Pick 3 wrong answers from same category preferably
+  let sameCategory = PUZZLES.filter(p => p.cat === correct.cat && p.emoji !== correct.emoji);
+  let otherCategory = PUZZLES.filter(p => p.cat !== correct.cat && p.emoji !== correct.emoji);
+
+  let wrongs = [];
+  if (sameCategory.length >= 2) {
+    wrongs = shuffle(sameCategory).slice(0, 2);
+    wrongs.push(shuffle(otherCategory)[0]);
+  } else {
+    wrongs = shuffle(PUZZLES.filter(p => p.emoji !== correct.emoji)).slice(0, 3);
+  }
+
+  currentOptions = shuffle([correct, ...wrongs]);
+
+  // Show emoji with animation
+  const emojiEl = document.getElementById('emojiDisplay');
+  emojiEl.textContent = correct.emoji;
+  emojiEl.className = 'emoji-display reveal';
+
+  // Category badge
+  const badge = document.getElementById('categoryBadge');
+  badge.textContent = getCatName(correct.cat);
+  badge.className = 'category-badge ' + (CAT_CLASSES[correct.cat] || '');
+
+  // Answer buttons
+  const btns = document.querySelectorAll('.answer-btn');
+  btns.forEach((btn, i) => {
+    btn.textContent = getPuzzleAnswer(currentOptions[i]);
+    btn.className = 'answer-btn';
+    btn.disabled = false;
+    btn.onclick = () => handleAnswer(i);
+  });
+
+  // Update hint button
+  updateHintBtn();
+
+  // Progress
+  if (mode === 'story') {
+    const pct = (questionIndex / STORY_TOTAL) * 100;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressText').textContent = et.questionOf.replace('{0}', questionIndex + 1).replace('{1}', STORY_TOTAL);
+  }
+
+  questionIndex++;
+}
+
+function handleAnswer(idx) {
+  if (answering || !gameActive) return;
+  answering = true;
+
+  const isCorrect = currentOptions[idx] === currentCorrect;
+  const btns = document.querySelectorAll('.answer-btn');
+  const emojiEl = document.getElementById('emojiDisplay');
+
+  totalAnswered++;
+
+  if (isCorrect) {
+    playSound('correct');
+    btns[idx].classList.add('correct');
+    emojiEl.className = 'emoji-display correct-bounce';
+    streak++;
+    if (streak > maxStreak) maxStreak = streak;
+    correctCount++;
+
+    // Score: base 10 + streak bonus
+    const bonus = Math.min(streak * 2, 20);
+    score += 10 + bonus;
+
+    // Confetti
+    launchConfetti();
+
+    // Streak popup
+    if (streak >= 3 && streak % 3 === 0) {
+      showStreakPopup(streak);
+    }
+  } else {
+    playSound('wrong');
+    btns[idx].classList.add('wrong');
+    emojiEl.className = 'emoji-display wrong-shake';
+    streak = 0;
+
+    // Reveal correct
+    btns.forEach((btn, i) => {
+      if (currentOptions[i] === currentCorrect) btn.classList.add('reveal-correct');
+    });
+  }
+
+  btns.forEach(btn => btn.disabled = true);
+  document.getElementById('hintBtn').disabled = true;
+
+  updateScoreBar();
+  saveProgress();
+
+  const delay = isCorrect ? 700 : 1200;
+  setTimeout(() => {
+    if (mode === 'story' && questionIndex >= STORY_TOTAL) {
+      endGame();
+    } else {
+      nextQuestion();
+    }
+  }, delay);
+}
+
+function useHint() {
+  if (hintsLeft <= 0 || hintUsedThisRound || answering || !gameActive) return;
+
+  playSound('hint');
+  hintsLeft--;
+  hintUsedThisRound = true;
+
+  // Eliminate one wrong answer
+  const btns = document.querySelectorAll('.answer-btn');
+  const wrongIndices = [];
+  currentOptions.forEach((opt, i) => {
+    if (opt !== currentCorrect && !btns[i].classList.contains('hint-eliminated')) {
+      wrongIndices.push(i);
+    }
+  });
+
+  if (wrongIndices.length > 0) {
+    const removeIdx = wrongIndices[Math.floor(Math.random() * wrongIndices.length)];
+    btns[removeIdx].classList.add('hint-eliminated');
+    btns[removeIdx].disabled = true;
+  }
+
+  updateHintBtn();
+}
+
+function updateHintBtn() {
+  const btn = document.getElementById('hintBtn');
+  btn.textContent = et.hintText.replace('{0}', hintsLeft);
+  btn.disabled = hintsLeft <= 0 || hintUsedThisRound || answering;
+}
+
+function updateScoreBar() {
+  document.getElementById('scoreDisplay').textContent = score;
+  document.getElementById('streakDisplay').textContent = streak;
+  const acc = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
+  document.getElementById('accuracyDisplay').textContent = acc + '%';
+}
+
+function showStreakPopup(s) {
+  const popup = document.getElementById('streakPopup');
+  popup.textContent = s + ' ' + (t.combo || 'COMBO') + ' \uD83D\uDD25';
+  popup.style.fontSize = Math.min(36 + s * 2, 60) + 'px';
+  popup.style.color = '#fbbf24';
+  popup.style.textShadow = '0 0 20px rgba(251,191,36,.6)';
+  popup.className = 'streak-display show';
+  setTimeout(() => popup.className = 'streak-display', 800);
+}
+
+// ===== LocalStorage =====
+function getBestKey() {
+  return 'emojiPuzzle_best_' + mode;
+}
+function getBest() {
+  return parseInt(localStorage.getItem(getBestKey()) || '0', 10);
+}
+function saveBest(val) {
+  const prev = getBest();
+  if (val > prev) {
+    localStorage.setItem(getBestKey(), val);
+    return true;
+  }
+  return false;
+}
+function saveProgress() {
+  if (mode === 'story') {
+    localStorage.setItem('emojiPuzzle_progress', JSON.stringify({
+      questionIndex, score, correctCount, totalAnswered, streak, maxStreak, hintsLeft
+    }));
+  }
+}
+function loadProgress() {
+  // Progress is reset on new game, kept for future resume feature
+}
+
+// ===== End Game =====
+function endGame() {
+  gameActive = false;
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+
+  playSound('end');
+  launchConfetti();
+
+  const isNewBest = saveBest(score);
+  const acc = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
+
+  document.getElementById('resultTitle').textContent = et.resultTitle;
+  document.getElementById('resultScore').textContent = score;
+  document.getElementById('resultCorrect').textContent = correctCount;
+  document.getElementById('resultCorrectLabel').textContent = et.correct;
+  document.getElementById('resultAccuracy').textContent = acc + '%';
+  document.getElementById('resultAccuracyLabel').textContent = et.accuracy;
+  document.getElementById('resultStreak').textContent = maxStreak;
+  document.getElementById('resultStreakLabel').textContent = et.maxStreak;
+  document.getElementById('resultBest').textContent = isNewBest
+    ? '\u2B50 ' + et.newBest
+    : et.bestRecord.replace('{0}', getBest());
+  document.getElementById('resultPlayAgain').textContent = et.playAgain;
+  document.getElementById('resultShare').textContent = et.shareResult;
+
+  document.getElementById('bestDisplay').textContent = getBest();
+
+  // Clear story progress
+  localStorage.removeItem('emojiPuzzle_progress');
+
+  setTimeout(() => {
+    document.getElementById('resultOverlay').classList.add('show');
+  }, 300);
+
+  // Call share modal
+  setTimeout(() => {
+    shareResult();
+  }, 800);
+}
+
+function shareResult() {
+  const acc = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
+  const modeNames = { story: et.story, speed: et.speed };
+  PuzzleShare.showShareModal({
+    gameName: et.gameTitle,
+    title: et.gameTitle,
+    score: score,
+    message: (modeNames[mode] || '') + ' | ' + correctCount + ' ' + et.correct + ' | ' + acc + '% ' + et.accuracy,
+    lang: lang
+  });
+}
+
+// ===== Start =====
+init();
+</script>
+</body>
+</html>

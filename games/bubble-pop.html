@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Bubble Pop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif;background:#0a0a1a;color:#e2e8f0}
+body{display:flex;flex-direction:column;align-items:center}
+
+.ad-placeholder{width:100%;max-width:480px;height:50px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);font-size:12px;letter-spacing:1px;flex-shrink:0}
+.ad-top{border-radius:0 0 8px 8px}
+.ad-bottom{border-radius:8px 8px 0 0;margin-top:auto}
+
+.header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;flex-shrink:0}
+.back-link{color:#94a3b8;text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;transition:color .2s}
+.back-link:hover{color:#e2e8f0}
+.title{font-size:18px;font-weight:800;background:linear-gradient(135deg,#00e5ff,#ec4899,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.game-container{flex:1;display:flex;flex-direction:column;align-items:center;width:100%;max-width:480px;padding:0;min-height:0;overflow:hidden}
+
+/* Mode select */
+.mode-select{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;width:100%;gap:12px;padding:0 16px}
+.mode-title{font-size:28px;font-weight:900;margin-bottom:4px;text-align:center}
+.mode-emoji{font-size:48px;margin-bottom:8px}
+.mode-subtitle{font-size:14px;color:#94a3b8;margin-bottom:16px;text-align:center}
+.mode-btn{width:100%;max-width:320px;padding:16px 20px;border:1px solid rgba(0,229,255,.3);background:rgba(0,229,255,.08);border-radius:14px;color:#e2e8f0;font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;text-align:left}
+.mode-btn:hover{background:rgba(0,229,255,.18);border-color:rgba(0,229,255,.5);transform:translateY(-2px)}
+.mode-btn .mode-name{font-size:17px;margin-bottom:4px}
+.mode-btn .mode-desc{font-size:12px;color:#94a3b8;font-weight:400}
+.mode-best{font-size:11px;color:#00e5ff;margin-top:4px;font-weight:600}
+
+/* Level select */
+.level-select{display:none;flex-direction:column;align-items:center;flex:1;width:100%;padding:0 16px;overflow-y:auto}
+.level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;width:100%;max-width:320px;margin-top:12px}
+.level-btn{aspect-ratio:1;border-radius:12px;border:1px solid rgba(0,229,255,.2);background:rgba(0,229,255,.06);color:#e2e8f0;font-family:'Outfit',sans-serif;font-size:18px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.level-btn:hover{background:rgba(0,229,255,.15);transform:translateY(-2px)}
+.level-btn.cleared{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.1);color:#10b981}
+.level-btn.locked{opacity:.35;cursor:default;pointer-events:none}
+.level-back-btn{margin-top:16px;padding:10px 28px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#94a3b8;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer}
+
+/* Stats bar */
+.stats-bar{width:100%;display:flex;justify-content:space-between;padding:6px 16px;flex-shrink:0;gap:4px}
+.stat-item{text-align:center;flex:1}
+.stat-label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.5px}
+.stat-value{font-size:16px;font-weight:800;color:#e2e8f0}
+.stat-value.score-val{color:#00e5ff}
+
+.canvas-wrap{flex:1;width:100%;position:relative;min-height:0}
+.canvas-wrap canvas{width:100%;height:100%;display:block;cursor:crosshair}
+
+/* Game over overlay */
+.overlay{display:none;position:absolute;inset:0;background:rgba(10,10,26,.92);flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:10}
+.overlay.show{display:flex}
+.overlay-title{font-size:28px;font-weight:900}
+.overlay-score{font-size:42px;font-weight:900;color:#00e5ff}
+.overlay-best{font-size:14px;color:#94a3b8}
+.overlay-btn{padding:14px 36px;border-radius:14px;border:none;font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s}
+.overlay-btn.primary{background:linear-gradient(135deg,#00e5ff,#a855f7);color:#fff}
+.overlay-btn.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#e2e8f0;margin-top:4px}
+.overlay-btn:hover{transform:translateY(-2px);filter:brightness(1.1)}
+
+.next-bubble-preview{position:absolute;bottom:12px;left:16px;display:flex;align-items:center;gap:8px;font-size:12px;color:#64748b;font-weight:600}
+.next-bubble-circle{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.15)}
+</style>
+</head>
+<body>
+
+<div class="ad-placeholder ad-top"><span data-i18n="ad_area">광고 영역</span></div>
+
+<div class="header">
+  <a class="back-link" href="../index.html" data-i18n="back">← 메인으로</a>
+  <div class="title" data-i18n="bubble_pop_title">Bubble Pop</div>
+</div>
+
+<div class="game-container" id="gameContainer">
+  <!-- Mode select -->
+  <div class="mode-select" id="modeSelect">
+    <div class="mode-emoji">🫧</div>
+    <div class="mode-title" data-i18n="bubble_pop_title">Bubble Pop</div>
+    <div class="mode-subtitle" data-i18n="bubble_pop_desc">팡팡! 같은 색 버블을 맞춰 터뜨리세요!</div>
+
+    <button class="mode-btn" onclick="startEndless()">
+      <div class="mode-name" data-i18n="endless_mode">🔄 끝없는 모드</div>
+      <div class="mode-desc" data-i18n="endless_desc">버블이 계속 밀려옵니다. 끝까지 살아남으세요!</div>
+      <div class="mode-best" id="endlessBest"></div>
+    </button>
+
+    <button class="mode-btn" onclick="showLevelSelect()">
+      <div class="mode-name" data-i18n="level_mode">🧩 레벨 모드</div>
+      <div class="mode-desc" data-i18n="level_desc">20개의 패턴을 클리어하세요!</div>
+      <div class="mode-best" id="levelProgress"></div>
+    </button>
+  </div>
+
+  <!-- Level select -->
+  <div class="level-select" id="levelSelect">
+    <div style="font-size:20px;font-weight:800;margin-top:12px" data-i18n="level_select">레벨 선택</div>
+    <div class="level-grid" id="levelGrid"></div>
+    <button class="level-back-btn" onclick="showModeSelect()" data-i18n="back">← 메인으로</button>
+  </div>
+
+  <!-- Game area -->
+  <div class="stats-bar" id="statsBar" style="display:none">
+    <div class="stat-item"><div class="stat-label" data-i18n="score">점수</div><div class="stat-value score-val" id="scoreDisplay">0</div></div>
+    <div class="stat-item"><div class="stat-label" data-i18n="best">최고점</div><div class="stat-value" id="bestDisplay">0</div></div>
+    <div class="stat-item"><div class="stat-label" data-i18n="bubble_left">버블</div><div class="stat-value" id="bubblesDisplay">-</div></div>
+  </div>
+
+  <div class="canvas-wrap" id="canvasWrap" style="display:none">
+    <canvas id="gameCanvas"></canvas>
+    <div class="next-bubble-preview" id="nextPreview">
+      <span data-i18n="next_bubble">NEXT</span>
+      <div class="next-bubble-circle" id="nextBubbleCircle"></div>
+    </div>
+    <div class="overlay" id="gameOverlay">
+      <div class="overlay-title" id="overlayTitle"></div>
+      <div class="overlay-score" id="overlayScore"></div>
+      <div class="overlay-best" id="overlayBest"></div>
+      <button class="overlay-btn primary" id="overlayBtn" onclick="onOverlayAction()"></button>
+      <button class="overlay-btn secondary" onclick="backToMenu()" data-i18n="back">← 메인으로</button>
+    </div>
+  </div>
+</div>
+
+<div class="ad-placeholder ad-bottom"><span data-i18n="ad_area">광고 영역</span></div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+'use strict';
+
+// ===== Custom i18n =====
+const BUBBLE_I18N = {
+  ko: { bubble_pop_title:'Bubble Pop', bubble_pop_desc:'팡팡! 같은 색 버블을 맞춰 터뜨리세요!', endless_mode:'🔄 끝없는 모드', endless_desc:'버블이 계속 밀려옵니다. 끝까지 살아남으세요!', level_mode:'🧩 레벨 모드', level_desc:'20개의 패턴을 클리어하세요!', next_bubble:'NEXT', bubble_left:'버블', shoot:'발사!', level_clear:'레벨 클리어!', all_clear:'모든 레벨 클리어!', endless_best:'최고 기록: {score}점', level_prog:'{n}/20 클리어' },
+  en: { bubble_pop_title:'Bubble Pop', bubble_pop_desc:'Pop! Match and burst same-colored bubbles!', endless_mode:'🔄 Endless Mode', endless_desc:'Bubbles keep coming. Survive as long as you can!', level_mode:'🧩 Level Mode', level_desc:'Clear 20 unique patterns!', next_bubble:'NEXT', bubble_left:'Bubbles', shoot:'Shoot!', level_clear:'Level Clear!', all_clear:'All Levels Clear!', endless_best:'Best: {score}pts', level_prog:'{n}/20 Cleared' },
+  ja: { bubble_pop_title:'Bubble Pop', bubble_pop_desc:'パンパン！同じ色のバブルを当てて割ろう！', endless_mode:'🔄 エンドレスモード', endless_desc:'バブルがどんどん押し寄せます。最後まで生き残ろう！', level_mode:'🧩 レベルモード', level_desc:'20のパターンをクリアしよう！', next_bubble:'NEXT', bubble_left:'バブル', shoot:'発射！', level_clear:'レベルクリア！', all_clear:'全レベルクリア！', endless_best:'最高記録：{score}点', level_prog:'{n}/20 クリア' },
+  zh: { bubble_pop_title:'Bubble Pop', bubble_pop_desc:'砰砰！匹配并消除相同颜色的泡泡！', endless_mode:'🔄 无尽模式', endless_desc:'泡泡不断涌来，坚持到最后！', level_mode:'🧩 关卡模式', level_desc:'通关20个独特图案！', next_bubble:'NEXT', bubble_left:'泡泡', shoot:'发射！', level_clear:'关卡通关！', all_clear:'全部通关！', endless_best:'最高纪录：{score}分', level_prog:'{n}/20 通关' },
+  es: { bubble_pop_title:'Bubble Pop', bubble_pop_desc:'¡Pop! ¡Combina y revienta burbujas del mismo color!', endless_mode:'🔄 Modo Infinito', endless_desc:'¡Las burbujas siguen llegando. ¡Sobrevive!', level_mode:'🧩 Modo Niveles', level_desc:'¡Completa 20 patrones únicos!', next_bubble:'SIG.', bubble_left:'Burbujas', shoot:'¡Dispara!', level_clear:'¡Nivel Completado!', all_clear:'¡Todos los Niveles Completados!', endless_best:'Mejor: {score}pts', level_prog:'{n}/20 Completados' }
+};
+
+const lang = getGameLang();
+const t = { ...getTranslations(), ...(BUBBLE_I18N[lang] || BUBBLE_I18N.ko) };
+
+// Apply translations
+document.querySelectorAll('[data-i18n]').forEach(el => {
+  const k = el.dataset.i18n;
+  if (t[k]) el.textContent = t[k];
+});
+
+// ===== Audio =====
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function ensureAudio(){ if(!audioCtx) audioCtx = new AudioCtx(); }
+
+function playShoot(){
+  ensureAudio();
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  o.type='sine';o.frequency.setValueAtTime(600,audioCtx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(300,audioCtx.currentTime+.1);
+  g.gain.setValueAtTime(.15,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.15);
+  o.start();o.stop(audioCtx.currentTime+.15);
+}
+
+function playPop(){
+  ensureAudio();
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  o.type='sine';o.frequency.setValueAtTime(800,audioCtx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(1200,audioCtx.currentTime+.08);
+  g.gain.setValueAtTime(.2,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.12);
+  o.start();o.stop(audioCtx.currentTime+.12);
+}
+
+function playFall(){
+  ensureAudio();
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  o.type='triangle';o.frequency.setValueAtTime(500,audioCtx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(100,audioCtx.currentTime+.3);
+  g.gain.setValueAtTime(.12,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.35);
+  o.start();o.stop(audioCtx.currentTime+.35);
+}
+
+function playGameOver(){
+  ensureAudio();
+  [220,180,140].forEach((f,i)=>{
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.connect(g);g.connect(audioCtx.destination);
+    o.type='sawtooth';o.frequency.setValueAtTime(f,audioCtx.currentTime+i*.15);
+    g.gain.setValueAtTime(.1,audioCtx.currentTime+i*.15);
+    g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+i*.15+.3);
+    o.start(audioCtx.currentTime+i*.15);o.stop(audioCtx.currentTime+i*.15+.3);
+  });
+}
+
+// ===== Constants =====
+const COLORS = ['#ff4757','#00e5ff','#ffd32a','#7bed9f','#ff6b81','#a55eea'];
+const BUBBLE_RADIUS_RATIO = 0.032; // relative to canvas width
+const COLS = 12;
+const ROW_HEIGHT_RATIO = 0.055;
+
+// ===== Game State =====
+let canvas, ctx, W, H;
+let bubbleR, rowH;
+let grid = []; // grid[row][col] = colorIndex or -1
+let shooterBubble = null; // {color}
+let nextBubble = null;
+let aimAngle = -Math.PI/2;
+let shootingBubble = null; // {x,y,vx,vy,color}
+let particles = [];
+let fallingBubbles = [];
+let score = 0;
+let gameMode = null; // 'endless' or 'level'
+let currentLevel = 0;
+let gameActive = false;
+let gameOver = false;
+let addRowTimer = 0;
+let addRowInterval = 12000; // ms in endless mode
+let lastTime = 0;
+let animId = null;
+let mouseX = 0, mouseY = 0;
+
+// ===== Canvas Setup =====
+canvas = document.getElementById('gameCanvas');
+ctx = canvas.getContext('2d');
+
+function resizeCanvas(){
+  const wrap = document.getElementById('canvasWrap');
+  const rect = wrap.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  W = rect.width;
+  H = rect.height;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  bubbleR = W * BUBBLE_RADIUS_RATIO;
+  rowH = bubbleR * 2 * 0.87; // hex packing vertical spacing
+}
+
+// ===== Grid Helpers =====
+function getGridX(row, col){
+  const offset = (row % 2 === 1) ? bubbleR : 0;
+  return bubbleR + col * bubbleR * 2 + offset;
+}
+function getGridY(row){
+  return bubbleR + row * rowH;
+}
+function getColCount(row){
+  return (row % 2 === 1) ? COLS - 1 : COLS;
+}
+function isValidCell(row, col){
+  return row >= 0 && col >= 0 && col < getColCount(row);
+}
+
+function getNeighbors(row, col){
+  const even = row % 2 === 0;
+  const offsets = even
+    ? [[-1,-1],[-1,0],[0,-1],[0,1],[1,-1],[1,0]]
+    : [[-1,0],[-1,1],[0,-1],[0,1],[1,0],[1,1]];
+  const result = [];
+  for(const [dr,dc] of offsets){
+    const nr = row+dr, nc = col+dc;
+    if(isValidCell(nr,nc)) result.push([nr,nc]);
+  }
+  return result;
+}
+
+function findCluster(row, col, color){
+  const visited = new Set();
+  const stack = [[row,col]];
+  const cluster = [];
+  while(stack.length){
+    const [r,c] = stack.pop();
+    const key = r+','+c;
+    if(visited.has(key)) continue;
+    visited.add(key);
+    if(!grid[r] || grid[r][c] !== color || color < 0) continue;
+    cluster.push([r,c]);
+    for(const [nr,nc] of getNeighbors(r,c)){
+      if(!visited.has(nr+','+nc)) stack.push([nr,nc]);
+    }
+  }
+  return cluster;
+}
+
+function findFloating(){
+  // BFS from top row to find connected bubbles
+  const connected = new Set();
+  const queue = [];
+  for(let c=0;c<getColCount(0);c++){
+    if(grid[0] && grid[0][c] >= 0){
+      queue.push([0,c]);
+      connected.add('0,'+c);
+    }
+  }
+  while(queue.length){
+    const [r,c] = queue.shift();
+    for(const [nr,nc] of getNeighbors(r,c)){
+      const key = nr+','+nc;
+      if(!connected.has(key) && grid[nr] && grid[nr][nc] >= 0){
+        connected.add(key);
+        queue.push([nr,nc]);
+      }
+    }
+  }
+  // Everything not connected is floating
+  const floating = [];
+  for(let r=0;r<grid.length;r++){
+    if(!grid[r]) continue;
+    for(let c=0;c<getColCount(r);c++){
+      if(grid[r][c] >= 0 && !connected.has(r+','+c)){
+        floating.push([r,c]);
+      }
+    }
+  }
+  return floating;
+}
+
+function snapToGrid(x, y){
+  let bestDist = Infinity, bestR = 0, bestC = 0;
+  for(let r=0;r<grid.length+1;r++){
+    for(let c=0;c<getColCount(r);c++){
+      const gx = getGridX(r,c), gy = getGridY(r);
+      const d = Math.hypot(x-gx, y-gy);
+      if(d < bestDist){
+        // Only snap to empty cells
+        if(!grid[r] || grid[r][c] < 0 || grid[r][c] === undefined){
+          bestDist = d;
+          bestR = r;
+          bestC = c;
+        }
+      }
+    }
+  }
+  return [bestR, bestC];
+}
+
+function countBubblesInGrid(){
+  let count = 0;
+  for(let r=0;r<grid.length;r++){
+    if(!grid[r]) continue;
+    for(let c=0;c<getColCount(r);c++){
+      if(grid[r][c] >= 0) count++;
+    }
+  }
+  return count;
+}
+
+// ===== Grid init =====
+function initGrid(rows, pattern){
+  grid = [];
+  if(pattern){
+    // Use level pattern
+    for(let r=0;r<pattern.length;r++){
+      grid[r] = [];
+      const cols = getColCount(r);
+      for(let c=0;c<cols;c++){
+        grid[r][c] = (c < pattern[r].length) ? pattern[r][c] : -1;
+      }
+    }
+  } else {
+    // Random rows for endless
+    for(let r=0;r<rows;r++){
+      grid[r] = [];
+      const cols = getColCount(r);
+      for(let c=0;c<cols;c++){
+        grid[r][c] = Math.floor(Math.random()*COLORS.length);
+      }
+    }
+  }
+}
+
+function addNewRow(){
+  // Shift all rows down by 1 and add new row at top
+  grid.unshift([]);
+  const cols = getColCount(0);
+  for(let c=0;c<cols;c++){
+    grid[0][c] = Math.floor(Math.random()*COLORS.length);
+  }
+  // Check game over after adding row
+  checkBottomGameOver();
+}
+
+function checkBottomGameOver(){
+  const maxRow = Math.floor((H - bubbleR * 4) / rowH);
+  for(let r=0;r<grid.length;r++){
+    if(!grid[r]) continue;
+    for(let c=0;c<getColCount(r);c++){
+      if(grid[r][c] >= 0 && r >= maxRow){
+        endGame();
+        return;
+      }
+    }
+  }
+}
+
+// ===== Level Patterns =====
+function generateLevels(){
+  const levels = [];
+  // 20 levels with increasing difficulty
+  // Pattern generators
+  const R = ()=>Math.floor(Math.random()*COLORS.length);
+  const E = -1;
+
+  // Level 1: Simple 3 rows
+  levels.push(Array.from({length:3},(_,r)=>{
+    const cols=getColCount(r);
+    return Array.from({length:cols},()=>Math.floor(Math.random()*3));
+  }));
+
+  // Level 2: Triangle
+  levels.push(Array.from({length:5},(_,r)=>{
+    const cols=getColCount(r);
+    return Array.from({length:cols},(_,c)=>{
+      const mid=Math.floor(cols/2);
+      return Math.abs(c-mid)<=r ? r%3 : E;
+    });
+  }));
+
+  // Level 3: Checkerboard
+  levels.push(Array.from({length:4},(_,r)=>{
+    const cols=getColCount(r);
+    return Array.from({length:cols},(_,c)=>(r+c)%2===0 ? (r+c)%3 : E);
+  }));
+
+  // Level 4: Diamond
+  levels.push(Array.from({length:7},(_,r)=>{
+    const cols=getColCount(r);
+    const mid=Math.floor(cols/2);
+    const half = r<4 ? r : 6-r;
+    return Array.from({length:cols},(_,c)=>Math.abs(c-mid)<=half ? Math.abs(c-mid)%COLORS.length : E);
+  }));
+
+  // Level 5: Two colors only, dense
+  levels.push(Array.from({length:5},(_,r)=>{
+    const cols=getColCount(r);
+    return Array.from({length:cols},(_,c)=>(c+r)%2);
+  }));
+
+  // Level 6: Stripes
+  levels.push(Array.from({length:6},(_,r)=>{
+    const cols=getColCount(r);
+    return Array.from({length:cols},()=>r%COLORS.length);
+  }));
+
+  // Level 7: Columns
+  levels.push(Array.from({length:5},(_,r)=>{
+    const cols=getColCount(r);
+    return Array.from({length:cols},(_,c)=>c%4);
+  }));
+
+  // Level 8: Sparse random
+  levels.push(Array.from({length:6},(_,r)=>{
+    const cols=getColCount(r);
+    return Array.from({length:cols},()=>Math.random()>.4 ? R() : E);
+  }));
+
+  // Level 9: Heart shape
+  levels.push(Array.from({length:7},(_,r)=>{
+    const cols=getColCount(r);
+    const heart = [
+      [0,0,1,1,0,0,1,1,0,0,0,0],
+      [0,1,1,1,1,1,1,1,1,0,0],
+      [1,1,1,1,1,1,1,1,1,1,0,0],
+      [0,1,1,1,1,1,1,1,1,0,0],
+      [0,0,1,1,1,1,1,1,0,0,0,0],
+      [0,0,0,1,1,1,1,0,0,0,0],
+      [0,0,0,0,1,1,0,0,0,0,0,0]
+    ];
+    return Array.from({length:cols},(_,c)=> c<(heart[r]||[]).length && heart[r][c] ? 0 : E);
+  }));
+
+  // Level 10: Random 4-color, 5 rows
+  levels.push(Array.from({length:5},(_,r)=>{
+    const cols=getColCount(r);
+    return Array.from({length:cols},()=>Math.floor(Math.random()*4));
+  }));
+
+  // Levels 11-20: increasingly dense/complex
+  for(let l=11;l<=20;l++){
+    const rows = Math.min(4+Math.floor(l/3), 8);
+    const numColors = Math.min(3+Math.floor(l/5), COLORS.length);
+    const density = 0.5 + (l/40);
+    levels.push(Array.from({length:rows},(_,r)=>{
+      const cols=getColCount(r);
+      return Array.from({length:cols},()=>Math.random()<density ? Math.floor(Math.random()*numColors) : E);
+    }));
+  }
+
+  return levels;
+}
+
+const LEVELS = generateLevels();
+
+// ===== Storage =====
+function getEndlessBest(){ return parseInt(localStorage.getItem('bubblePop_endlessBest')||'0'); }
+function setEndlessBest(s){ localStorage.setItem('bubblePop_endlessBest', s); }
+function getLevelCleared(){ return JSON.parse(localStorage.getItem('bubblePop_levelsCleared')||'[]'); }
+function setLevelCleared(arr){ localStorage.setItem('bubblePop_levelsCleared', JSON.stringify(arr)); }
+
+// ===== UI =====
+function showModeSelect(){
+  document.getElementById('modeSelect').style.display='flex';
+  document.getElementById('levelSelect').style.display='none';
+  document.getElementById('statsBar').style.display='none';
+  document.getElementById('canvasWrap').style.display='none';
+  document.getElementById('gameOverlay').classList.remove('show');
+  gameActive = false;
+  if(animId) cancelAnimationFrame(animId);
+
+  const best = getEndlessBest();
+  document.getElementById('endlessBest').textContent = best > 0 ? t.endless_best.replace('{score}',best) : '';
+  const cleared = getLevelCleared().length;
+  document.getElementById('levelProgress').textContent = cleared > 0 ? t.level_prog.replace('{n}',cleared) : '';
+}
+
+function showLevelSelect(){
+  document.getElementById('modeSelect').style.display='none';
+  document.getElementById('levelSelect').style.display='flex';
+  const gridEl = document.getElementById('levelGrid');
+  gridEl.innerHTML='';
+  const cleared = getLevelCleared();
+  for(let i=0;i<20;i++){
+    const btn = document.createElement('button');
+    btn.className='level-btn';
+    btn.textContent = i+1;
+    if(cleared.includes(i)) btn.classList.add('cleared');
+    if(i>0 && !cleared.includes(i-1) && !cleared.includes(i)) btn.classList.add('locked');
+    btn.addEventListener('click',()=>startLevel(i));
+    gridEl.appendChild(btn);
+  }
+}
+
+function showGame(){
+  document.getElementById('modeSelect').style.display='none';
+  document.getElementById('levelSelect').style.display='none';
+  document.getElementById('statsBar').style.display='flex';
+  document.getElementById('canvasWrap').style.display='flex';
+  document.getElementById('gameOverlay').classList.remove('show');
+}
+
+function backToMenu(){
+  showModeSelect();
+}
+
+// ===== Game Start =====
+function startEndless(){
+  gameMode='endless';
+  score=0;
+  gameOver=false;
+  addRowTimer=0;
+  particles=[];
+  fallingBubbles=[];
+  shootingBubble=null;
+  showGame();
+  resizeCanvas();
+  initGrid(6);
+  shooterBubble={color:Math.floor(Math.random()*COLORS.length)};
+  nextBubble={color:Math.floor(Math.random()*COLORS.length)};
+  updateNextPreview();
+  gameActive=true;
+  lastTime=performance.now();
+  updateUI();
+  gameLoop(lastTime);
+}
+
+function startLevel(idx){
+  gameMode='level';
+  currentLevel=idx;
+  score=0;
+  gameOver=false;
+  addRowTimer=0;
+  particles=[];
+  fallingBubbles=[];
+  shootingBubble=null;
+  showGame();
+  resizeCanvas();
+  // Deep copy level pattern
+  const pattern = LEVELS[idx].map(r=>[...r]);
+  initGrid(0, pattern);
+  // Pick colors that exist in level
+  const usedColors = new Set();
+  for(const row of grid) for(const c of row) if(c>=0) usedColors.add(c);
+  const colorArr = [...usedColors];
+  shooterBubble={color:colorArr[Math.floor(Math.random()*colorArr.length)]};
+  nextBubble={color:colorArr[Math.floor(Math.random()*colorArr.length)]};
+  updateNextPreview();
+  gameActive=true;
+  lastTime=performance.now();
+  updateUI();
+  gameLoop(lastTime);
+}
+
+function updateNextPreview(){
+  const circle = document.getElementById('nextBubbleCircle');
+  if(nextBubble) circle.style.background=COLORS[nextBubble.color];
+}
+
+function updateUI(){
+  document.getElementById('scoreDisplay').textContent=score;
+  const best = gameMode==='endless' ? getEndlessBest() : '-';
+  document.getElementById('bestDisplay').textContent=best;
+  document.getElementById('bubblesDisplay').textContent=countBubblesInGrid();
+}
+
+// ===== Shooting =====
+function shoot(){
+  if(!gameActive || shootingBubble || gameOver) return;
+  playShoot();
+  const speed = W * 0.018;
+  const startX = W/2;
+  const startY = H - bubbleR*3;
+  shootingBubble = {
+    x: startX,
+    y: startY,
+    vx: Math.cos(aimAngle)*speed,
+    vy: Math.sin(aimAngle)*speed,
+    color: shooterBubble.color
+  };
+  shooterBubble = nextBubble;
+  // Pick next bubble from colors in grid
+  const usedColors = new Set();
+  for(const row of grid) if(row) for(const c of row) if(c>=0) usedColors.add(c);
+  if(usedColors.size===0) usedColors.add(0);
+  const colorArr=[...usedColors];
+  nextBubble={color:colorArr[Math.floor(Math.random()*colorArr.length)]};
+  updateNextPreview();
+}
+
+function onBubbleLand(bx, by, color){
+  const [row, col] = snapToGrid(bx, by);
+  // Ensure grid row exists
+  while(grid.length <= row) grid.push(Array.from({length:getColCount(grid.length)},()=>-1));
+  if(!grid[row]) grid[row] = Array.from({length:getColCount(row)},()=>-1);
+  grid[row][col] = color;
+
+  // Find cluster
+  const cluster = findCluster(row, col, color);
+  if(cluster.length >= 3){
+    // Pop!
+    let delay = 0;
+    for(const [r,c] of cluster){
+      const px = getGridX(r,c), py = getGridY(r);
+      spawnPopParticles(px, py, COLORS[grid[r][c]], delay);
+      grid[r][c] = -1;
+      delay += 30;
+    }
+    score += cluster.length * 10;
+    setTimeout(()=>playPop(), 0);
+
+    // Check for floating bubbles
+    setTimeout(()=>{
+      const floating = findFloating();
+      if(floating.length > 0){
+        playFall();
+        for(const [r,c] of floating){
+          const fx = getGridX(r,c), fy = getGridY(r);
+          fallingBubbles.push({x:fx, y:fy, vy:0, color:grid[r][c]});
+          grid[r][c] = -1;
+        }
+        score += floating.length * 15; // bonus for chain
+      }
+      updateUI();
+
+      // Check level clear
+      if(gameMode === 'level'){
+        if(countBubblesInGrid() === 0){
+          levelClear();
+        }
+      }
+    }, 100);
+  } else {
+    updateUI();
+    // In level mode, no penalty. In endless, check bottom
+    if(gameMode === 'endless'){
+      checkBottomGameOver();
+    }
+  }
+}
+
+// ===== Particles =====
+function spawnPopParticles(x, y, color, delay){
+  for(let i=0;i<8;i++){
+    const angle = (Math.PI*2/8)*i + Math.random()*.5;
+    const speed = 1.5 + Math.random()*3;
+    particles.push({
+      x, y, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed,
+      r: bubbleR*0.3 + Math.random()*bubbleR*0.2,
+      color, alpha:1, life:0, maxLife:400+Math.random()*200, delay: delay||0
+    });
+  }
+}
+
+// ===== Aim Line =====
+function drawAimLine(){
+  if(!gameActive || shootingBubble || gameOver) return;
+  const startX = W/2;
+  const startY = H - bubbleR*3;
+  let dx = Math.cos(aimAngle);
+  let dy = Math.sin(aimAngle);
+
+  // Don't allow shooting downward
+  if(dy >= 0) return;
+
+  ctx.save();
+  ctx.setLineDash([6,6]);
+  ctx.strokeStyle='rgba(255,255,255,.2)';
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+
+  // Trace with wall bounces
+  let x=startX, y=startY;
+  let remainingLen = H;
+  let curDx=dx, curDy=dy;
+  const step=5;
+
+  for(let i=0;i<200 && remainingLen>0;i++){
+    const nx=x+curDx*step;
+    const ny=y+curDy*step;
+
+    // Wall bounce
+    if(nx-bubbleR < 0 || nx+bubbleR > W){
+      curDx = -curDx;
+      ctx.lineTo(x, y);
+    }
+    // Top ceiling
+    if(ny - bubbleR < 0) {
+      ctx.lineTo(x, y);
+      break;
+    }
+
+    x=x+curDx*step;
+    y=y+curDy*step;
+    if(x<bubbleR) x=bubbleR;
+    if(x>W-bubbleR) x=W-bubbleR;
+    ctx.lineTo(x, y);
+    remainingLen-=step;
+
+    // Check collision with grid bubbles
+    let hit=false;
+    for(let r=0;r<grid.length;r++){
+      if(!grid[r]) continue;
+      for(let c=0;c<getColCount(r);c++){
+        if(grid[r][c]<0) continue;
+        const gx=getGridX(r,c), gy=getGridY(r);
+        if(Math.hypot(x-gx,y-gy)<bubbleR*1.8){
+          hit=true;break;
+        }
+      }
+      if(hit) break;
+    }
+    if(hit) break;
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ===== Render =====
+function drawBubble(x, y, colorIdx, scale){
+  scale = scale || 1;
+  const r = bubbleR * scale;
+  const color = COLORS[colorIdx];
+
+  // Glow
+  ctx.save();
+  ctx.shadowColor = color;
+  ctx.shadowBlur = r * 0.6;
+
+  // Main circle
+  const grad = ctx.createRadialGradient(x-r*0.3, y-r*0.3, r*0.1, x, y, r);
+  grad.addColorStop(0, 'rgba(255,255,255,.4)');
+  grad.addColorStop(0.4, color);
+  grad.addColorStop(1, shadeColor(color, -40));
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(x, y, r*0.9, 0, Math.PI*2);
+  ctx.fill();
+
+  // Highlight
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(255,255,255,.25)';
+  ctx.beginPath();
+  ctx.arc(x-r*0.25, y-r*0.25, r*0.3, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function shadeColor(c, amount){
+  let col = c.replace('#','');
+  let r=parseInt(col.substring(0,2),16);
+  let g=parseInt(col.substring(2,4),16);
+  let b=parseInt(col.substring(4,6),16);
+  r=Math.max(0,Math.min(255,r+amount));
+  g=Math.max(0,Math.min(255,g+amount));
+  b=Math.max(0,Math.min(255,b+amount));
+  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+
+function render(){
+  ctx.clearRect(0,0,W,H);
+
+  // Background
+  ctx.fillStyle='#0a0a1a';
+  ctx.fillRect(0,0,W,H);
+
+  // Grid bubbles
+  for(let r=0;r<grid.length;r++){
+    if(!grid[r]) continue;
+    for(let c=0;c<getColCount(r);c++){
+      if(grid[r][c]<0) continue;
+      drawBubble(getGridX(r,c), getGridY(r), grid[r][c]);
+    }
+  }
+
+  // Aim line
+  drawAimLine();
+
+  // Shooting bubble
+  if(shootingBubble){
+    drawBubble(shootingBubble.x, shootingBubble.y, shootingBubble.color);
+  }
+
+  // Shooter bubble at bottom
+  if(shooterBubble && !shootingBubble && !gameOver){
+    drawBubble(W/2, H-bubbleR*3, shooterBubble.color, 1.1);
+    // Small arrow indicator
+    ctx.save();
+    ctx.strokeStyle='rgba(255,255,255,.15)';
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.arc(W/2, H-bubbleR*3, bubbleR*2, Math.PI*1.1, Math.PI*1.9);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Falling bubbles
+  for(const fb of fallingBubbles){
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, 1 - fb.y / (H+50));
+    drawBubble(fb.x, fb.y, fb.color, 0.9);
+    ctx.restore();
+  }
+
+  // Particles
+  for(const p of particles){
+    if(p.delay > 0) continue;
+    ctx.save();
+    ctx.globalAlpha = p.alpha;
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Danger line (bottom threshold)
+  const maxRow = Math.floor((H - bubbleR * 4) / rowH);
+  const dangerY = getGridY(maxRow);
+  ctx.save();
+  ctx.setLineDash([8,8]);
+  ctx.strokeStyle='rgba(255,71,87,.2)';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(0,dangerY);
+  ctx.lineTo(W,dangerY);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ===== Game Loop =====
+function gameLoop(now){
+  if(!gameActive) return;
+  const dt = now - lastTime;
+  lastTime = now;
+
+  // Update shooting bubble
+  if(shootingBubble){
+    shootingBubble.x += shootingBubble.vx;
+    shootingBubble.y += shootingBubble.vy;
+
+    // Wall bounce
+    if(shootingBubble.x - bubbleR < 0){
+      shootingBubble.x = bubbleR;
+      shootingBubble.vx = -shootingBubble.vx;
+    }
+    if(shootingBubble.x + bubbleR > W){
+      shootingBubble.x = W - bubbleR;
+      shootingBubble.vx = -shootingBubble.vx;
+    }
+
+    // Ceiling
+    if(shootingBubble.y - bubbleR < 0){
+      shootingBubble.y = bubbleR;
+      onBubbleLand(shootingBubble.x, shootingBubble.y, shootingBubble.color);
+      shootingBubble = null;
+    }
+
+    // Collision with grid bubbles
+    if(shootingBubble){
+      let landed = false;
+      for(let r=0;r<grid.length && !landed;r++){
+        if(!grid[r]) continue;
+        for(let c=0;c<getColCount(r);c++){
+          if(grid[r][c]<0) continue;
+          const gx=getGridX(r,c), gy=getGridY(r);
+          if(Math.hypot(shootingBubble.x-gx, shootingBubble.y-gy) < bubbleR*1.8){
+            onBubbleLand(shootingBubble.x, shootingBubble.y, shootingBubble.color);
+            shootingBubble=null;
+            landed=true;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  // Update falling bubbles
+  for(let i=fallingBubbles.length-1;i>=0;i--){
+    fallingBubbles[i].vy += 0.3;
+    fallingBubbles[i].y += fallingBubbles[i].vy;
+    if(fallingBubbles[i].y > H+50) fallingBubbles.splice(i,1);
+  }
+
+  // Update particles
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    if(p.delay > 0){ p.delay -= dt; continue; }
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.05;
+    p.life += dt;
+    p.alpha = Math.max(0, 1 - p.life/p.maxLife);
+    p.r *= 0.99;
+    if(p.life >= p.maxLife) particles.splice(i,1);
+  }
+
+  // Endless mode: add rows periodically
+  if(gameMode==='endless' && !gameOver){
+    addRowTimer += dt;
+    if(addRowTimer >= addRowInterval){
+      addRowTimer = 0;
+      addNewRow();
+      updateUI();
+    }
+  }
+
+  render();
+  animId = requestAnimationFrame(gameLoop);
+}
+
+// ===== End Game =====
+function endGame(){
+  if(gameOver) return;
+  gameOver=true;
+  gameActive=false;
+  playGameOver();
+
+  if(gameMode==='endless'){
+    const best=getEndlessBest();
+    if(score>best) setEndlessBest(score);
+    document.getElementById('overlayTitle').textContent=t.game_over;
+    document.getElementById('overlayScore').textContent=score;
+    document.getElementById('overlayBest').textContent=t.best+': '+Math.max(score,best);
+    document.getElementById('overlayBtn').textContent=t.try_again;
+    document.getElementById('overlayBtn').dataset.action='restart-endless';
+  }
+  document.getElementById('gameOverlay').classList.add('show');
+
+  PuzzleShare.showShareModal({
+    gameName: 'Bubble Pop',
+    score: score,
+    message: gameMode==='endless' ? t.game_over : '',
+    lang: lang
+  });
+}
+
+function levelClear(){
+  gameOver=true;
+  gameActive=false;
+  playPop();
+
+  const cleared=getLevelCleared();
+  if(!cleared.includes(currentLevel)){
+    cleared.push(currentLevel);
+    setLevelCleared(cleared);
+  }
+
+  const isAllClear = cleared.length >= 20;
+  document.getElementById('overlayTitle').textContent = isAllClear ? t.all_clear : t.level_clear;
+  document.getElementById('overlayScore').textContent=score;
+  document.getElementById('overlayBest').textContent='';
+
+  if(currentLevel < 19 && !isAllClear){
+    document.getElementById('overlayBtn').textContent=t.next_level;
+    document.getElementById('overlayBtn').dataset.action='next-level';
+  } else {
+    document.getElementById('overlayBtn').textContent=t.back;
+    document.getElementById('overlayBtn').dataset.action='menu';
+  }
+  document.getElementById('gameOverlay').classList.add('show');
+
+  PuzzleShare.showShareModal({
+    gameName: 'Bubble Pop',
+    score: score,
+    message: t.level_clear + ' Lv.' + (currentLevel+1),
+    lang: lang
+  });
+}
+
+function onOverlayAction(){
+  const action = document.getElementById('overlayBtn').dataset.action;
+  if(action==='restart-endless') startEndless();
+  else if(action==='next-level') startLevel(currentLevel+1);
+  else showModeSelect();
+}
+
+// ===== Input =====
+function updateAim(clientX, clientY){
+  const rect = canvas.getBoundingClientRect();
+  mouseX = clientX - rect.left;
+  mouseY = clientY - rect.top;
+  // Scale to canvas coords
+  mouseX = mouseX * (W / rect.width);
+  mouseY = mouseY * (H / rect.height);
+
+  const sx = W/2, sy = H - bubbleR*3;
+  const dx = mouseX - sx, dy = mouseY - sy;
+  let angle = Math.atan2(dy, dx);
+  // Clamp to upward angles
+  if(angle > -0.15) angle = -0.15;
+  if(angle < -Math.PI+0.15) angle = -Math.PI+0.15;
+  aimAngle = angle;
+}
+
+canvas.addEventListener('mousemove', e => updateAim(e.clientX, e.clientY));
+canvas.addEventListener('click', e => {
+  updateAim(e.clientX, e.clientY);
+  shoot();
+});
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  updateAim(touch.clientX, touch.clientY);
+}, {passive:false});
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  updateAim(touch.clientX, touch.clientY);
+}, {passive:false});
+
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  shoot();
+}, {passive:false});
+
+// ===== Resize =====
+window.addEventListener('resize', ()=>{
+  if(gameActive || gameOver){
+    resizeCanvas();
+  }
+});
+
+// ===== Init =====
+showModeSelect();
+</script>
+</body>
+</html>

@@ -123,8 +123,8 @@ footer{text-align:center;padding:40px 20px;color:#333;font-size:.8rem;border-top
 
   <!-- Stats -->
   <div class="stats-bar">
-    <div class="stat-item"><div class="stat-val">8</div><div class="stat-label" data-i18n="stat_games">게임</div></div>
-    <div class="stat-item"><div class="stat-val">800+</div><div class="stat-label" data-i18n="stat_levels">레벨</div></div>
+    <div class="stat-item"><div class="stat-val">27</div><div class="stat-label" data-i18n="stat_games">게임</div></div>
+    <div class="stat-item"><div class="stat-val">3000+</div><div class="stat-label" data-i18n="stat_levels">레벨</div></div>
     <div class="stat-item"><div class="stat-val">∞</div><div class="stat-label" data-i18n="stat_fun">재미</div></div>
   </div>
 
@@ -135,6 +135,8 @@ footer{text-align:center;padding:40px 20px;color:#333;font-size:.8rem;border-top
     <button class="cat-btn" onclick="filterGames('action')" data-i18n="cat_action">⚡ 액션</button>
     <button class="cat-btn" onclick="filterGames('sort')" data-i18n="cat_sort">🎨 정렬</button>
     <button class="cat-btn" onclick="filterGames('number')" data-i18n="cat_number">🔢 숫자</button>
+    <button class="cat-btn" onclick="filterGames('quiz')" data-i18n="cat_quiz">🧩 퀴즈</button>
+    <button class="cat-btn" onclick="filterGames('speed')" data-i18n="cat_speed">⏱️ 스피드</button>
   </div>
 
   <!-- Game Grid -->
@@ -257,6 +259,292 @@ footer{text-align:center;padding:40px 20px;color:#333;font-size:.8rem;border-top
       </div>
     </a>
 
+    <!-- Inline Ad 2 -->
+    <div class="ad-inline">
+      <div class="ad-label">Advertisement</div>
+      <div data-i18n="ad_native">광고 영역 (네이티브 광고)</div>
+    </div>
+
+    <!-- IQ Test -->
+    <a href="games/iq-test.html" class="game-card theme-purple" data-cat="quiz logic">
+      <div class="game-thumb">🧠</div>
+      <span class="game-badge badge-hot">🔥 HOT</span>
+      <div class="game-info">
+        <h3 data-i18n="iq_title">IQ 테스트</h3>
+        <p data-i18n="iq_desc">패턴을 분석하고 다음에 올 것을 맞혀보세요! 당신의 IQ는?</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_20q">20문제</span>
+          <span class="game-tag tag-hot" data-i18n="tag_share_worthy">📸 공유각</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Reaction Speed Test -->
+    <a href="games/reaction-test.html" class="game-card theme-green" data-cat="speed action">
+      <div class="game-thumb">⚡</div>
+      <span class="game-badge badge-new">✨ NEW</span>
+      <div class="game-info">
+        <h3 data-i18n="reaction_title">반응속도 테스트</h3>
+        <p data-i18n="reaction_desc">초록불이 켜지면 최대한 빠르게 터치! 당신의 반응속도는?</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_3modes">3가지 모드</span>
+          <span class="game-tag tag-hot" data-i18n="tag_addictive">🔥 중독주의</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Memory Card -->
+    <a href="games/memory-card.html" class="game-card theme-pink" data-cat="logic">
+      <div class="game-thumb">🃏</div>
+      <span class="game-badge badge-new">✨ NEW</span>
+      <div class="game-info">
+        <h3 data-i18n="memory_title">메모리 카드</h3>
+        <p data-i18n="memory_desc">카드를 뒤집어 같은 그림을 찾으세요! 기억력 챌린지.</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_40levels">40 레벨</span>
+          <span class="game-tag tag-easy" data-i18n="tag_easy_start">쉬운 시작</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Math Speed Quiz -->
+    <a href="games/math-quiz.html" class="game-card theme-orange" data-cat="quiz number speed">
+      <div class="game-thumb">🔢</div>
+      <span class="game-badge badge-hot">🔥 HOT</span>
+      <div class="game-info">
+        <h3 data-i18n="math_title">수학 스피드 퀴즈</h3>
+        <p data-i18n="math_desc">30초 안에 수학 문제를 최대한 많이 풀어보세요! 연속 콤보!</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_3modes">3가지 모드</span>
+          <span class="game-tag tag-hot" data-i18n="tag_addictive">🔥 중독주의</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Inline Ad 3 -->
+    <div class="ad-inline">
+      <div class="ad-label">Advertisement</div>
+      <div data-i18n="ad_native">광고 영역 (네이티브 광고)</div>
+    </div>
+
+    <!-- Color Brain -->
+    <a href="games/color-brain.html" class="game-card theme-cyan" data-cat="quiz logic">
+      <div class="game-thumb">🎨</div>
+      <span class="game-badge badge-new">✨ NEW</span>
+      <div class="game-info">
+        <h3 data-i18n="cbrain_title">컬러 브레인</h3>
+        <p data-i18n="cbrain_desc">글자 색과 의미가 다르다! 스트룹 효과 두뇌 퀴즈.</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_20rounds">20 라운드</span>
+          <span class="game-tag tag-hot" data-i18n="tag_brain_twist">🧠 두뇌풀가동</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Sequence Memory -->
+    <a href="games/sequence-memory.html" class="game-card theme-red" data-cat="logic">
+      <div class="game-thumb">🔴🟢<br>🔵🟡</div>
+      <div class="game-info">
+        <h3 data-i18n="seq_title">순서 기억하기</h3>
+        <p data-i18n="seq_desc">점점 길어지는 색 순서를 기억하세요! 사이먼 게임.</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_infinite">무한 모드</span>
+          <span class="game-tag tag-new" data-i18n="tag_new">✨ 신규</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Typing Speed -->
+    <a href="games/typing-speed.html" class="game-card theme-blue" data-cat="speed action">
+      <div class="game-thumb">⌨️</div>
+      <span class="game-badge badge-new">✨ NEW</span>
+      <div class="game-info">
+        <h3 data-i18n="typing_title">타이핑 스피드</h3>
+        <p data-i18n="typing_desc">영어 단어를 얼마나 빠르게 칠 수 있나요? WPM 측정!</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_3modes">3가지 모드</span>
+          <span class="game-tag tag-hot" data-i18n="tag_addictive">🔥 중독주의</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Word Bomb -->
+    <a href="games/word-bomb.html" class="game-card theme-yellow" data-cat="quiz speed">
+      <div class="game-thumb">💣</div>
+      <div class="game-info">
+        <h3 data-i18n="bomb_title">단어 폭탄</h3>
+        <p data-i18n="bomb_desc">주어진 글자가 포함된 단어를 빨리 입력하세요! 폭탄이 터지기 전에!</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_infinite">무한 모드</span>
+          <span class="game-tag tag-hot" data-i18n="tag_addictive">🔥 중독주의</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Flag Quiz -->
+    <a href="games/flag-quiz.html" class="game-card theme-green" data-cat="quiz">
+      <div class="game-thumb">🏳️</div>
+      <span class="game-badge badge-new">✨ NEW</span>
+      <div class="game-info">
+        <h3 data-i18n="flag_title">국기 퀴즈</h3>
+        <p data-i18n="flag_desc">국기를 보고 나라를 맞혀보세요! 50개국 도전!</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_50countries">50개국</span>
+          <span class="game-tag tag-hot" data-i18n="tag_share_worthy">📸 공유각</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Spot the Difference -->
+    <a href="games/spot-diff.html" class="game-card theme-cyan" data-cat="logic">
+      <div class="game-thumb">🔍</div>
+      <span class="game-badge badge-new">✨ NEW</span>
+      <div class="game-info">
+        <h3 data-i18n="spot_title">틀린그림찾기</h3>
+        <p data-i18n="spot_desc">두 그림에서 다른 부분을 찾아보세요! 관찰력 테스트.</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_20levels">20 레벨</span>
+          <span class="game-tag tag-easy" data-i18n="tag_easy_start">쉬운 시작</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Number Chain -->
+    <a href="games/number-chain.html" class="game-card theme-red" data-cat="number logic">
+      <div class="game-thumb">🔗</div>
+      <div class="game-info">
+        <h3 data-i18n="chain_title">넘버 체인</h3>
+        <p data-i18n="chain_desc">합이 10이 되는 숫자를 연결하세요! 연쇄 콤보!</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_30levels">30 레벨</span>
+          <span class="game-tag tag-hot" data-i18n="tag_addictive">🔥 중독주의</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Inline Ad 4 -->
+    <div class="ad-inline">
+      <div class="ad-label">Advertisement</div>
+      <div data-i18n="ad_native">광고 영역 (네이티브 광고)</div>
+    </div>
+
+    <!-- Emoji Puzzle -->
+    <a href="games/emoji-puzzle.html" class="game-card theme-yellow" data-cat="quiz">
+      <div class="game-thumb">🤔💡</div>
+      <span class="game-badge badge-hot">🔥 HOT</span>
+      <div class="game-info">
+        <h3 data-i18n="emoji_title">이모지 퍼즐</h3>
+        <p data-i18n="emoji_desc">이모지 조합이 뜻하는 것은? 영화, 음식, 장소를 맞혀보세요!</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_48puzzles">48 퍼즐</span>
+          <span class="game-tag tag-hot" data-i18n="tag_share_worthy">📸 공유각</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Tile Match -->
+    <a href="games/tile-match.html" class="game-card theme-purple" data-cat="logic">
+      <div class="game-thumb">🀄</div>
+      <span class="game-badge badge-new">✨ NEW</span>
+      <div class="game-info">
+        <h3 data-i18n="tile_title">타일 매치</h3>
+        <p data-i18n="tile_desc">같은 타일을 찾아 연결하세요! 마작 스타일 매칭 퍼즐.</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_20levels">20 레벨</span>
+          <span class="game-tag tag-easy" data-i18n="tag_easy_start">쉬운 시작</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Aim Trainer -->
+    <a href="games/aim-trainer.html" class="game-card theme-orange" data-cat="speed action">
+      <div class="game-thumb">🎯</div>
+      <span class="game-badge badge-new">✨ NEW</span>
+      <div class="game-info">
+        <h3 data-i18n="aim_title">에임 트레이너</h3>
+        <p data-i18n="aim_desc">나타나는 타겟을 빠르게 클릭! 조준 실력을 테스트하세요.</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_3modes">3가지 모드</span>
+          <span class="game-tag tag-hot" data-i18n="tag_addictive">🔥 중독주의</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Snake -->
+    <a href="games/snake.html" class="game-card theme-green" data-cat="action">
+      <div class="game-thumb">🐍</div>
+      <span class="game-badge badge-hot">🔥 HOT</span>
+      <div class="game-info">
+        <h3 data-i18n="snake_title">스네이크</h3>
+        <p data-i18n="snake_desc">클래식 뱀 게임! 먹이를 먹고 길어지는 네온 뱀을 조종하세요.</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_3modes">3가지 모드</span>
+          <span class="game-tag tag-hot" data-i18n="tag_popular">🔥 인기</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Inline Ad 5 -->
+    <div class="ad-inline">
+      <div class="ad-label">Advertisement</div>
+      <div data-i18n="ad_native">광고 영역 (네이티브 광고)</div>
+    </div>
+
+    <!-- Block Stack -->
+    <a href="games/block-stack.html" class="game-card theme-cyan" data-cat="action">
+      <div class="game-thumb">🧱</div>
+      <span class="game-badge badge-hot">🔥 HOT</span>
+      <div class="game-info">
+        <h3 data-i18n="block_title">블록 스택</h3>
+        <p data-i18n="block_desc">떨어지는 블록을 쌓아 줄을 완성하세요! 클래식 블록 퍼즐.</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_3modes">3가지 모드</span>
+          <span class="game-tag tag-hot" data-i18n="tag_addictive">🔥 중독주의</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Whack-a-Mole -->
+    <a href="games/whack-mole.html" class="game-card theme-orange" data-cat="action speed">
+      <div class="game-thumb">🐹</div>
+      <span class="game-badge badge-new">✨ NEW</span>
+      <div class="game-info">
+        <h3 data-i18n="mole_title">두더지 잡기</h3>
+        <p data-i18n="mole_desc">올라오는 두더지를 빠르게 잡으세요! 폭탄은 피하고!</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_3modes">3가지 모드</span>
+          <span class="game-tag tag-hot" data-i18n="tag_popular">🔥 인기</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Maze -->
+    <a href="games/maze.html" class="game-card theme-blue" data-cat="logic">
+      <div class="game-thumb">🌀</div>
+      <div class="game-info">
+        <h3 data-i18n="maze_title">미로 탈출</h3>
+        <p data-i18n="maze_desc">미로를 탐험하고 출구를 찾으세요! 코인도 모으세요.</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_20levels">20 레벨</span>
+          <span class="game-tag tag-new" data-i18n="tag_new">✨ 신규</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- RPS Battle -->
+    <a href="games/rps-battle.html" class="game-card theme-pink" data-cat="action quiz">
+      <div class="game-thumb">✊✋✌️</div>
+      <span class="game-badge badge-new">✨ NEW</span>
+      <div class="game-info">
+        <h3 data-i18n="rps_title">가위바위보 배틀</h3>
+        <p data-i18n="rps_desc">AI 상대와 가위바위보 대결! 토너먼트에서 우승하세요.</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_tournament">토너먼트</span>
+          <span class="game-tag tag-hot" data-i18n="tag_share_worthy">📸 공유각</span>
+        </div>
+      </div>
+    </a>
+
     <!-- Bottom Ad -->
     <div class="ad-inline">
       <div class="ad-label">Advertisement</div>
@@ -289,6 +577,30 @@ const I18N = {
     merge_title: '숫자 합치기', merge_desc: '같은 숫자를 드래그해서 합치세요! 얼마나 큰 숫자를 만들 수 있을까?',
     tag_100levels: '100+ 레벨', tag_infinite: '무한 모드', tag_popular: '🔥 인기',
     tag_addictive: '🔥 중독주의', tag_easy_start: '쉬운 시작', tag_new: '✨ 신규',
+    tag_20q: '20문제', tag_share_worthy: '📸 공유각', tag_3modes: '3가지 모드',
+    tag_40levels: '40 레벨', tag_20rounds: '20 라운드', tag_brain_twist: '🧠 두뇌풀가동',
+    cat_quiz: '🧩 퀴즈', cat_speed: '⏱️ 스피드',
+    iq_title: 'IQ 테스트', iq_desc: '패턴을 분석하고 다음에 올 것을 맞혀보세요! 당신의 IQ는?',
+    reaction_title: '반응속도 테스트', reaction_desc: '초록불이 켜지면 최대한 빠르게 터치! 당신의 반응속도는?',
+    memory_title: '메모리 카드', memory_desc: '카드를 뒤집어 같은 그림을 찾으세요! 기억력 챌린지.',
+    math_title: '수학 스피드 퀴즈', math_desc: '30초 안에 수학 문제를 최대한 많이 풀어보세요! 연속 콤보!',
+    cbrain_title: '컬러 브레인', cbrain_desc: '글자 색과 의미가 다르다! 스트룹 효과 두뇌 퀴즈.',
+    seq_title: '순서 기억하기', seq_desc: '점점 길어지는 색 순서를 기억하세요! 사이먼 게임.',
+    typing_title: '타이핑 스피드', typing_desc: '영어 단어를 얼마나 빠르게 칠 수 있나요? WPM 측정!',
+    bomb_title: '단어 폭탄', bomb_desc: '주어진 글자가 포함된 단어를 빨리 입력하세요! 폭탄이 터지기 전에!',
+    flag_title: '국기 퀴즈', flag_desc: '국기를 보고 나라를 맞혀보세요! 50개국 도전!',
+    spot_title: '틀린그림찾기', spot_desc: '두 그림에서 다른 부분을 찾아보세요! 관찰력 테스트.',
+    chain_title: '넘버 체인', chain_desc: '합이 10이 되는 숫자를 연결하세요! 연쇄 콤보!',
+    tag_50countries: '50개국', tag_20levels: '20 레벨', tag_30levels: '30 레벨', tag_48puzzles: '48 퍼즐',
+    emoji_title: '이모지 퍼즐', emoji_desc: '이모지 조합이 뜻하는 것은? 영화, 음식, 장소를 맞혀보세요!',
+    tile_title: '타일 매치', tile_desc: '같은 타일을 찾아 연결하세요! 마작 스타일 매칭 퍼즐.',
+    aim_title: '에임 트레이너', aim_desc: '나타나는 타겟을 빠르게 클릭! 조준 실력을 테스트하세요.',
+    snake_title: '스네이크', snake_desc: '클래식 뱀 게임! 먹이를 먹고 길어지는 네온 뱀을 조종하세요.',
+    block_title: '블록 스택', block_desc: '떨어지는 블록을 쌓아 줄을 완성하세요! 클래식 블록 퍼즐.',
+    mole_title: '두더지 잡기', mole_desc: '올라오는 두더지를 빠르게 잡으세요! 폭탄은 피하고!',
+    maze_title: '미로 탈출', maze_desc: '미로를 탐험하고 출구를 찾으세요! 코인도 모으세요.',
+    rps_title: '가위바위보 배틀', rps_desc: 'AI 상대와 가위바위보 대결! 토너먼트에서 우승하세요.',
+    tag_tournament: '토너먼트',
     footer: 'Puzzle Arcade © 2026 | 매일 새로운 퍼즐을 즐기세요 🎮',
   },
   en: {
@@ -307,6 +619,30 @@ const I18N = {
     merge_title: 'Number Merge', merge_desc: 'Drag and merge same numbers! How high can you go?',
     tag_100levels: '100+ Levels', tag_infinite: 'Endless', tag_popular: '🔥 Popular',
     tag_addictive: '🔥 Addictive', tag_easy_start: 'Easy Start', tag_new: '✨ New',
+    tag_20q: '20 Questions', tag_share_worthy: '📸 Shareable', tag_3modes: '3 Modes',
+    tag_40levels: '40 Levels', tag_20rounds: '20 Rounds', tag_brain_twist: '🧠 Brain Twister',
+    cat_quiz: '🧩 Quiz', cat_speed: '⏱️ Speed',
+    iq_title: 'IQ Test', iq_desc: 'Analyze patterns and guess what comes next! What\'s your IQ?',
+    reaction_title: 'Reaction Test', reaction_desc: 'Tap as fast as you can when the light turns green!',
+    memory_title: 'Memory Cards', memory_desc: 'Flip cards and find matching pairs! Memory challenge.',
+    math_title: 'Math Speed Quiz', math_desc: 'Solve as many math problems as you can in 30 seconds!',
+    cbrain_title: 'Color Brain', cbrain_desc: 'The word and color don\'t match! Stroop effect brain quiz.',
+    seq_title: 'Sequence Memory', seq_desc: 'Remember the growing color sequence! Simon game.',
+    typing_title: 'Typing Speed', typing_desc: 'How fast can you type English words? Measure your WPM!',
+    bomb_title: 'Word Bomb', bomb_desc: 'Type a word containing the given letters before the bomb explodes!',
+    flag_title: 'Flag Quiz', flag_desc: 'Guess the country from its flag! 50 countries challenge!',
+    spot_title: 'Spot the Difference', spot_desc: 'Find the differences between two pictures! Observation test.',
+    chain_title: 'Number Chain', chain_desc: 'Connect numbers that add up to 10! Chain combos!',
+    tag_50countries: '50 Countries', tag_20levels: '20 Levels', tag_30levels: '30 Levels', tag_48puzzles: '48 Puzzles',
+    emoji_title: 'Emoji Puzzle', emoji_desc: 'What do these emojis mean? Guess movies, food, and places!',
+    tile_title: 'Tile Match', tile_desc: 'Find and connect matching tiles! Mahjong-style puzzle.',
+    aim_title: 'Aim Trainer', aim_desc: 'Click the targets as fast as you can! Test your aim.',
+    snake_title: 'Snake', snake_desc: 'Classic snake game! Control the neon snake and eat to grow.',
+    block_title: 'Block Stack', block_desc: 'Stack falling blocks to complete rows! Classic block puzzle.',
+    mole_title: 'Whack-a-Mole', mole_desc: 'Whack the moles as they pop up! Avoid the bombs!',
+    maze_title: 'Maze Runner', maze_desc: 'Navigate the maze and find the exit! Collect coins too.',
+    rps_title: 'RPS Battle', rps_desc: 'Rock Paper Scissors vs AI! Win the tournament!',
+    tag_tournament: 'Tournament',
     footer: 'Puzzle Arcade © 2026 | Enjoy new puzzles every day 🎮',
   },
   ja: {
@@ -325,6 +661,30 @@ const I18N = {
     merge_title: '数字マージ', merge_desc: '同じ数字をドラッグして合体！どこまで大きくできる？',
     tag_100levels: '100+ レベル', tag_infinite: '無限モード', tag_popular: '🔥 人気',
     tag_addictive: '🔥 中毒注意', tag_easy_start: '簡単スタート', tag_new: '✨ 新着',
+    tag_20q: '20問', tag_share_worthy: '📸 シェア映え', tag_3modes: '3モード',
+    tag_40levels: '40 レベル', tag_20rounds: '20 ラウンド', tag_brain_twist: '🧠 脳トレ',
+    cat_quiz: '🧩 クイズ', cat_speed: '⏱️ スピード',
+    iq_title: 'IQテスト', iq_desc: 'パターンを分析して次に来るものを当てよう！あなたのIQは？',
+    reaction_title: '反応速度テスト', reaction_desc: '緑になったら素早くタップ！あなたの反応速度は？',
+    memory_title: 'メモリーカード', memory_desc: 'カードをめくって同じ絵を見つけよう！記憶力チャレンジ。',
+    math_title: '算数スピードクイズ', math_desc: '30秒で算数問題をたくさん解こう！連続コンボ！',
+    cbrain_title: 'カラーブレイン', cbrain_desc: '文字の色と意味が違う！ストループ効果脳トレクイズ。',
+    seq_title: 'シーケンス記憶', seq_desc: 'どんどん長くなる色の順番を覚えよう！サイモンゲーム。',
+    typing_title: 'タイピングスピード', typing_desc: '英単語をどれだけ速く打てる？WPM測定！',
+    bomb_title: 'ワードボム', bomb_desc: '指定の文字を含む単語を素早く入力！爆弾が爆発する前に！',
+    flag_title: '国旗クイズ', flag_desc: '国旗を見て国を当てよう！50カ国チャレンジ！',
+    spot_title: '間違い探し', spot_desc: '2つの絵の違いを見つけよう！観察力テスト。',
+    chain_title: 'ナンバーチェーン', chain_desc: '合計10になる数字を繋げよう！連鎖コンボ！',
+    tag_50countries: '50カ国', tag_20levels: '20 レベル', tag_30levels: '30 レベル', tag_48puzzles: '48 パズル',
+    emoji_title: '絵文字パズル', emoji_desc: 'この絵文字は何を意味する？映画、食べ物、場所を当てよう！',
+    tile_title: 'タイルマッチ', tile_desc: '同じタイルを見つけて繋げよう！麻雀スタイルパズル。',
+    aim_title: 'エイムトレーナー', aim_desc: 'ターゲットを素早くクリック！照準スキルをテスト。',
+    snake_title: 'スネーク', snake_desc: 'クラシックスネークゲーム！ネオンヘビでエサを食べよう。',
+    block_title: 'ブロックスタック', block_desc: '落ちてくるブロックを積んでラインを完成！クラシックブロックパズル。',
+    mole_title: 'もぐらたたき', mole_desc: '出てくるもぐらを素早く叩こう！爆弾は避けて！',
+    maze_title: '迷路ランナー', maze_desc: '迷路を探検して出口を見つけよう！コインも集めて。',
+    rps_title: 'じゃんけんバトル', rps_desc: 'AIとじゃんけん対決！トーナメントで優勝しよう！',
+    tag_tournament: 'トーナメント',
     footer: 'Puzzle Arcade © 2026 | 毎日新しいパズルを楽しもう 🎮',
   },
   zh: {
@@ -343,6 +703,30 @@ const I18N = {
     merge_title: '数字合并', merge_desc: '拖动合并相同数字！你能合到多大？',
     tag_100levels: '100+ 关卡', tag_infinite: '无限模式', tag_popular: '🔥 热门',
     tag_addictive: '🔥 小心上瘾', tag_easy_start: '轻松上手', tag_new: '✨ 新游戏',
+    tag_20q: '20题', tag_share_worthy: '📸 值得分享', tag_3modes: '3种模式',
+    tag_40levels: '40 关卡', tag_20rounds: '20 回合', tag_brain_twist: '🧠 烧脑',
+    cat_quiz: '🧩 测验', cat_speed: '⏱️ 速度',
+    iq_title: 'IQ测试', iq_desc: '分析规律猜下一个！你的IQ是多少？',
+    reaction_title: '反应速度测试', reaction_desc: '绿灯亮起时尽快点击！你的反应速度如何？',
+    memory_title: '记忆卡片', memory_desc: '翻牌找相同图案！记忆力挑战。',
+    math_title: '数学速算', math_desc: '30秒内解尽可能多的数学题！连续连击！',
+    cbrain_title: '色彩大脑', cbrain_desc: '文字颜色和含义不同！斯特鲁普效应脑力测验。',
+    seq_title: '序列记忆', seq_desc: '记住越来越长的颜色序列！西蒙游戏。',
+    typing_title: '打字速度', typing_desc: '你能多快打出英文单词？测量WPM！',
+    bomb_title: '单词炸弹', bomb_desc: '在炸弹爆炸前输入包含指定字母的单词！',
+    flag_title: '国旗猜猜', flag_desc: '看国旗猜国家！50国挑战！',
+    spot_title: '找不同', spot_desc: '找出两张图片的不同之处！观察力测试。',
+    chain_title: '数字链', chain_desc: '连接和为10的数字！连锁连击！',
+    tag_50countries: '50个国家', tag_20levels: '20 关卡', tag_30levels: '30 关卡', tag_48puzzles: '48 谜题',
+    emoji_title: '表情谜题', emoji_desc: '这些表情代表什么？猜猜电影、食物和地点！',
+    tile_title: '瓷砖匹配', tile_desc: '找到并连接相同的瓷砖！麻将风格益智。',
+    aim_title: '瞄准训练', aim_desc: '尽快点击目标！测试你的瞄准能力。',
+    snake_title: '贪吃蛇', snake_desc: '经典贪吃蛇！控制霓虹蛇吃食物变长。',
+    block_title: '方块堆叠', block_desc: '堆叠下落的方块完成行！经典方块益智。',
+    mole_title: '打地鼠', mole_desc: '快速打出冒出的地鼠！躲开炸弹！',
+    maze_title: '迷宫逃脱', maze_desc: '探索迷宫找到出口！收集金币。',
+    rps_title: '石头剪刀布', rps_desc: '和AI对战石头剪刀布！赢得锦标赛！',
+    tag_tournament: '锦标赛',
     footer: 'Puzzle Arcade © 2026 | 每天享受新的益智游戏 🎮',
   },
   es: {
@@ -361,6 +745,30 @@ const I18N = {
     merge_title: 'Merge Numbers', merge_desc: '¡Arrastra y fusiona números iguales! ¿Hasta dónde llegarás?',
     tag_100levels: '100+ Niveles', tag_infinite: 'Infinito', tag_popular: '🔥 Popular',
     tag_addictive: '🔥 Adictivo', tag_easy_start: 'Fácil', tag_new: '✨ Nuevo',
+    tag_20q: '20 Preguntas', tag_share_worthy: '📸 Compartible', tag_3modes: '3 Modos',
+    tag_40levels: '40 Niveles', tag_20rounds: '20 Rondas', tag_brain_twist: '🧠 Rompecabezas',
+    cat_quiz: '🧩 Quiz', cat_speed: '⏱️ Velocidad',
+    iq_title: 'Test de IQ', iq_desc: '¡Analiza patrones y adivina qué sigue! ¿Cuál es tu IQ?',
+    reaction_title: 'Test de Reacción', reaction_desc: '¡Toca lo más rápido que puedas cuando se ponga verde!',
+    memory_title: 'Cartas de Memoria', memory_desc: '¡Voltea cartas y encuentra pares iguales! Desafío de memoria.',
+    math_title: 'Quiz Matemático', math_desc: '¡Resuelve problemas de matemáticas en 30 segundos! ¡Combo!',
+    cbrain_title: 'Color Brain', cbrain_desc: '¡El color y la palabra no coinciden! Quiz cerebral efecto Stroop.',
+    seq_title: 'Memoria Secuencial', seq_desc: '¡Recuerda la secuencia de colores creciente! Juego Simon.',
+    typing_title: 'Velocidad de Escritura', typing_desc: '¿Qué tan rápido tecleas palabras en inglés? ¡Mide tu WPM!',
+    bomb_title: 'Bomba de Palabras', bomb_desc: '¡Escribe una palabra con las letras dadas antes de que explote!',
+    flag_title: 'Quiz de Banderas', flag_desc: '¡Adivina el país por su bandera! ¡50 países!',
+    spot_title: 'Encuentra las Diferencias', spot_desc: '¡Encuentra las diferencias entre dos imágenes!',
+    chain_title: 'Cadena Numérica', chain_desc: '¡Conecta números que sumen 10! ¡Combos en cadena!',
+    tag_50countries: '50 Países', tag_20levels: '20 Niveles', tag_30levels: '30 Niveles', tag_48puzzles: '48 Puzzles',
+    emoji_title: 'Emoji Puzzle', emoji_desc: '¿Qué significan estos emojis? ¡Adivina películas, comida y lugares!',
+    tile_title: 'Tile Match', tile_desc: '¡Encuentra y conecta tiles iguales! Puzzle estilo mahjong.',
+    aim_title: 'Aim Trainer', aim_desc: '¡Haz clic en los objetivos lo más rápido posible! Prueba tu puntería.',
+    snake_title: 'Snake', snake_desc: '¡Juego clásico de serpiente! Controla la serpiente neón y come para crecer.',
+    block_title: 'Block Stack', block_desc: '¡Apila bloques para completar filas! Puzzle de bloques clásico.',
+    mole_title: 'Golpea al Topo', mole_desc: '¡Golpea los topos que aparecen! ¡Evita las bombas!',
+    maze_title: 'Laberinto', maze_desc: '¡Navega el laberinto y encuentra la salida! Recoge monedas.',
+    rps_title: 'Piedra Papel Tijera', rps_desc: '¡Piedra papel tijera contra IA! ¡Gana el torneo!',
+    tag_tournament: 'Torneo',
     footer: 'Puzzle Arcade © 2026 | ¡Disfruta nuevos puzzles cada día! 🎮',
   },
 };

@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>넘버 체인 - Number Chain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a1a;
+  --surface: #12122a;
+  --surface2: #1a1a3a;
+  --text: #e8e8f0;
+  --text-dim: #8888aa;
+  --accent: #a855f7;
+  --accent-rgb: 168, 85, 247;
+  --chain-color: #667eea;
+  --chain-rgb: 102, 126, 234;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.screen { display: none; flex-direction: column; align-items: center; min-height: 100dvh; }
+.screen.active { display: flex; }
+
+.top-bar {
+  width: 100%; max-width: 600px; padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.back-btn {
+  background: none; border: none; color: var(--text-dim); font-size: 14px;
+  font-family: 'Outfit', sans-serif; cursor: pointer; padding: 8px 12px;
+  border-radius: 8px; transition: all 0.2s; text-decoration: none;
+}
+.back-btn:hover { background: var(--surface); color: var(--text); }
+.sound-btn {
+  background: none; border: 1px solid var(--surface2); color: var(--text-dim);
+  font-size: 18px; cursor: pointer; padding: 6px 10px; border-radius: 8px;
+  transition: all 0.2s;
+}
+.sound-btn:hover { background: var(--surface); }
+
+/* Title Screen */
+.title-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+.game-icon {
+  width: 120px; height: 120px; border-radius: 28px;
+  background: radial-gradient(circle at 40% 40%, rgba(var(--accent-rgb), 0.3), transparent 70%), var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 56px; margin-bottom: 24px;
+  box-shadow: 0 0 40px rgba(var(--accent-rgb), 0.2), inset 0 0 30px rgba(var(--accent-rgb), 0.1);
+  animation: iconPulse 3s ease-in-out infinite;
+}
+@keyframes iconPulse {
+  0%, 100% { box-shadow: 0 0 40px rgba(var(--accent-rgb), 0.2), inset 0 0 30px rgba(var(--accent-rgb), 0.1); }
+  50% { box-shadow: 0 0 60px rgba(var(--accent-rgb), 0.35), inset 0 0 40px rgba(var(--accent-rgb), 0.2); }
+}
+.game-title { font-size: 32px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+.game-subtitle { font-size: 15px; color: var(--text-dim); margin-bottom: 40px; text-align: center; }
+
+.main-btn {
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.2), rgba(var(--accent-rgb), 0.05));
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
+  color: var(--accent); font-family: 'Outfit', sans-serif;
+  font-size: 16px; font-weight: 600; padding: 14px 48px;
+  border-radius: 14px; cursor: pointer; margin-bottom: 12px;
+  transition: all 0.25s; min-width: 200px;
+}
+.main-btn:hover {
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.3), rgba(var(--accent-rgb), 0.1));
+  box-shadow: 0 0 25px rgba(var(--accent-rgb), 0.2);
+  transform: translateY(-1px);
+}
+.secondary-btn {
+  background: var(--surface); border: 1px solid var(--surface2);
+  color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: 14px; font-weight: 500; padding: 12px 36px;
+  border-radius: 12px; cursor: pointer; transition: all 0.2s; min-width: 200px;
+}
+.secondary-btn:hover { background: var(--surface2); }
+
+/* Level Select */
+.level-screen { padding: 0 16px 100px; }
+.level-grid-title {
+  font-size: 14px; font-weight: 600; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 12px;
+  width: 100%; max-width: 400px; text-align: left;
+}
+.level-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 8px; width: 100%; max-width: 400px;
+}
+.level-cell {
+  aspect-ratio: 1; border-radius: 12px; background: var(--surface);
+  border: 1px solid var(--surface2); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; cursor: pointer;
+  transition: all 0.2s; position: relative; font-size: 18px; font-weight: 600;
+}
+.level-cell:hover { background: var(--surface2); transform: scale(1.05); }
+.level-cell.locked { opacity: 0.3; cursor: default; pointer-events: none; }
+.level-cell.completed { border-color: rgba(var(--accent-rgb), 0.3); }
+.level-cell .stars-mini { font-size: 8px; margin-top: 2px; letter-spacing: 1px; }
+.level-cell.current {
+  border-color: rgba(var(--accent-rgb), 0.6);
+  box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.15);
+}
+
+/* Game Screen */
+.game-header {
+  width: 100%; max-width: 500px; padding: 8px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.level-label { font-size: 14px; font-weight: 600; color: var(--text-dim); }
+.game-stats { display: flex; gap: 16px; align-items: center; }
+.stat { text-align: center; }
+.stat-val { font-size: 20px; font-weight: 700; }
+.stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+
+.progress-bar-container {
+  width: 100%; max-width: 500px; padding: 0 16px; margin: 4px 0;
+}
+.progress-bar {
+  width: 100%; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; border-radius: 3px; transition: width 0.4s ease;
+  background: linear-gradient(90deg, #667eea, #a855f7, #ec4899);
+}
+
+.timer-bar {
+  width: 100%; max-width: 500px; padding: 0 16px; margin: 4px 0;
+}
+.timer-track {
+  width: 100%; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden;
+}
+.timer-fill {
+  height: 100%; border-radius: 2px; transition: width 0.3s linear;
+  background: linear-gradient(90deg, #22c55e, #eab308, #ef4444);
+}
+.timer-fill.warning { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+.grid-wrapper {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 16px; width: 100%; position: relative;
+}
+.grid-container {
+  display: grid; gap: 4px; position: relative;
+  max-width: min(90vw, 420px); max-height: min(70vh, 420px);
+  width: 100%; aspect-ratio: 1;
+}
+
+.cell {
+  border-radius: 12px; cursor: pointer; position: relative;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+  background: var(--surface); border: 1px solid rgba(255,255,255,0.04);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 700;
+}
+.cell .num {
+  position: relative; z-index: 2; transition: transform 0.2s, opacity 0.3s;
+  pointer-events: none;
+}
+.cell.selected {
+  background: rgba(var(--chain-rgb), 0.25);
+  border-color: rgba(var(--chain-rgb), 0.5);
+  box-shadow: 0 0 15px rgba(var(--chain-rgb), 0.3);
+  transform: scale(1.05);
+}
+.cell.valid-next {
+  border-color: rgba(var(--chain-rgb), 0.35);
+  box-shadow: 0 0 10px rgba(var(--chain-rgb), 0.15);
+}
+.cell.clearing {
+  animation: cellClear 0.4s ease-out forwards;
+}
+@keyframes cellClear {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.8; }
+  100% { transform: scale(0); opacity: 0; }
+}
+.cell.falling {
+  animation: cellFall 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes cellFall {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.cell.appearing {
+  animation: cellAppear 0.3s ease-out forwards;
+}
+@keyframes cellAppear {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Connection line SVG overlay */
+.chain-svg {
+  position: absolute; inset: 0; pointer-events: none; z-index: 5;
+}
+.chain-line {
+  stroke: rgba(var(--chain-rgb), 0.6);
+  stroke-width: 4; stroke-linecap: round; fill: none;
+  filter: drop-shadow(0 0 6px rgba(var(--chain-rgb), 0.4));
+}
+
+/* Combo display */
+.combo-display {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-size: 48px; font-weight: 800; pointer-events: none; z-index: 200;
+  opacity: 0; transition: none;
+  background: linear-gradient(135deg, #667eea, #a855f7, #ec4899);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; text-shadow: none;
+}
+.combo-display.show {
+  animation: comboAnim 0.8s ease-out forwards;
+}
+@keyframes comboAnim {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  30% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+  60% { opacity: 1; transform: translate(-50%, -60%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -80%) scale(0.8); }
+}
+
+/* Score popup */
+.score-popup {
+  position: absolute; font-size: 18px; font-weight: 700; pointer-events: none;
+  z-index: 100; color: #f9d423;
+  animation: scoreFloat 0.7s ease-out forwards;
+}
+@keyframes scoreFloat {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-40px) scale(0.7); }
+}
+
+/* Bottom bar */
+.game-bottom {
+  width: 100%; max-width: 500px; padding: 12px 16px 24px;
+  display: flex; gap: 8px; justify-content: center;
+}
+.game-btn {
+  background: var(--surface); border: 1px solid var(--surface2);
+  color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: 13px; font-weight: 500; padding: 10px 20px;
+  border-radius: 10px; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 6px;
+}
+.game-btn:hover { background: var(--surface2); }
+
+/* Win overlay */
+.win-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  display: none; align-items: center; justify-content: center; z-index: 100;
+  backdrop-filter: blur(6px);
+}
+.win-overlay.active { display: flex; }
+.win-card {
+  background: var(--surface); border: 1px solid var(--surface2);
+  border-radius: 20px; padding: 36px 32px; text-align: center;
+  max-width: 340px; width: 90%;
+  animation: winPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes winPop {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.win-emoji { font-size: 48px; margin-bottom: 12px; }
+.win-title { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+.win-sub { font-size: 14px; color: var(--text-dim); margin-bottom: 20px; }
+.win-stars { font-size: 36px; margin-bottom: 20px; letter-spacing: 4px; }
+.win-stats { display: flex; justify-content: center; gap: 24px; margin-bottom: 24px; }
+.win-stat-val { font-size: 22px; font-weight: 700; }
+.win-stat-label { font-size: 11px; color: var(--text-dim); }
+.win-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+/* Game Over overlay */
+.gameover-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  display: none; align-items: center; justify-content: center; z-index: 100;
+  backdrop-filter: blur(6px);
+}
+.gameover-overlay.active { display: flex; }
+
+/* Ad placeholders */
+.ad-placeholder {
+  width: 100%; max-width: 500px; height: 60px; margin: 8px auto;
+  background: var(--surface); border: 1px dashed var(--surface2);
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim); font-size: 11px; letter-spacing: 0.5px;
+}
+
+/* Number colors */
+.num-1 { color: #60a5fa; }
+.num-2 { color: #34d399; }
+.num-3 { color: #fbbf24; }
+.num-4 { color: #f87171; }
+.num-5 { color: #a78bfa; }
+.num-6 { color: #fb923c; }
+.num-7 { color: #38bdf8; }
+.num-8 { color: #4ade80; }
+.num-9 { color: #f472b6; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 4px; }
+
+@media (max-width: 380px) {
+  .game-title { font-size: 26px; }
+  .level-grid { gap: 6px; }
+  .cell { border-radius: 8px; font-size: 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TITLE SCREEN -->
+<div id="titleScreen" class="screen active">
+  <div class="top-bar">
+    <a href="../index.html" class="back-btn" id="backBtn">← 메인으로</a>
+    <button class="sound-btn" id="soundToggle" onclick="toggleSound()">🔊</button>
+  </div>
+  <div class="title-area">
+    <div class="game-icon">🔗</div>
+    <div class="game-title" id="titleText">넘버 체인</div>
+    <div class="game-subtitle" id="subtitleText">숫자를 연결하여 10을 만드세요!</div>
+    <button class="main-btn" id="continueBtn" onclick="continueGame()">이어하기</button>
+    <button class="secondary-btn" id="levelSelectBtn" onclick="showLevels()">레벨 선택</button>
+  </div>
+  <div class="ad-placeholder" id="adTop">광고 영역</div>
+</div>
+
+<!-- LEVEL SELECT SCREEN -->
+<div id="levelScreen" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" id="levelsBackBtn" onclick="showTitle()">← 뒤로</button>
+    <button class="sound-btn" onclick="toggleSound()">🔊</button>
+  </div>
+  <div class="level-screen" id="levelList"></div>
+  <div class="ad-placeholder" id="adLevels">광고 영역</div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="gameScreen" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" id="gameBackBtn" onclick="showLevels()">← 레벨</button>
+    <button class="sound-btn" onclick="toggleSound()">🔊</button>
+  </div>
+  <div class="game-header">
+    <div class="level-label" id="levelLabel">레벨 1</div>
+    <div class="game-stats">
+      <div class="stat">
+        <div class="stat-val" id="pairsCleared">0</div>
+        <div class="stat-label" id="pairsLabel">쌍</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="targetPairs">0</div>
+        <div class="stat-label" id="targetLabel">목표</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="scoreDisplay">0</div>
+        <div class="stat-label" id="scoreLabel">점수</div>
+      </div>
+    </div>
+  </div>
+  <div class="progress-bar-container">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+  <div class="timer-bar" id="timerBar" style="display:none;">
+    <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+  </div>
+  <div class="ad-placeholder" id="adGame">광고 영역</div>
+  <div class="grid-wrapper">
+    <div class="grid-container" id="grid"></div>
+    <svg class="chain-svg" id="chainSvg"></svg>
+  </div>
+  <div class="game-bottom">
+    <button class="game-btn" id="restartBtn" onclick="resetLevel()">↺ 초기화</button>
+    <button class="game-btn" id="shuffleBtn" onclick="shuffleGrid()">🔀 섞기</button>
+  </div>
+</div>
+
+<!-- WIN OVERLAY -->
+<div class="win-overlay" id="winOverlay">
+  <div class="win-card">
+    <div class="win-emoji">🎉</div>
+    <div class="win-title" id="winTitle">클리어!</div>
+    <div class="win-sub" id="winSub">잘했어요!</div>
+    <div class="win-stars" id="winStars">⭐⭐⭐</div>
+    <div class="win-stats">
+      <div class="stat"><div class="win-stat-val" id="winScore">0</div><div class="win-stat-label" id="winScoreLabel">점수</div></div>
+      <div class="stat"><div class="win-stat-val" id="winPairs">0</div><div class="win-stat-label" id="winPairsLabel">쌍</div></div>
+    </div>
+    <div class="win-btns">
+      <button class="secondary-btn" id="winLevelsBtn" onclick="showLevels(); closeWin();">레벨 선택</button>
+      <button class="main-btn" id="winNextBtn" onclick="nextLevel()">다음 레벨 →</button>
+      <button class="secondary-btn" style="min-width:auto;padding:12px 20px;margin-top:6px;" id="winShareBtn" onclick="shareResult()">📤 공유</button>
+    </div>
+  </div>
+</div>
+
+<!-- GAME OVER OVERLAY -->
+<div class="gameover-overlay" id="gameoverOverlay">
+  <div class="win-card">
+    <div class="win-emoji">😢</div>
+    <div class="win-title" id="goTitle">게임 오버</div>
+    <div class="win-sub" id="goSub">다시 도전하세요!</div>
+    <div class="win-stats">
+      <div class="stat"><div class="win-stat-val" id="goScore">0</div><div class="win-stat-label" id="goScoreLabel">점수</div></div>
+      <div class="stat"><div class="win-stat-val" id="goPairs">0</div><div class="win-stat-label" id="goPairsLabel">쌍</div></div>
+    </div>
+    <div class="win-btns">
+      <button class="secondary-btn" onclick="showLevels(); closeGameOver();">레벨 선택</button>
+      <button class="main-btn" id="goRetryBtn" onclick="retryLevel()">다시 도전</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMBO DISPLAY -->
+<div class="combo-display" id="comboDisplay"></div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+'use strict';
+
+// ==================== CUSTOM I18N ====================
+const NC_I18N = {
+  ko: {
+    title: '넘버 체인',
+    subtitle: '숫자를 연결하여 10을 만드세요!',
+    continue_btn: '이어하기',
+    level_select: '레벨 선택',
+    back_main: '← 메인으로',
+    back_levels: '← 레벨',
+    back: '← 뒤로',
+    pairs: '쌍',
+    target: '목표',
+    score: '점수',
+    restart: '↺ 초기화',
+    shuffle: '🔀 섞기',
+    stage_clear: '클리어!',
+    game_over: '게임 오버',
+    well_done: '잘했어요!',
+    amazing: '대단해요!',
+    excellent: '완벽해요!',
+    try_again: '다시 도전하세요!',
+    retry: '다시 도전',
+    next_level: '다음 레벨 →',
+    share: '📤 공유',
+    ad_area: '광고 영역',
+    combo: 'COMBO',
+    time_up: '시간 초과!',
+    no_moves: '이동 불가!',
+    section_basic: '기본 (4×4)',
+    section_advanced: '심화 (5×5)',
+    section_expert: '전문가 (5×5 + 시간)',
+    game_name: 'Number Chain',
+  },
+  en: {
+    title: 'Number Chain',
+    subtitle: 'Connect numbers that add up to 10!',
+    continue_btn: 'Continue',
+    level_select: 'Select Level',
+    back_main: '← Back',
+    back_levels: '← Levels',
+    back: '← Back',
+    pairs: 'Pairs',
+    target: 'Target',
+    score: 'Score',
+    restart: '↺ Restart',
+    shuffle: '🔀 Shuffle',
+    stage_clear: 'Cleared!',
+    game_over: 'Game Over',
+    well_done: 'Well done!',
+    amazing: 'Amazing!',
+    excellent: 'Excellent!',
+    try_again: 'Try again!',
+    retry: 'Retry',
+    next_level: 'Next Level →',
+    share: '📤 Share',
+    ad_area: 'Ad Space',
+    combo: 'COMBO',
+    time_up: 'Time\'s up!',
+    no_moves: 'No moves left!',
+    section_basic: 'Basic (4×4)',
+    section_advanced: 'Advanced (5×5)',
+    section_expert: 'Expert (5×5 + Timer)',
+    game_name: 'Number Chain',
+  },
+  ja: {
+    title: 'ナンバーチェーン',
+    subtitle: '数字をつないで10を作ろう！',
+    continue_btn: '続きから',
+    level_select: 'レベル選択',
+    back_main: '← メインへ',
+    back_levels: '← レベル',
+    back: '← 戻る',
+    pairs: 'ペア',
+    target: '目標',
+    score: 'スコア',
+    restart: '↺ やり直し',
+    shuffle: '🔀 シャッフル',
+    stage_clear: 'クリア！',
+    game_over: 'ゲームオーバー',
+    well_done: 'よくできました！',
+    amazing: 'すごい！',
+    excellent: '完璧！',
+    try_again: 'もう一度挑戦！',
+    retry: 'もう一度',
+    next_level: '次のレベル →',
+    share: '📤 シェア',
+    ad_area: '広告エリア',
+    combo: 'コンボ',
+    time_up: '時間切れ！',
+    no_moves: '移動できません！',
+    section_basic: '基本 (4×4)',
+    section_advanced: '上級 (5×5)',
+    section_expert: 'エキスパート (5×5 + タイマー)',
+    game_name: 'ナンバーチェーン',
+  },
+  zh: {
+    title: '数字链',
+    subtitle: '连接数字，凑成10！',
+    continue_btn: '继续',
+    level_select: '选择关卡',
+    back_main: '← 返回',
+    back_levels: '← 关卡',
+    back: '← 返回',
+    pairs: '对数',
+    target: '目标',
+    score: '分数',
+    restart: '↺ 重来',
+    shuffle: '🔀 打乱',
+    stage_clear: '通关！',
+    game_over: '游戏结束',
+    well_done: '做得好！',
+    amazing: '太厉害了！',
+    excellent: '完美！',
+    try_again: '再试一次！',
+    retry: '重试',
+    next_level: '下一关 →',
+    share: '📤 分享',
+    ad_area: '广告区域',
+    combo: '连击',
+    time_up: '时间到！',
+    no_moves: '无法移动！',
+    section_basic: '基础 (4×4)',
+    section_advanced: '进阶 (5×5)',
+    section_expert: '专家 (5×5 + 计时)',
+    game_name: '数字链',
+  },
+  es: {
+    title: 'Cadena Numérica',
+    subtitle: '¡Conecta números que sumen 10!',
+    continue_btn: 'Continuar',
+    level_select: 'Elegir Nivel',
+    back_main: '← Volver',
+    back_levels: '← Niveles',
+    back: '← Volver',
+    pairs: 'Pares',
+    target: 'Meta',
+    score: 'Puntos',
+    restart: '↺ Reiniciar',
+    shuffle: '🔀 Mezclar',
+    stage_clear: '¡Completado!',
+    game_over: 'Fin del juego',
+    well_done: '¡Bien hecho!',
+    amazing: '¡Increíble!',
+    excellent: '¡Excelente!',
+    try_again: '¡Inténtalo de nuevo!',
+    retry: 'Reintentar',
+    next_level: 'Siguiente →',
+    share: '📤 Compartir',
+    ad_area: 'Espacio publicitario',
+    combo: 'COMBO',
+    time_up: '¡Tiempo agotado!',
+    no_moves: '¡Sin movimientos!',
+    section_basic: 'Básico (4×4)',
+    section_advanced: 'Avanzado (5×5)',
+    section_expert: 'Experto (5×5 + Tiempo)',
+    game_name: 'Number Chain',
+  },
+};
+
+function ncT() {
+  const lang = getGameLang();
+  const base = getTranslations();
+  const custom = NC_I18N[lang] || NC_I18N.ko;
+  return { ...base, ...custom };
+}
+
+// ==================== AUDIO ====================
+let audioCtx = null;
+let soundEnabled = true;
+
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.querySelectorAll('.sound-btn').forEach(b => b.textContent = soundEnabled ? '🔊' : '🔇');
+}
+
+function playConnect() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(659, ctx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
+  } catch(e) {}
+}
+
+function playClear() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudio();
+    const notes = [523, 659, 784];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.2);
+      osc.start(ctx.currentTime + i * 0.08);
+      osc.stop(ctx.currentTime + i * 0.08 + 0.2);
+    });
+  } catch(e) {}
+}
+
+function playCombo() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudio();
+    const notes = [659, 784, 988, 1175];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.06 + 0.25);
+      osc.start(ctx.currentTime + i * 0.06);
+      osc.stop(ctx.currentTime + i * 0.06 + 0.25);
+    });
+  } catch(e) {}
+}
+
+function playLevelComplete() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudio();
+    const notes = [523, 659, 784, 1047, 784, 1047];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + i * 0.1;
+      gain.gain.setValueAtTime(0.12, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      osc.start(t); osc.stop(t + 0.3);
+    });
+  } catch(e) {}
+}
+
+function playFail() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(220, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(110, ctx.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
+  } catch(e) {}
+}
+
+// ==================== LEVEL CONFIG ====================
+const TOTAL_LEVELS = 30;
+
+function getLevelConfig(lvl) {
+  let gridSize, targetPairs, timeLimit;
+  if (lvl <= 10) {
+    gridSize = 4;
+    targetPairs = 3 + Math.floor((lvl - 1) * 1.2);
+    timeLimit = 0;
+  } else if (lvl <= 20) {
+    gridSize = 5;
+    targetPairs = 8 + Math.floor((lvl - 11) * 1.5);
+    timeLimit = 0;
+  } else {
+    gridSize = 5;
+    targetPairs = 12 + Math.floor((lvl - 21) * 1.8);
+    timeLimit = Math.max(30, 90 - (lvl - 21) * 5);
+  }
+  return { gridSize, targetPairs, timeLimit };
+}
+
+// ==================== GAME STATE ====================
+let currentLevel = 1;
+let grid = [];
+let gridSize = 4;
+let chain = [];
+let pairsCount = 0;
+let targetPairsCount = 0;
+let score = 0;
+let comboCount = 0;
+let comboTimer = null;
+let isDragging = false;
+let timerInterval = null;
+let timeRemaining = 0;
+let hasTimeLimit = false;
+let levelActive = false;
+
+// ==================== PROGRESS ====================
+const STORAGE_KEY = 'numberChain_progress';
+
+function loadProgress() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch(e) { return {}; }
+}
+
+function saveProgress(level, stars, sc) {
+  const p = loadProgress();
+  if (!p[level] || p[level].stars < stars) {
+    p[level] = { stars, score: sc };
+  } else if (p[level].score < sc) {
+    p[level].score = sc;
+  }
+  // Unlock next level
+  if (level < TOTAL_LEVELS && !p[level + 1]) {
+    p[level + 1] = { stars: 0, score: 0, unlocked: true };
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+}
+
+function getMaxUnlocked() {
+  const p = loadProgress();
+  let max = 1;
+  for (const k in p) {
+    const n = parseInt(k);
+    if (n > max) max = n;
+  }
+  return max;
+}
+
+// ==================== SCREENS ====================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showTitle() {
+  stopTimer();
+  levelActive = false;
+  showScreen('titleScreen');
+}
+
+function showLevels() {
+  stopTimer();
+  levelActive = false;
+  renderLevelSelect();
+  showScreen('levelScreen');
+}
+
+function continueGame() {
+  const maxLevel = getMaxUnlocked();
+  startLevel(maxLevel);
+}
+
+function closeWin() {
+  document.getElementById('winOverlay').classList.remove('active');
+}
+
+function closeGameOver() {
+  document.getElementById('gameoverOverlay').classList.remove('active');
+}
+
+function nextLevel() {
+  closeWin();
+  if (currentLevel < TOTAL_LEVELS) {
+    startLevel(currentLevel + 1);
+  } else {
+    showLevels();
+  }
+}
+
+function retryLevel() {
+  closeGameOver();
+  startLevel(currentLevel);
+}
+
+function shareResult() {
+  const t = ncT();
+  if (typeof PuzzleShare !== 'undefined') {
+    PuzzleShare.showShareModal({
+      gameName: t.game_name,
+      title: t.game_name,
+      score: score,
+      stars: getStars(),
+      message: t.stage_clear + ' ' + t.level + ' ' + currentLevel,
+      lang: getGameLang(),
+    });
+  }
+}
+
+// ==================== LEVEL SELECT ====================
+function renderLevelSelect() {
+  const t = ncT();
+  const progress = loadProgress();
+  const maxUnlocked = getMaxUnlocked();
+  const container = document.getElementById('levelList');
+  container.innerHTML = '';
+
+  const sections = [
+    { label: t.section_basic, start: 1, end: 10 },
+    { label: t.section_advanced, start: 11, end: 20 },
+    { label: t.section_expert, start: 21, end: 30 },
+  ];
+
+  sections.forEach(sec => {
+    const title = document.createElement('div');
+    title.className = 'level-grid-title';
+    title.textContent = sec.label;
+    container.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.className = 'level-grid';
+    for (let i = sec.start; i <= sec.end; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'level-cell';
+      const data = progress[i];
+      const unlocked = i === 1 || (data && (data.stars > 0 || data.unlocked)) || i <= maxUnlocked;
+      if (!unlocked) {
+        cell.classList.add('locked');
+        cell.innerHTML = '🔒';
+      } else {
+        if (data && data.stars > 0) cell.classList.add('completed');
+        if (i === maxUnlocked && !(data && data.stars > 0)) cell.classList.add('current');
+        cell.innerHTML = i + '<div class="stars-mini">' +
+          (data && data.stars > 0 ? '⭐'.repeat(data.stars) + '☆'.repeat(3 - data.stars) : '') +
+          '</div>';
+        cell.onclick = () => startLevel(i);
+      }
+      grid.appendChild(cell);
+    }
+    container.appendChild(grid);
+  });
+}
+
+// ==================== GRID ====================
+function generateGrid(size) {
+  const arr = [];
+  for (let r = 0; r < size; r++) {
+    arr[r] = [];
+    for (let c = 0; c < size; c++) {
+      arr[r][c] = randomNum();
+    }
+  }
+  // Ensure at least a few valid pairs exist
+  ensureValidPairs(arr, size);
+  return arr;
+}
+
+function randomNum() {
+  return Math.floor(Math.random() * 9) + 1;
+}
+
+function ensureValidPairs(arr, size) {
+  let attempts = 0;
+  while (!hasValidMove(arr, size) && attempts < 50) {
+    const r = Math.floor(Math.random() * size);
+    const c = Math.floor(Math.random() * size);
+    arr[r][c] = randomNum();
+    attempts++;
+  }
+}
+
+function hasValidMove(arr, size) {
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (arr[r][c] === 0) continue;
+      const neighbors = getNeighbors(r, c, size);
+      for (const [nr, nc] of neighbors) {
+        if (arr[nr][nc] !== 0 && arr[r][c] + arr[nr][nc] === 10) return true;
+      }
+    }
+  }
+  return false;
+}
+
+function getNeighbors(r, c, size) {
+  const dirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+  const result = [];
+  for (const [dr, dc] of dirs) {
+    const nr = r + dr, nc = c + dc;
+    if (nr >= 0 && nr < size && nc >= 0 && nc < size) result.push([nr, nc]);
+  }
+  return result;
+}
+
+function isAdjacent(r1, c1, r2, c2) {
+  return Math.abs(r1 - r2) <= 1 && Math.abs(c1 - c2) <= 1 && !(r1 === r2 && c1 === c2);
+}
+
+// ==================== RENDERING ====================
+function renderGrid() {
+  const container = document.getElementById('grid');
+  container.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+  container.innerHTML = '';
+
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      const val = grid[r][c];
+      if (val > 0) {
+        const span = document.createElement('span');
+        span.className = `num num-${val}`;
+        span.textContent = val;
+        cell.appendChild(span);
+      } else {
+        cell.style.visibility = 'hidden';
+      }
+      container.appendChild(cell);
+    }
+  }
+
+  setupDragHandlers();
+}
+
+function getCellElement(r, c) {
+  return document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+}
+
+function updateChainVisuals() {
+  // Remove old selections
+  document.querySelectorAll('.cell.selected, .cell.valid-next').forEach(el => {
+    el.classList.remove('selected', 'valid-next');
+  });
+
+  // Highlight selected cells
+  chain.forEach(([r, c]) => {
+    const el = getCellElement(r, c);
+    if (el) el.classList.add('selected');
+  });
+
+  // Draw chain lines
+  const svg = document.getElementById('chainSvg');
+  svg.innerHTML = '';
+  if (chain.length >= 2) {
+    const gridEl = document.getElementById('grid');
+    const gridRect = gridEl.getBoundingClientRect();
+    const svgRect = svg.getBoundingClientRect();
+
+    for (let i = 0; i < chain.length - 1; i++) {
+      const [r1, c1] = chain[i];
+      const [r2, c2] = chain[i + 1];
+      const el1 = getCellElement(r1, c1);
+      const el2 = getCellElement(r2, c2);
+      if (!el1 || !el2) continue;
+
+      const rect1 = el1.getBoundingClientRect();
+      const rect2 = el2.getBoundingClientRect();
+      const x1 = rect1.left + rect1.width / 2 - svgRect.left;
+      const y1 = rect1.top + rect1.height / 2 - svgRect.top;
+      const x2 = rect2.left + rect2.width / 2 - svgRect.left;
+      const y2 = rect2.top + rect2.height / 2 - svgRect.top;
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      line.setAttribute('class', 'chain-line');
+      svg.appendChild(line);
+    }
+  }
+
+  // Show valid next cells
+  if (chain.length > 0) {
+    const [lastR, lastC] = chain[chain.length - 1];
+    const lastVal = grid[lastR][lastC];
+    const neighbors = getNeighbors(lastR, lastC, gridSize);
+    for (const [nr, nc] of neighbors) {
+      if (grid[nr][nc] === 0) continue;
+      if (chain.some(([cr, cc]) => cr === nr && cc === nc)) continue;
+      if (lastVal + grid[nr][nc] === 10) {
+        const el = getCellElement(nr, nc);
+        if (el) el.classList.add('valid-next');
+      }
+    }
+  }
+}
+
+// ==================== DRAG HANDLERS ====================
+function setupDragHandlers() {
+  const container = document.getElementById('grid');
+
+  // Prevent default touch behavior
+  container.addEventListener('touchstart', onPointerStart, { passive: false });
+  container.addEventListener('touchmove', onPointerMove, { passive: false });
+  container.addEventListener('touchend', onPointerEnd, { passive: false });
+
+  container.addEventListener('mousedown', onPointerStart);
+  container.addEventListener('mousemove', onPointerMove);
+  container.addEventListener('mouseup', onPointerEnd);
+  container.addEventListener('mouseleave', onPointerEnd);
+}
+
+function getPointerCell(e) {
+  const touch = e.touches ? e.touches[0] : e;
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  if (!el) return null;
+  const cell = el.closest('.cell');
+  if (!cell) return null;
+  const r = parseInt(cell.dataset.row);
+  const c = parseInt(cell.dataset.col);
+  if (isNaN(r) || isNaN(c)) return null;
+  return [r, c];
+}
+
+function onPointerStart(e) {
+  if (!levelActive) return;
+  e.preventDefault();
+  isDragging = true;
+  chain = [];
+  const pos = getPointerCell(e);
+  if (pos && grid[pos[0]][pos[1]] > 0) {
+    chain.push(pos);
+    playConnect();
+  }
+  updateChainVisuals();
+}
+
+function onPointerMove(e) {
+  if (!isDragging || !levelActive) return;
+  e.preventDefault();
+  const pos = getPointerCell(e);
+  if (!pos) return;
+  const [r, c] = pos;
+  if (grid[r][c] === 0) return;
+
+  // Check if already in chain
+  const idx = chain.findIndex(([cr, cc]) => cr === r && cc === c);
+  if (idx >= 0) {
+    // Backtracking: if it's the second-to-last, remove last
+    if (idx === chain.length - 2) {
+      chain.pop();
+      updateChainVisuals();
+    }
+    return;
+  }
+
+  // Must be adjacent to last cell in chain
+  if (chain.length === 0) return;
+  const [lastR, lastC] = chain[chain.length - 1];
+  if (!isAdjacent(lastR, lastC, r, c)) return;
+
+  // Chain rules: pairs must add to 10
+  // Chain must be built in pairs: [a, b] where a+b=10, then [c, d] where c+d=10
+  // Or continuous chain where each consecutive pair sums to 10
+  const lastVal = grid[lastR][lastC];
+  const curVal = grid[r][c];
+
+  if (lastVal + curVal === 10) {
+    chain.push([r, c]);
+    playConnect();
+    updateChainVisuals();
+  }
+}
+
+function onPointerEnd(e) {
+  if (!isDragging) return;
+  isDragging = false;
+
+  // Process chain - need at least 2 cells forming valid pair(s)
+  if (chain.length >= 2 && chain.length % 2 === 0) {
+    // Verify all pairs sum to 10
+    let valid = true;
+    for (let i = 0; i < chain.length; i += 2) {
+      const [r1, c1] = chain[i];
+      const [r2, c2] = chain[i + 1];
+      if (grid[r1][c1] + grid[r2][c2] !== 10) { valid = false; break; }
+      if (!isAdjacent(r1, c1, r2, c2)) { valid = false; break; }
+    }
+    if (valid) {
+      clearChain();
+      return;
+    }
+  }
+  // Also handle simple pair (length 2)
+  if (chain.length === 2) {
+    const [r1, c1] = chain[0];
+    const [r2, c2] = chain[1];
+    if (grid[r1][c1] + grid[r2][c2] === 10 && isAdjacent(r1, c1, r2, c2)) {
+      clearChain();
+      return;
+    }
+  }
+
+  // Invalid chain
+  chain = [];
+  updateChainVisuals();
+}
+
+// ==================== CLEAR & FILL ====================
+function clearChain() {
+  const pairs = Math.floor(chain.length / 2);
+  const cellsToClear = [...chain];
+  const pairPoints = pairs * 100;
+
+  // Combo
+  comboCount++;
+  clearTimeout(comboTimer);
+  comboTimer = setTimeout(() => { comboCount = 0; }, 1500);
+
+  let comboBonus = 0;
+  if (comboCount > 1) {
+    comboBonus = comboCount * 50;
+    showCombo(comboCount);
+    playCombo();
+  }
+
+  const totalPoints = pairPoints + comboBonus;
+  score += totalPoints;
+  pairsCount += pairs;
+
+  // Animate clearing
+  cellsToClear.forEach(([r, c]) => {
+    const el = getCellElement(r, c);
+    if (el) el.classList.add('clearing');
+  });
+
+  playClear();
+  showScorePopup(cellsToClear[0], '+' + totalPoints);
+
+  // After animation, remove and fill
+  setTimeout(() => {
+    cellsToClear.forEach(([r, c]) => {
+      grid[r][c] = 0;
+    });
+    dropAndFill();
+    chain = [];
+    updateUI();
+
+    // Check win/lose
+    setTimeout(() => {
+      if (pairsCount >= targetPairsCount) {
+        levelComplete();
+      } else if (!hasValidMove(grid, gridSize)) {
+        // Auto shuffle once if no valid moves
+        if (!autoShuffled) {
+          autoShuffled = true;
+          shuffleGrid();
+        } else {
+          gameOver(ncT().no_moves);
+        }
+      }
+    }, 100);
+  }, 400);
+}
+
+let autoShuffled = false;
+
+function dropAndFill() {
+  // Gravity: drop numbers down in each column
+  for (let c = 0; c < gridSize; c++) {
+    let writeRow = gridSize - 1;
+    for (let r = gridSize - 1; r >= 0; r--) {
+      if (grid[r][c] !== 0) {
+        if (writeRow !== r) {
+          grid[writeRow][c] = grid[r][c];
+          grid[r][c] = 0;
+        }
+        writeRow--;
+      }
+    }
+    // Fill empty cells from top
+    for (let r = writeRow; r >= 0; r--) {
+      grid[r][c] = randomNum();
+    }
+  }
+
+  // Ensure valid moves after fill
+  ensureValidPairs(grid, gridSize);
+  renderGrid();
+  updateChainVisuals();
+
+  // Animate new cells
+  for (let c = 0; c < gridSize; c++) {
+    for (let r = 0; r < gridSize; r++) {
+      const el = getCellElement(r, c);
+      if (el) {
+        el.classList.add('falling');
+        setTimeout(() => el.classList.remove('falling'), 350);
+      }
+    }
+  }
+}
+
+function showScorePopup(pos, text) {
+  const el = getCellElement(pos[0], pos[1]);
+  if (!el) return;
+  const popup = document.createElement('div');
+  popup.className = 'score-popup';
+  popup.textContent = text;
+  const rect = el.getBoundingClientRect();
+  popup.style.left = rect.left + rect.width / 2 - 20 + 'px';
+  popup.style.top = rect.top - 10 + 'px';
+  popup.style.position = 'fixed';
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 700);
+}
+
+function showCombo(count) {
+  const t = ncT();
+  const el = document.getElementById('comboDisplay');
+  el.textContent = `${count}x ${t.combo}!`;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 800);
+}
+
+function shuffleGrid() {
+  if (!levelActive) return;
+  // Fisher-Yates shuffle of all grid values
+  const values = [];
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      values.push(grid[r][c] || randomNum());
+    }
+  }
+  for (let i = values.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [values[i], values[j]] = [values[j], values[i]];
+  }
+  let idx = 0;
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      grid[r][c] = values[idx++];
+    }
+  }
+  ensureValidPairs(grid, gridSize);
+  renderGrid();
+  autoShuffled = false;
+}
+
+// ==================== UI UPDATE ====================
+function updateUI() {
+  const t = ncT();
+  document.getElementById('pairsCleared').textContent = pairsCount;
+  document.getElementById('targetPairs').textContent = targetPairsCount;
+  document.getElementById('scoreDisplay').textContent = score;
+
+  const progress = Math.min(1, pairsCount / targetPairsCount);
+  document.getElementById('progressFill').style.width = (progress * 100) + '%';
+}
+
+// ==================== TIMER ====================
+function startTimer(seconds) {
+  timeRemaining = seconds;
+  hasTimeLimit = true;
+  document.getElementById('timerBar').style.display = 'block';
+  updateTimerDisplay();
+
+  timerInterval = setInterval(() => {
+    timeRemaining -= 0.1;
+    if (timeRemaining <= 0) {
+      timeRemaining = 0;
+      stopTimer();
+      gameOver(ncT().time_up);
+    }
+    updateTimerDisplay();
+  }, 100);
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+function updateTimerDisplay() {
+  const config = getLevelConfig(currentLevel);
+  const pct = (timeRemaining / config.timeLimit) * 100;
+  const fill = document.getElementById('timerFill');
+  fill.style.width = pct + '%';
+  if (pct < 25) fill.classList.add('warning');
+  else fill.classList.remove('warning');
+}
+
+// ==================== LEVEL FLOW ====================
+function startLevel(lvl) {
+  currentLevel = lvl;
+  const config = getLevelConfig(lvl);
+  gridSize = config.gridSize;
+  targetPairsCount = config.targetPairs;
+  pairsCount = 0;
+  score = 0;
+  comboCount = 0;
+  chain = [];
+  autoShuffled = false;
+  levelActive = true;
+
+  grid = generateGrid(gridSize);
+
+  const t = ncT();
+  document.getElementById('levelLabel').textContent = t.level + ' ' + lvl;
+  document.getElementById('pairsLabel').textContent = t.pairs;
+  document.getElementById('targetLabel').textContent = t.target;
+  document.getElementById('scoreLabel').textContent = t.score;
+
+  stopTimer();
+  if (config.timeLimit > 0) {
+    startTimer(config.timeLimit);
+  } else {
+    hasTimeLimit = false;
+    document.getElementById('timerBar').style.display = 'none';
+  }
+
+  renderGrid();
+  updateUI();
+  showScreen('gameScreen');
+}
+
+function resetLevel() {
+  startLevel(currentLevel);
+}
+
+function getStars() {
+  const config = getLevelConfig(currentLevel);
+  const baseScore = config.targetPairs * 100;
+  const ratio = score / baseScore;
+  if (ratio >= 2.0) return 3;
+  if (ratio >= 1.3) return 2;
+  return 1;
+}
+
+function levelComplete() {
+  levelActive = false;
+  stopTimer();
+  playLevelComplete();
+
+  const stars = getStars();
+  saveProgress(currentLevel, stars, score);
+
+  const t = ncT();
+  document.getElementById('winTitle').textContent = t.stage_clear;
+  document.getElementById('winSub').textContent = stars === 3 ? t.excellent : stars === 2 ? t.amazing : t.well_done;
+  document.getElementById('winStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+  document.getElementById('winScore').textContent = score;
+  document.getElementById('winScoreLabel').textContent = t.score;
+  document.getElementById('winPairs').textContent = pairsCount;
+  document.getElementById('winPairsLabel').textContent = t.pairs;
+  document.getElementById('winNextBtn').textContent = t.next_level;
+  document.getElementById('winLevelsBtn').textContent = t.level_select;
+  document.getElementById('winShareBtn').textContent = t.share;
+
+  if (currentLevel >= TOTAL_LEVELS) {
+    document.getElementById('winNextBtn').style.display = 'none';
+  } else {
+    document.getElementById('winNextBtn').style.display = '';
+  }
+
+  document.getElementById('winOverlay').classList.add('active');
+
+  // Auto show share
+  setTimeout(() => {
+    if (typeof PuzzleShare !== 'undefined') {
+      PuzzleShare.showShareModal({
+        gameName: t.game_name,
+        title: t.game_name,
+        score: score,
+        stars: stars,
+        message: t.stage_clear + ' ' + t.level + ' ' + currentLevel,
+        lang: getGameLang(),
+      });
+    }
+  }, 600);
+}
+
+function gameOver(reason) {
+  levelActive = false;
+  stopTimer();
+  playFail();
+
+  const t = ncT();
+  document.getElementById('goTitle').textContent = t.game_over;
+  document.getElementById('goSub').textContent = reason || t.try_again;
+  document.getElementById('goScore').textContent = score;
+  document.getElementById('goScoreLabel').textContent = t.score;
+  document.getElementById('goPairs').textContent = pairsCount;
+  document.getElementById('goPairsLabel').textContent = t.pairs;
+  document.getElementById('goRetryBtn').textContent = t.retry;
+
+  document.getElementById('gameoverOverlay').classList.add('active');
+}
+
+// ==================== I18N APPLY ====================
+function applyI18n() {
+  const t = ncT();
+  document.getElementById('backBtn').textContent = t.back_main;
+  document.getElementById('titleText').textContent = t.title;
+  document.getElementById('subtitleText').textContent = t.subtitle;
+  document.getElementById('continueBtn').textContent = t.continue_btn;
+  document.getElementById('levelSelectBtn').textContent = t.level_select;
+  document.getElementById('levelsBackBtn').textContent = t.back;
+  document.getElementById('gameBackBtn').textContent = t.back_levels;
+  document.getElementById('restartBtn').textContent = t.restart;
+  document.getElementById('shuffleBtn').textContent = t.shuffle;
+  document.querySelectorAll('.ad-placeholder').forEach(el => el.textContent = t.ad_area);
+
+  // Set page title
+  document.title = t.title;
+}
+
+// ==================== INIT ====================
+function init() {
+  applyI18n();
+  showTitle();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

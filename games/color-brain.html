@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Color Brain Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif;background:#0a0a1a;color:#e2e8f0}
+body{display:flex;flex-direction:column;align-items:center}
+
+.ad-placeholder{width:100%;max-width:480px;height:50px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);font-size:12px;letter-spacing:1px;flex-shrink:0}
+.ad-top{border-radius:0 0 8px 8px}
+.ad-bottom{border-radius:8px 8px 0 0;margin-top:auto}
+
+.header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;flex-shrink:0}
+.back-link{color:#94a3b8;text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;transition:color .2s}
+.back-link:hover{color:#e2e8f0}
+.title{font-size:18px;font-weight:800;background:linear-gradient(135deg,#f43f5e,#a855f7,#3b82f6,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.status-bar{width:100%;max-width:480px;display:flex;justify-content:space-around;padding:6px 16px;flex-shrink:0;align-items:center}
+.status-box{text-align:center}
+.status-label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.status-value{font-size:20px;font-weight:900;color:#f1f5f9;line-height:1.1}
+.status-value.hearts{color:#f43f5e;font-size:22px;letter-spacing:2px}
+.status-value.score-val{color:#fbbf24}
+.status-value.round-val{color:#a855f7}
+
+.timer-bar-container{width:100%;max-width:480px;padding:0 16px;flex-shrink:0}
+.timer-bar{width:100%;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.timer-fill{height:100%;border-radius:3px;transition:width 0.1s linear;background:linear-gradient(90deg,#10b981,#3b82f6)}
+.timer-fill.warning{background:linear-gradient(90deg,#f59e0b,#f43f5e)}
+.timer-fill.danger{background:#f43f5e;animation:pulse-danger .4s ease-in-out infinite}
+@keyframes pulse-danger{0%,100%{opacity:1}50%{opacity:.5}}
+
+.game-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:480px;padding:16px;position:relative;min-height:0;gap:16px}
+
+.question-label{font-size:15px;font-weight:700;color:#94a3b8;text-align:center;min-height:44px;display:flex;align-items:center;justify-content:center;padding:0 8px;line-height:1.3}
+
+.color-word-display{font-size:72px;font-weight:900;text-align:center;line-height:1.1;padding:16px;border-radius:20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);min-width:280px;min-height:120px;display:flex;align-items:center;justify-content:center;transition:transform .15s;position:relative;overflow:hidden}
+.color-word-display.pop{animation:wordPop .3s ease-out}
+@keyframes wordPop{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+
+.answers-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:360px}
+.answer-btn{padding:14px 8px;border-radius:14px;border:2px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#e2e8f0;font-size:16px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .15s;text-align:center;min-height:52px;display:flex;align-items:center;justify-content:center}
+.answer-btn:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2)}
+.answer-btn:active{transform:scale(.95)}
+.answer-btn.correct{background:rgba(16,185,129,.25);border-color:#10b981;color:#10b981;animation:btnCorrect .4s ease-out}
+.answer-btn.wrong{background:rgba(244,63,94,.25);border-color:#f43f5e;color:#f43f5e;animation:btnShake .4s ease-out}
+@keyframes btnCorrect{0%{transform:scale(1)}30%{transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes btnShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+
+.answers-yesno{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:320px}
+.yesno-btn{padding:18px;border-radius:16px;border:2px solid;font-size:20px;font-weight:800;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .15s;text-align:center}
+.yesno-btn.yes{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.1);color:#10b981}
+.yesno-btn.no{border-color:rgba(244,63,94,.4);background:rgba(244,63,94,.1);color:#f43f5e}
+.yesno-btn:hover{transform:scale(1.03)}
+.yesno-btn:active{transform:scale(.95)}
+.yesno-btn.correct{animation:btnCorrect .4s ease-out}
+.yesno-btn.wrong{animation:btnShake .4s ease-out}
+
+.streak-display{font-size:13px;font-weight:700;color:#fbbf24;height:20px;text-align:center;opacity:0;transition:opacity .2s}
+.streak-display.show{opacity:1}
+
+/* Start Screen */
+.start-screen{position:fixed;inset:0;background:#0a0a1a;display:flex;align-items:center;justify-content:center;z-index:300;transition:opacity .4s}
+.start-screen.hidden{opacity:0;pointer-events:none}
+.start-box{text-align:center;padding:32px}
+.start-box h1{font-size:36px;font-weight:900;margin-bottom:8px;background:linear-gradient(135deg,#f43f5e,#a855f7,#3b82f6,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.start-box .subtitle{font-size:15px;color:#94a3b8;margin-bottom:28px;line-height:1.4}
+.start-box .demo-word{font-size:52px;font-weight:900;margin:20px 0;animation:colorCycle 3s ease-in-out infinite}
+@keyframes colorCycle{0%,100%{color:#f43f5e}25%{color:#3b82f6}50%{color:#10b981}75%{color:#f59e0b}}
+.start-btn{background:linear-gradient(135deg,#a855f7,#3b82f6);color:#fff;border:none;padding:16px 48px;border-radius:14px;font-size:18px;font-weight:800;font-family:'Outfit',sans-serif;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 24px rgba(168,85,247,.4)}
+.start-btn:hover{transform:scale(1.05)}
+.start-btn:active{transform:scale(.97)}
+
+/* Overlay */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;visibility:hidden;transition:all .3s}
+.overlay.show{opacity:1;visibility:visible}
+.overlay-box{background:#1a1a2e;border-radius:24px;padding:32px 28px;text-align:center;max-width:340px;width:90%;border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.overlay-box h2{font-size:28px;font-weight:900;margin-bottom:4px;background:linear-gradient(135deg,#f43f5e,#a855f7,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.grade-display{font-size:80px;font-weight:900;margin:8px 0;line-height:1}
+.grade-S{color:#fbbf24;text-shadow:0 0 40px rgba(251,191,36,.5)}
+.grade-A{color:#a855f7;text-shadow:0 0 40px rgba(168,85,247,.5)}
+.grade-B{color:#3b82f6;text-shadow:0 0 40px rgba(59,130,246,.5)}
+.grade-C{color:#10b981;text-shadow:0 0 40px rgba(16,185,129,.5)}
+.grade-D{color:#f59e0b;text-shadow:0 0 40px rgba(245,158,11,.5)}
+.grade-F{color:#f43f5e;text-shadow:0 0 40px rgba(244,63,94,.5)}
+.result-stats{display:flex;flex-direction:column;gap:6px;margin:16px 0}
+.result-stat{display:flex;justify-content:space-between;font-size:14px;padding:6px 12px;background:rgba(255,255,255,.04);border-radius:8px}
+.result-stat .label{color:#94a3b8}
+.result-stat .value{font-weight:700;color:#e2e8f0}
+.overlay-buttons{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.overlay-btn{border:none;padding:14px;border-radius:12px;font-size:16px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:transform .15s}
+.overlay-btn:hover{transform:scale(1.03)}
+.overlay-btn:active{transform:scale(.97)}
+.overlay-btn.primary{background:linear-gradient(135deg,#a855f7,#3b82f6);color:#fff;box-shadow:0 4px 20px rgba(168,85,247,.4)}
+.overlay-btn.secondary{background:rgba(255,255,255,.08);color:#e2e8f0;border:1px solid rgba(255,255,255,.1)}
+
+.feedback-flash{position:fixed;inset:0;pointer-events:none;z-index:150;opacity:0;transition:opacity .15s}
+.feedback-flash.correct{background:rgba(16,185,129,.12);opacity:1}
+.feedback-flash.wrong{background:rgba(244,63,94,.15);opacity:1}
+</style>
+</head>
+<body>
+
+<div class="ad-placeholder ad-top" id="adTop">AD SPACE</div>
+
+<div class="header">
+  <a href="../index.html" class="back-link" id="backLink"></a>
+  <div class="title" id="gameTitle">Color Brain</div>
+</div>
+
+<div class="status-bar">
+  <div class="status-box"><div class="status-label" id="lblLives">LIVES</div><div class="status-value hearts" id="livesDisplay"></div></div>
+  <div class="status-box"><div class="status-label" id="lblRound">ROUND</div><div class="status-value round-val" id="roundDisplay">1/20</div></div>
+  <div class="status-box"><div class="status-label" id="lblScore">SCORE</div><div class="status-value score-val" id="scoreDisplay">0</div></div>
+</div>
+
+<div class="timer-bar-container">
+  <div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
+</div>
+
+<div class="game-area">
+  <div class="question-label" id="questionLabel"></div>
+  <div class="color-word-display pop" id="colorWordDisplay"></div>
+  <div class="streak-display" id="streakDisplay"></div>
+  <div class="answers-grid" id="answersGrid"></div>
+  <div class="answers-yesno" id="answersYesNo" style="display:none"></div>
+</div>
+
+<div class="ad-placeholder ad-bottom" id="adBottom">AD SPACE</div>
+
+<div class="feedback-flash" id="feedbackFlash"></div>
+
+<!-- Start Screen -->
+<div class="start-screen" id="startScreen">
+  <div class="start-box">
+    <h1 id="startTitle">Color Brain</h1>
+    <div class="subtitle" id="startSubtitle"></div>
+    <div class="demo-word" id="demoWord">RED</div>
+    <button class="start-btn" id="startBtn"></button>
+  </div>
+</div>
+
+<!-- Result Overlay -->
+<div class="overlay" id="resultOverlay">
+  <div class="overlay-box">
+    <h2 id="resultTitle"></h2>
+    <div class="grade-display" id="gradeDisplay"></div>
+    <div class="result-stats" id="resultStats"></div>
+    <div class="overlay-buttons">
+      <button class="overlay-btn primary" id="btnPlayAgain"></button>
+      <button class="overlay-btn secondary" id="btnShare"></button>
+    </div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+// ===== COLOR BRAIN QUIZ =====
+
+// --- i18n ---
+const COLORS = {
+  red:    { hex: '#f43f5e', ko: '빨강', en: 'RED', ja: '赤', zh: '红', es: 'ROJO' },
+  blue:   { hex: '#3b82f6', ko: '파랑', en: 'BLUE', ja: '青', zh: '蓝', es: 'AZUL' },
+  green:  { hex: '#10b981', ko: '초록', en: 'GREEN', ja: '緑', zh: '绿', es: 'VERDE' },
+  yellow: { hex: '#fbbf24', ko: '노랑', en: 'YELLOW', ja: '黄', zh: '黄', es: 'AMARILLO' },
+  purple: { hex: '#a855f7', ko: '보라', en: 'PURPLE', ja: '紫', zh: '紫', es: 'MORADO' },
+  orange: { hex: '#f97316', ko: '주황', en: 'ORANGE', ja: '橙', zh: '橙', es: 'NARANJA' },
+  pink:   { hex: '#ec4899', ko: '분홍', en: 'PINK', ja: 'ピンク', zh: '粉', es: 'ROSA' },
+  white:  { hex: '#f1f5f9', ko: '하양', en: 'WHITE', ja: '白', zh: '白色', es: 'BLANCO' },
+};
+const COLOR_KEYS = Object.keys(COLORS);
+
+const GAME_TEXT = {
+  ko: {
+    title: 'Color Brain',
+    back: '← 메인으로',
+    lives: '생명',
+    round: '라운드',
+    score: '점수',
+    start: '시작하기',
+    subtitle: '글자의 색? 아니면 단어? 당신의 뇌를 속여보세요!',
+    q_color: '글자의 색깔은?',
+    q_word: '단어가 뭐라고 써있나요?',
+    q_match: '글자 색과 단어가 일치하나요?',
+    q_speed_color: '빠르게! 글자의 색깔은?',
+    q_speed_word: '빠르게! 단어는?',
+    yes: '일치',
+    no: '불일치',
+    result_title: '결과 발표',
+    brain_grade: '두뇌 등급',
+    accuracy: '정확도',
+    avg_time: '평균 반응시간',
+    total_score: '총 점수',
+    streak_best: '최대 연속 정답',
+    play_again: '다시 도전',
+    share: '결과 공유',
+    grade_S: '천재적 두뇌!',
+    grade_A: '우수한 두뇌!',
+    grade_B: '좋은 두뇌!',
+    grade_C: '보통 두뇌',
+    grade_D: '조금 더 연습!',
+    grade_F: '뇌가 혼란 중...',
+    streak: '연속',
+    ad: '광고 영역',
+    demo: '빨강',
+    time_up: '시간 초과!',
+    game_over: '게임 오버',
+  },
+  en: {
+    title: 'Color Brain',
+    back: '← Back',
+    lives: 'LIVES',
+    round: 'ROUND',
+    score: 'SCORE',
+    start: 'START',
+    subtitle: 'Color of text? Or the word? Trick your brain!',
+    q_color: 'What COLOR is the text?',
+    q_word: 'What does the word SAY?',
+    q_match: 'Do the color and word MATCH?',
+    q_speed_color: 'Quick! What COLOR?',
+    q_speed_word: 'Quick! What WORD?',
+    yes: 'MATCH',
+    no: 'NO MATCH',
+    result_title: 'Results',
+    brain_grade: 'Brain Grade',
+    accuracy: 'Accuracy',
+    avg_time: 'Avg Response',
+    total_score: 'Total Score',
+    streak_best: 'Best Streak',
+    play_again: 'Play Again',
+    share: 'Share Result',
+    grade_S: 'Genius Brain!',
+    grade_A: 'Excellent Brain!',
+    grade_B: 'Good Brain!',
+    grade_C: 'Average Brain',
+    grade_D: 'Keep Practicing!',
+    grade_F: 'Brain Confused...',
+    streak: 'Streak',
+    ad: 'Ad Space',
+    demo: 'RED',
+    time_up: 'Time Up!',
+    game_over: 'Game Over',
+  },
+  ja: {
+    title: 'Color Brain',
+    back: '← メインへ',
+    lives: 'ライフ',
+    round: 'ラウンド',
+    score: 'スコア',
+    start: 'スタート',
+    subtitle: '文字の色？それとも単語？脳を騙してみよう！',
+    q_color: '文字の色は何色？',
+    q_word: '何と書いてある？',
+    q_match: '文字の色と単語は一致？',
+    q_speed_color: '急いで！文字の色は？',
+    q_speed_word: '急いで！単語は？',
+    yes: '一致',
+    no: '不一致',
+    result_title: '結果発表',
+    brain_grade: '脳グレード',
+    accuracy: '正確度',
+    avg_time: '平均反応時間',
+    total_score: '合計スコア',
+    streak_best: '最大連続正解',
+    play_again: 'もう一度',
+    share: '結果をシェア',
+    grade_S: '天才的な脳！',
+    grade_A: '優秀な脳！',
+    grade_B: '良い脳！',
+    grade_C: '普通の脳',
+    grade_D: 'もっと練習！',
+    grade_F: '脳が混乱中...',
+    streak: '連続',
+    ad: '広告エリア',
+    demo: '赤',
+    time_up: '時間切れ！',
+    game_over: 'ゲームオーバー',
+  },
+  zh: {
+    title: 'Color Brain',
+    back: '← 返回',
+    lives: '生命',
+    round: '回合',
+    score: '分数',
+    start: '开始',
+    subtitle: '文字颜色？还是文字内容？来挑战你的大脑！',
+    q_color: '文字的颜色是什么？',
+    q_word: '文字写的是什么？',
+    q_match: '颜色和文字一致吗？',
+    q_speed_color: '快！文字颜色？',
+    q_speed_word: '快！写的是？',
+    yes: '一致',
+    no: '不一致',
+    result_title: '结果公布',
+    brain_grade: '大脑等级',
+    accuracy: '准确率',
+    avg_time: '平均反应时间',
+    total_score: '总分',
+    streak_best: '最大连续正确',
+    play_again: '再来一次',
+    share: '分享结果',
+    grade_S: '天才大脑！',
+    grade_A: '优秀大脑！',
+    grade_B: '不错的大脑！',
+    grade_C: '普通大脑',
+    grade_D: '再练练！',
+    grade_F: '大脑混乱中...',
+    streak: '连续',
+    ad: '广告区域',
+    demo: '红',
+    time_up: '时间到！',
+    game_over: '游戏结束',
+  },
+  es: {
+    title: 'Color Brain',
+    back: '← Volver',
+    lives: 'VIDAS',
+    round: 'RONDA',
+    score: 'PUNTOS',
+    start: 'INICIAR',
+    subtitle: 'Color del texto? O la palabra? Engana a tu cerebro!',
+    q_color: 'Que COLOR tiene el texto?',
+    q_word: 'Que DICE la palabra?',
+    q_match: 'El color y la palabra COINCIDEN?',
+    q_speed_color: 'Rapido! Que COLOR?',
+    q_speed_word: 'Rapido! Que PALABRA?',
+    yes: 'COINCIDE',
+    no: 'NO COINCIDE',
+    result_title: 'Resultados',
+    brain_grade: 'Grado Cerebral',
+    accuracy: 'Precision',
+    avg_time: 'Tiempo Promedio',
+    total_score: 'Puntuacion Total',
+    streak_best: 'Mejor Racha',
+    play_again: 'Jugar de Nuevo',
+    share: 'Compartir',
+    grade_S: 'Cerebro Genio!',
+    grade_A: 'Cerebro Excelente!',
+    grade_B: 'Buen Cerebro!',
+    grade_C: 'Cerebro Normal',
+    grade_D: 'Sigue Practicando!',
+    grade_F: 'Cerebro Confundido...',
+    streak: 'Racha',
+    ad: 'Espacio Publicitario',
+    demo: 'ROJO',
+    time_up: 'Tiempo!',
+    game_over: 'Fin del Juego',
+  },
+};
+
+function getLang() {
+  return (typeof getGameLang === 'function') ? getGameLang() : 'ko';
+}
+function T() {
+  const lang = getLang();
+  return GAME_TEXT[lang] || GAME_TEXT.ko;
+}
+function colorName(key) {
+  const lang = getLang();
+  return COLORS[key][lang] || COLORS[key].en;
+}
+
+// ===== WEB AUDIO SOUND ENGINE =====
+const Audio = {
+  ctx: null,
+  init() { if (this.ctx) return; this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+  resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
+  _play(fn) { this.init(); this.resume(); try { fn(this.ctx); } catch(e) {} },
+  correct() {
+    this._play(ctx => {
+      [523, 659, 784].forEach((f, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.06);
+        g.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.06);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.06 + 0.15);
+        o.start(ctx.currentTime + i * 0.06); o.stop(ctx.currentTime + i * 0.06 + 0.15);
+      });
+    });
+  },
+  wrong() {
+    this._play(ctx => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(200, ctx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.25);
+      g.gain.setValueAtTime(0.1, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.3);
+    });
+  },
+  tick() {
+    this._play(ctx => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine'; o.frequency.setValueAtTime(880, ctx.currentTime);
+      g.gain.setValueAtTime(0.05, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.05);
+    });
+  },
+  streak(n) {
+    this._play(ctx => {
+      const base = 523 + n * 50;
+      [0, 200, 400, 600].forEach((off, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(base + off, ctx.currentTime + i * 0.05);
+        g.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.05);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.05 + 0.15);
+        o.start(ctx.currentTime + i * 0.05); o.stop(ctx.currentTime + i * 0.05 + 0.15);
+      });
+    });
+  },
+  gameEnd() {
+    this._play(ctx => {
+      [784, 659, 523, 392].forEach((f, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.2);
+        g.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.2);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.2 + 0.4);
+        o.start(ctx.currentTime + i * 0.2); o.stop(ctx.currentTime + i * 0.2 + 0.4);
+      });
+    });
+  },
+  gradeReveal() {
+    this._play(ctx => {
+      [523, 659, 784, 1047].forEach((f, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.1);
+        g.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.1);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.1 + 0.3);
+        o.start(ctx.currentTime + i * 0.1); o.stop(ctx.currentTime + i * 0.1 + 0.3);
+      });
+    });
+  },
+};
+
+// ===== GAME STATE =====
+const TOTAL_ROUNDS = 20;
+const BASE_TIME = 5000;
+const MIN_TIME = 2500;
+
+let state = {
+  round: 0,
+  score: 0,
+  lives: 3,
+  streak: 0,
+  bestStreak: 0,
+  correctCount: 0,
+  responseTimes: [],
+  questionStartTime: 0,
+  timerInterval: null,
+  timeLeft: 0,
+  timeTotal: 0,
+  answered: false,
+  currentQuestion: null,
+  gameActive: false,
+};
+
+// ===== DOM ELEMENTS =====
+const $backLink = document.getElementById('backLink');
+const $gameTitle = document.getElementById('gameTitle');
+const $lblLives = document.getElementById('lblLives');
+const $lblRound = document.getElementById('lblRound');
+const $lblScore = document.getElementById('lblScore');
+const $livesDisplay = document.getElementById('livesDisplay');
+const $roundDisplay = document.getElementById('roundDisplay');
+const $scoreDisplay = document.getElementById('scoreDisplay');
+const $timerFill = document.getElementById('timerFill');
+const $questionLabel = document.getElementById('questionLabel');
+const $colorWordDisplay = document.getElementById('colorWordDisplay');
+const $answersGrid = document.getElementById('answersGrid');
+const $answersYesNo = document.getElementById('answersYesNo');
+const $streakDisplay = document.getElementById('streakDisplay');
+const $startScreen = document.getElementById('startScreen');
+const $startTitle = document.getElementById('startTitle');
+const $startSubtitle = document.getElementById('startSubtitle');
+const $startBtn = document.getElementById('startBtn');
+const $demoWord = document.getElementById('demoWord');
+const $resultOverlay = document.getElementById('resultOverlay');
+const $resultTitle = document.getElementById('resultTitle');
+const $gradeDisplay = document.getElementById('gradeDisplay');
+const $resultStats = document.getElementById('resultStats');
+const $btnPlayAgain = document.getElementById('btnPlayAgain');
+const $btnShare = document.getElementById('btnShare');
+const $feedbackFlash = document.getElementById('feedbackFlash');
+const $adTop = document.getElementById('adTop');
+const $adBottom = document.getElementById('adBottom');
+
+// ===== INIT UI =====
+function initUI() {
+  const t = T();
+  $backLink.textContent = t.back;
+  $backLink.href = '../index.html';
+  $gameTitle.textContent = t.title;
+  $lblLives.textContent = t.lives;
+  $lblRound.textContent = t.round;
+  $lblScore.textContent = t.score;
+  $startTitle.textContent = t.title;
+  $startSubtitle.textContent = t.subtitle;
+  $startBtn.textContent = t.start;
+  $demoWord.textContent = t.demo;
+  $adTop.textContent = t.ad;
+  $adBottom.textContent = t.ad;
+  updateLives();
+  document.title = 'Color Brain Quiz';
+}
+
+function updateLives() {
+  let hearts = '';
+  for (let i = 0; i < 3; i++) hearts += i < state.lives ? '\u2764\uFE0F' : '\uD83E\uDE76';
+  $livesDisplay.textContent = hearts;
+}
+
+function updateRound() {
+  $roundDisplay.textContent = `${state.round}/${TOTAL_ROUNDS}`;
+}
+
+function updateScore() {
+  $scoreDisplay.textContent = state.score;
+}
+
+// ===== QUESTION GENERATION =====
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function pickRandomExcept(arr, except) {
+  const filtered = arr.filter(x => x !== except);
+  return pickRandom(filtered);
+}
+
+function getTimeForRound(round) {
+  // Gradually reduce from BASE_TIME to MIN_TIME
+  const progress = (round - 1) / (TOTAL_ROUNDS - 1);
+  return Math.round(BASE_TIME - progress * (BASE_TIME - MIN_TIME));
+}
+
+function getQuestionType(round) {
+  // Rounds 1-5: color or word questions
+  // Rounds 6-12: mix in match questions
+  // Rounds 13-20: speed rounds with shorter names
+  if (round <= 5) return pickRandom(['color', 'word']);
+  if (round <= 12) return pickRandom(['color', 'word', 'match']);
+  return pickRandom(['speed_color', 'speed_word', 'match']);
+}
+
+function generateQuestion() {
+  const round = state.round;
+  const type = getQuestionType(round);
+  const wordKey = pickRandom(COLOR_KEYS);
+  let colorKey;
+
+  if (type === 'match') {
+    // 40% chance they match
+    colorKey = Math.random() < 0.4 ? wordKey : pickRandomExcept(COLOR_KEYS, wordKey);
+  } else {
+    // For Stroop effect: mostly different
+    colorKey = Math.random() < 0.2 ? wordKey : pickRandomExcept(COLOR_KEYS, wordKey);
+  }
+
+  const t = T();
+  let questionText, correctAnswer, options;
+
+  if (type === 'color' || type === 'speed_color') {
+    questionText = type === 'speed_color' ? t.q_speed_color : t.q_color;
+    correctAnswer = colorKey;
+    // Build 4 options including correct
+    const otherKeys = COLOR_KEYS.filter(k => k !== colorKey);
+    const shuffled = otherKeys.sort(() => Math.random() - 0.5).slice(0, 3);
+    options = [...shuffled, colorKey].sort(() => Math.random() - 0.5);
+  } else if (type === 'word' || type === 'speed_word') {
+    questionText = type === 'speed_word' ? t.q_speed_word : t.q_word;
+    correctAnswer = wordKey;
+    const otherKeys = COLOR_KEYS.filter(k => k !== wordKey);
+    const shuffled = otherKeys.sort(() => Math.random() - 0.5).slice(0, 3);
+    options = [...shuffled, wordKey].sort(() => Math.random() - 0.5);
+  } else {
+    // match type
+    questionText = t.q_match;
+    correctAnswer = wordKey === colorKey ? 'yes' : 'no';
+    options = null; // yes/no buttons
+  }
+
+  return { type, wordKey, colorKey, questionText, correctAnswer, options };
+}
+
+// ===== DISPLAY QUESTION =====
+function showQuestion() {
+  state.answered = false;
+  const q = state.currentQuestion;
+  const t = T();
+
+  // Question label
+  $questionLabel.textContent = q.questionText;
+
+  // Color word display
+  $colorWordDisplay.textContent = colorName(q.wordKey);
+  $colorWordDisplay.style.color = COLORS[q.colorKey].hex;
+  $colorWordDisplay.classList.remove('pop');
+  void $colorWordDisplay.offsetWidth;
+  $colorWordDisplay.classList.add('pop');
+
+  // Answers
+  if (q.options) {
+    $answersGrid.style.display = 'grid';
+    $answersYesNo.style.display = 'none';
+    $answersGrid.innerHTML = '';
+    q.options.forEach(key => {
+      const btn = document.createElement('button');
+      btn.className = 'answer-btn';
+      btn.textContent = colorName(key);
+      btn.style.borderColor = COLORS[key].hex + '40';
+      btn.style.color = COLORS[key].hex;
+      btn.addEventListener('click', () => handleAnswer(key, btn));
+      $answersGrid.appendChild(btn);
+    });
+  } else {
+    $answersGrid.style.display = 'none';
+    $answersYesNo.style.display = 'grid';
+    $answersYesNo.innerHTML = '';
+    const yesBtn = document.createElement('button');
+    yesBtn.className = 'yesno-btn yes';
+    yesBtn.textContent = t.yes;
+    yesBtn.addEventListener('click', () => handleAnswer('yes', yesBtn));
+    const noBtn = document.createElement('button');
+    noBtn.className = 'yesno-btn no';
+    noBtn.textContent = t.no;
+    noBtn.addEventListener('click', () => handleAnswer('no', noBtn));
+    $answersYesNo.appendChild(yesBtn);
+    $answersYesNo.appendChild(noBtn);
+  }
+
+  // Timer
+  state.timeTotal = getTimeForRound(state.round);
+  state.timeLeft = state.timeTotal;
+  state.questionStartTime = performance.now();
+  startTimer();
+}
+
+// ===== TIMER =====
+function startTimer() {
+  clearInterval(state.timerInterval);
+  $timerFill.style.width = '100%';
+  $timerFill.className = 'timer-fill';
+
+  state.timerInterval = setInterval(() => {
+    const elapsed = performance.now() - state.questionStartTime;
+    state.timeLeft = Math.max(0, state.timeTotal - elapsed);
+    const pct = (state.timeLeft / state.timeTotal) * 100;
+    $timerFill.style.width = pct + '%';
+
+    if (pct < 20) {
+      $timerFill.className = 'timer-fill danger';
+    } else if (pct < 40) {
+      $timerFill.className = 'timer-fill warning';
+    } else {
+      $timerFill.className = 'timer-fill';
+    }
+
+    if (state.timeLeft <= 0) {
+      clearInterval(state.timerInterval);
+      if (!state.answered) handleTimeout();
+    }
+  }, 50);
+}
+
+function handleTimeout() {
+  state.answered = true;
+  const t = T();
+  state.lives--;
+  state.streak = 0;
+  updateLives();
+  updateStreak();
+  flashFeedback('wrong');
+  Audio.wrong();
+
+  // Highlight correct answer
+  highlightCorrect();
+
+  setTimeout(() => nextRound(), 800);
+}
+
+// ===== ANSWER HANDLING =====
+function handleAnswer(answer, btnEl) {
+  if (state.answered || !state.gameActive) return;
+  state.answered = true;
+  clearInterval(state.timerInterval);
+  Audio.init();
+
+  const q = state.currentQuestion;
+  const responseTime = performance.now() - state.questionStartTime;
+  state.responseTimes.push(responseTime);
+
+  const isCorrect = answer === q.correctAnswer;
+
+  if (isCorrect) {
+    state.correctCount++;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+
+    // Score: base 100, speed bonus, streak bonus
+    const speedBonus = Math.round(Math.max(0, (state.timeTotal - responseTime) / state.timeTotal) * 100);
+    const streakBonus = Math.min(state.streak - 1, 5) * 20;
+    const roundScore = 100 + speedBonus + streakBonus;
+    state.score += roundScore;
+
+    btnEl.classList.add('correct');
+    flashFeedback('correct');
+    Audio.correct();
+    if (state.streak >= 3) Audio.streak(state.streak);
+    updateScore();
+    updateStreak();
+  } else {
+    state.lives--;
+    state.streak = 0;
+    btnEl.classList.add('wrong');
+    flashFeedback('wrong');
+    Audio.wrong();
+    updateLives();
+    updateStreak();
+    highlightCorrect();
+  }
+
+  setTimeout(() => nextRound(), isCorrect ? 500 : 900);
+}
+
+function highlightCorrect() {
+  const q = state.currentQuestion;
+  if (q.options) {
+    document.querySelectorAll('.answer-btn').forEach(btn => {
+      if (btn.textContent === colorName(q.correctAnswer)) {
+        btn.classList.add('correct');
+      }
+    });
+  } else {
+    document.querySelectorAll('.yesno-btn').forEach(btn => {
+      const isYes = btn.classList.contains('yes');
+      if ((q.correctAnswer === 'yes' && isYes) || (q.correctAnswer === 'no' && !isYes)) {
+        btn.classList.add('correct');
+      }
+    });
+  }
+}
+
+function flashFeedback(type) {
+  $feedbackFlash.className = 'feedback-flash ' + type;
+  setTimeout(() => { $feedbackFlash.className = 'feedback-flash'; }, 200);
+}
+
+function updateStreak() {
+  const t = T();
+  if (state.streak >= 2) {
+    $streakDisplay.textContent = `${state.streak} ${t.streak}!`;
+    $streakDisplay.classList.add('show');
+  } else {
+    $streakDisplay.classList.remove('show');
+  }
+}
+
+// ===== GAME FLOW =====
+function nextRound() {
+  if (state.lives <= 0) {
+    endGame();
+    return;
+  }
+  if (state.round >= TOTAL_ROUNDS) {
+    endGame();
+    return;
+  }
+  state.round++;
+  updateRound();
+  state.currentQuestion = generateQuestion();
+  showQuestion();
+}
+
+function startGame() {
+  Audio.init();
+  state = {
+    round: 0,
+    score: 0,
+    lives: 3,
+    streak: 0,
+    bestStreak: 0,
+    correctCount: 0,
+    responseTimes: [],
+    questionStartTime: 0,
+    timerInterval: null,
+    timeLeft: 0,
+    timeTotal: 0,
+    answered: false,
+    currentQuestion: null,
+    gameActive: true,
+  };
+  updateLives();
+  updateScore();
+  $startScreen.classList.add('hidden');
+  $resultOverlay.classList.remove('show');
+  nextRound();
+}
+
+function endGame() {
+  state.gameActive = false;
+  clearInterval(state.timerInterval);
+  Audio.gameEnd();
+
+  const t = T();
+  const accuracy = state.round > 0 ? Math.round((state.correctCount / state.round) * 100) : 0;
+  const avgTime = state.responseTimes.length > 0 ? Math.round(state.responseTimes.reduce((a, b) => a + b, 0) / state.responseTimes.length) : 0;
+
+  // Grade calculation
+  let grade, gradeMsg;
+  if (accuracy >= 95 && avgTime < 1500) { grade = 'S'; gradeMsg = t.grade_S; }
+  else if (accuracy >= 85) { grade = 'A'; gradeMsg = t.grade_A; }
+  else if (accuracy >= 70) { grade = 'B'; gradeMsg = t.grade_B; }
+  else if (accuracy >= 55) { grade = 'C'; gradeMsg = t.grade_C; }
+  else if (accuracy >= 35) { grade = 'D'; gradeMsg = t.grade_D; }
+  else { grade = 'F'; gradeMsg = t.grade_F; }
+
+  // Show overlay
+  setTimeout(() => {
+    Audio.gradeReveal();
+    $resultTitle.textContent = state.lives <= 0 ? t.game_over : t.result_title;
+    $gradeDisplay.textContent = grade;
+    $gradeDisplay.className = 'grade-display grade-' + grade;
+
+    $resultStats.innerHTML = `
+      <div class="result-stat"><span class="label">${t.brain_grade}</span><span class="value">${gradeMsg}</span></div>
+      <div class="result-stat"><span class="label">${t.accuracy}</span><span class="value">${accuracy}%</span></div>
+      <div class="result-stat"><span class="label">${t.avg_time}</span><span class="value">${(avgTime / 1000).toFixed(2)}s</span></div>
+      <div class="result-stat"><span class="label">${t.total_score}</span><span class="value">${state.score}</span></div>
+      <div class="result-stat"><span class="label">${t.streak_best}</span><span class="value">${state.bestStreak}</span></div>
+    `;
+
+    $btnPlayAgain.textContent = t.play_again;
+    $btnShare.textContent = t.share;
+    $resultOverlay.classList.add('show');
+
+    // Save best score
+    const bestKey = 'colorBrain_best';
+    const prev = parseInt(localStorage.getItem(bestKey) || '0');
+    if (state.score > prev) localStorage.setItem(bestKey, state.score);
+  }, 600);
+}
+
+// ===== SHARE =====
+$btnShare.addEventListener('click', () => {
+  const t = T();
+  const accuracy = state.round > 0 ? Math.round((state.correctCount / state.round) * 100) : 0;
+  const avgTime = state.responseTimes.length > 0 ? (state.responseTimes.reduce((a, b) => a + b, 0) / state.responseTimes.length / 1000).toFixed(2) : '0';
+
+  let grade;
+  if (accuracy >= 95 && parseFloat(avgTime) < 1.5) grade = 'S';
+  else if (accuracy >= 85) grade = 'A';
+  else if (accuracy >= 70) grade = 'B';
+  else if (accuracy >= 55) grade = 'C';
+  else if (accuracy >= 35) grade = 'D';
+  else grade = 'F';
+
+  if (typeof PuzzleShare !== 'undefined' && PuzzleShare.showShareModal) {
+    PuzzleShare.showShareModal({
+      game: 'Color Brain',
+      grade: grade,
+      score: state.score,
+      accuracy: accuracy + '%',
+      avgTime: avgTime + 's',
+      streak: state.bestStreak,
+    });
+  } else {
+    // Fallback: copy to clipboard
+    const text = `Color Brain Quiz\nGrade: ${grade} | Score: ${state.score}\nAccuracy: ${accuracy}% | Avg: ${avgTime}s\nStreak: ${state.bestStreak}`;
+    navigator.clipboard.writeText(text).catch(() => {});
+  }
+});
+
+// ===== EVENT LISTENERS =====
+$startBtn.addEventListener('click', startGame);
+$btnPlayAgain.addEventListener('click', startGame);
+
+// Init touch audio context
+document.addEventListener('touchstart', () => Audio.init(), { once: true });
+document.addEventListener('click', () => Audio.init(), { once: true });
+
+// Init
+initUI();
+</script>
+</body>
+</html>
