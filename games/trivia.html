@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Trivia Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif;background:#0a0a1a;color:#e2e8f0}
+body{display:flex;flex-direction:column;align-items:center}
+
+.ad-placeholder{width:100%;max-width:480px;height:50px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);font-size:12px;letter-spacing:1px;flex-shrink:0}
+.ad-top{border-radius:0 0 8px 8px}.ad-bottom{border-radius:8px 8px 0 0;margin-top:auto}
+
+.header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;flex-shrink:0}
+.back-link{color:#94a3b8;text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;transition:color .2s}
+.back-link:hover{color:#e2e8f0}
+.title{font-size:18px;font-weight:800;background:linear-gradient(135deg,#f59e0b,#ec4899,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.score-bar{width:100%;max-width:480px;display:flex;justify-content:space-around;padding:6px 16px;flex-shrink:0}
+.score-box{text-align:center}
+.score-label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.score-value{font-size:22px;font-weight:900;color:#f1f5f9;line-height:1.1}
+.score-value.streak{color:#fbbf24}.score-value.best{color:#a855f7}.score-value.acc{color:#34d399}
+
+.timer-wrap{width:100%;max-width:480px;padding:0 16px;flex-shrink:0;margin:4px 0}
+.timer-bar-bg{width:100%;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
+.timer-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#a855f7,#ec4899);transition:width .1s linear;width:100%}
+.timer-bar-fill.urgent{background:linear-gradient(90deg,#ef4444,#f97316);animation:timerPulse .5s ease-in-out infinite}
+@keyframes timerPulse{0%,100%{opacity:1}50%{opacity:.6}}
+.timer-text{text-align:center;font-size:14px;font-weight:700;color:#94a3b8;margin-top:2px}
+.timer-text.urgent{color:#ef4444;animation:timerPulse .5s ease-in-out infinite}
+
+.progress-wrap{width:100%;max-width:480px;padding:0 16px;flex-shrink:0;margin:2px 0}
+.progress-bar-bg{width:100%;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#3b82f6,#a855f7);transition:width .3s ease;width:0%}
+.progress-text{text-align:center;font-size:12px;color:#64748b;font-weight:600;margin-top:2px}
+
+.game-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:480px;padding:8px 16px;min-height:0;gap:10px;overflow-y:auto}
+
+.question-box{width:100%;background:rgba(255,255,255,.04);border-radius:20px;border:1px solid rgba(255,255,255,.08);padding:20px 16px;text-align:center;position:relative;overflow:hidden;min-height:80px;display:flex;align-items:center;justify-content:center}
+.question-box::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(245,158,11,.05),rgba(168,85,247,.05));pointer-events:none}
+.question-text{font-size:18px;font-weight:700;line-height:1.4;position:relative;z-index:1}
+.category-badge{position:absolute;top:8px;left:12px;font-size:12px;font-weight:700;color:#a855f7;background:rgba(168,85,247,.15);padding:2px 10px;border-radius:20px;z-index:1}
+
+.lifeline-bar{display:flex;gap:10px;align-items:center;width:100%;justify-content:center}
+.lifeline-btn{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:#fbbf24;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
+.lifeline-btn:hover{background:rgba(245,158,11,.25);transform:translateY(-1px)}
+.lifeline-btn:disabled{opacity:.3;cursor:default;transform:none}
+.lifeline-btn .count{background:rgba(0,0,0,.3);padding:1px 7px;border-radius:8px;font-size:11px}
+
+.lives-display{display:flex;gap:4px;align-items:center;font-size:22px}
+.life{transition:all .3s ease}.life.lost{opacity:.2;transform:scale(.7)}
+
+.answers-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.answer-btn{background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.1);border-radius:14px;padding:14px 8px;font-size:15px;font-weight:700;font-family:'Outfit',sans-serif;color:#e2e8f0;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;min-height:52px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.2}
+.answer-btn:hover{background:rgba(168,85,247,.15);border-color:rgba(168,85,247,.4)}
+.answer-btn:active{transform:scale(.95)}
+.answer-btn.correct{background:rgba(34,197,94,.2);border-color:#22c55e;color:#22c55e;animation:btnPop .3s ease-out}
+.answer-btn.wrong{background:rgba(239,68,68,.15);border-color:#ef4444;color:#ef4444;animation:btnShake .3s ease-out}
+.answer-btn.reveal-correct{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.5);color:#22c55e}
+.answer-btn.hidden-5050{opacity:0;pointer-events:none;transform:scale(.8)}
+.answer-btn:disabled{cursor:default;pointer-events:none}
+@keyframes btnPop{0%{transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes btnShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;visibility:hidden;transition:all .3s}
+.overlay.show{opacity:1;visibility:visible}
+.overlay-box{background:#1a1a2e;border-radius:20px;padding:32px;text-align:center;max-width:400px;width:90%;border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto}
+.overlay-box h2{font-size:28px;font-weight:900;margin-bottom:4px;background:linear-gradient(135deg,#f59e0b,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.overlay-box .subtitle{font-size:14px;color:#94a3b8;margin-bottom:20px}
+.overlay-box .final-score{font-size:56px;font-weight:900;color:#fbbf24;margin:8px 0;text-shadow:0 0 30px rgba(251,191,36,.3)}
+.overlay-box .stat-row{display:flex;justify-content:space-around;margin:16px 0;gap:8px}
+.overlay-box .stat-item{text-align:center}
+.overlay-box .stat-val{font-size:22px;font-weight:800;color:#f1f5f9}
+.overlay-box .stat-lbl{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase}
+.overlay-box .best-label{font-size:14px;color:#a855f7;margin-bottom:16px;font-weight:600}
+
+.mode-buttons{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.mode-btn{background:linear-gradient(135deg,rgba(168,85,247,.2),rgba(236,72,153,.2));border:1px solid rgba(168,85,247,.3);color:#e2e8f0;padding:14px 20px;border-radius:12px;font-size:15px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .15s;text-align:left;display:flex;justify-content:space-between;align-items:center}
+.mode-btn:hover{background:linear-gradient(135deg,rgba(168,85,247,.3),rgba(236,72,153,.3));transform:translateY(-1px)}
+.mode-btn:active{transform:scale(.98)}
+.mode-btn .mode-desc{font-size:12px;color:#94a3b8;font-weight:600}
+
+.category-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;width:100%}
+.cat-btn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:14px 10px;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;color:#e2e8f0;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.cat-btn:hover{background:rgba(168,85,247,.15);border-color:rgba(168,85,247,.4);transform:translateY(-2px)}
+.cat-btn .cat-icon{font-size:28px}
+.cat-btn .cat-name{font-size:12px}
+
+.primary-btn{background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;border:none;padding:14px 40px;border-radius:12px;font-size:16px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px rgba(168,85,247,.4);margin-top:8px}
+.primary-btn:hover{transform:scale(1.05)}.primary-btn:active{transform:scale(.97)}
+.share-btn{background:transparent;border:1px solid rgba(255,255,255,.15);color:#94a3b8;padding:10px 24px;border-radius:10px;font-size:14px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;margin-top:6px;transition:all .15s}
+.share-btn:hover{border-color:rgba(255,255,255,.3);color:#e2e8f0}
+
+.streak-display{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:100;opacity:0;font-weight:900;text-align:center;white-space:nowrap}
+.streak-display.show{animation:streakIn .7s ease-out forwards}
+@keyframes streakIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}30%{transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-55%) scale(1.1)}}
+
+@media(max-width:380px){
+  .question-text{font-size:15px}
+  .answer-btn{font-size:13px;padding:12px 6px}
+  .overlay-box{padding:24px 18px}
+  .cat-btn{padding:10px 6px;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<div class="ad-placeholder ad-top"><span data-i18n="ad_area">AD SPACE</span></div>
+
+<div class="header">
+  <a class="back-link" href="../index.html" data-i18n="back"></a>
+  <div class="title" id="gameTitle"></div>
+</div>
+
+<div class="score-bar" id="scoreBar" style="display:none">
+  <div class="score-box"><div class="score-label" data-i18n="score"></div><div class="score-value" id="scoreDisplay">0</div></div>
+  <div class="score-box"><div class="score-label" id="streakLabel"></div><div class="score-value streak" id="streakDisplay">0</div></div>
+  <div class="score-box"><div class="score-label" id="accuracyLabel"></div><div class="score-value acc" id="accuracyDisplay">0%</div></div>
+  <div class="score-box"><div class="score-label" data-i18n="best"></div><div class="score-value best" id="bestDisplay">0</div></div>
+</div>
+
+<div class="timer-wrap" id="timerWrap" style="display:none">
+  <div class="timer-bar-bg"><div class="timer-bar-fill" id="timerFill"></div></div>
+  <div class="timer-text" id="timerText">15s</div>
+</div>
+
+<div class="progress-wrap" id="progressWrap" style="display:none">
+  <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+  <div class="progress-text" id="progressText"></div>
+</div>
+
+<div class="game-area" id="gameArea">
+  <div id="livesDisplay" class="lives-display" style="display:none"></div>
+  <div class="question-box" id="questionBox" style="display:none">
+    <span class="category-badge" id="catBadge"></span>
+    <div class="question-text" id="questionText"></div>
+  </div>
+  <div class="lifeline-bar" id="lifelineBar" style="display:none">
+    <button class="lifeline-btn" id="fiftyBtn" onclick="useFiftyFifty()">50/50 <span class="count" id="fiftyCount">3</span></button>
+  </div>
+  <div class="answers-grid" id="answersGrid" style="display:none">
+    <button class="answer-btn" id="ans0"></button>
+    <button class="answer-btn" id="ans1"></button>
+    <button class="answer-btn" id="ans2"></button>
+    <button class="answer-btn" id="ans3"></button>
+  </div>
+</div>
+
+<div class="ad-placeholder ad-bottom"><span data-i18n="ad_area">AD SPACE</span></div>
+
+<div class="streak-display" id="streakPopup"></div>
+
+<!-- Mode Select Overlay -->
+<div class="overlay" id="modeOverlay">
+  <div class="overlay-box" id="modeBox"></div>
+</div>
+
+<!-- Category Select Overlay -->
+<div class="overlay" id="catOverlay">
+  <div class="overlay-box" id="catBox"></div>
+</div>
+
+<!-- Game Over Overlay -->
+<div class="overlay" id="overOverlay">
+  <div class="overlay-box" id="overBox"></div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+'use strict';
+
+// ─── i18n ───
+const TRIVIA_I18N = {
+ko: {
+  gameTitle: 'Trivia Challenge',
+  selectMode: '모드 선택',
+  quickPlay: '퀵 플레이',
+  quickDesc: '랜덤 10문제',
+  categoryPlay: '카테고리',
+  catDesc: '카테고리별 10문제',
+  marathon: '마라톤',
+  marathonDesc: '3번 틀릴 때까지',
+  selectCategory: '카테고리 선택',
+  science: '과학', geography: '지리', history: '역사', popculture: '대중문화',
+  sports: '스포츠', food: '음식', animals: '동물', technology: '기술',
+  streak: '연속', accuracy: '정확도', question: '문제',
+  gameOver: '게임 종료', finalScore: '최종 점수',
+  correct: '정답', wrong: '오답', timeTaken: '소요 시간',
+  newBest: '새 최고 기록!', playAgain: '다시 하기', shareResult: '결과 공유',
+  survived: '생존', questions: '문제',
+  fiftyFifty: '50/50',
+},
+en: {
+  gameTitle: 'Trivia Challenge',
+  selectMode: 'Select Mode',
+  quickPlay: 'Quick Play',
+  quickDesc: '10 random questions',
+  categoryPlay: 'Category',
+  catDesc: '10 questions per category',
+  marathon: 'Marathon',
+  marathonDesc: 'Until 3 wrong',
+  selectCategory: 'Select Category',
+  science: 'Science', geography: 'Geography', history: 'History', popculture: 'Pop Culture',
+  sports: 'Sports', food: 'Food', animals: 'Animals', technology: 'Technology',
+  streak: 'Streak', accuracy: 'Accuracy', question: 'Q',
+  gameOver: 'Game Over', finalScore: 'Final Score',
+  correct: 'Correct', wrong: 'Wrong', timeTaken: 'Time',
+  newBest: 'New Best!', playAgain: 'Play Again', shareResult: 'Share',
+  survived: 'Survived', questions: 'questions',
+  fiftyFifty: '50/50',
+},
+ja: {
+  gameTitle: 'トリビアチャレンジ',
+  selectMode: 'モード選択',
+  quickPlay: 'クイックプレイ',
+  quickDesc: 'ランダム10問',
+  categoryPlay: 'カテゴリ',
+  catDesc: 'カテゴリ別10問',
+  marathon: 'マラソン',
+  marathonDesc: '3回ミスまで',
+  selectCategory: 'カテゴリ選択',
+  science: '科学', geography: '地理', history: '歴史', popculture: 'ポップカルチャー',
+  sports: 'スポーツ', food: '食べ物', animals: '動物', technology: 'テクノロジー',
+  streak: '連続', accuracy: '正確度', question: '問',
+  gameOver: 'ゲームオーバー', finalScore: '最終スコア',
+  correct: '正解', wrong: '不正解', timeTaken: '時間',
+  newBest: '新記録！', playAgain: 'もう一度', shareResult: '共有',
+  survived: '生存', questions: '問',
+  fiftyFifty: '50/50',
+},
+zh: {
+  gameTitle: '知识挑战',
+  selectMode: '选择模式',
+  quickPlay: '快速游戏',
+  quickDesc: '随机10题',
+  categoryPlay: '分类',
+  catDesc: '每类10题',
+  marathon: '马拉松',
+  marathonDesc: '错3次结束',
+  selectCategory: '选择分类',
+  science: '科学', geography: '地理', history: '历史', popculture: '流行文化',
+  sports: '体育', food: '美食', animals: '动物', technology: '科技',
+  streak: '连续', accuracy: '准确率', question: '题',
+  gameOver: '游戏结束', finalScore: '最终得分',
+  correct: '正确', wrong: '错误', timeTaken: '用时',
+  newBest: '新纪录！', playAgain: '再来一次', shareResult: '分享',
+  survived: '存活', questions: '题',
+  fiftyFifty: '50/50',
+},
+es: {
+  gameTitle: 'Trivia Challenge',
+  selectMode: 'Elegir Modo',
+  quickPlay: 'Rápido',
+  quickDesc: '10 preguntas al azar',
+  categoryPlay: 'Categoría',
+  catDesc: '10 por categoría',
+  marathon: 'Maratón',
+  marathonDesc: 'Hasta 3 errores',
+  selectCategory: 'Elegir Categoría',
+  science: 'Ciencia', geography: 'Geografía', history: 'Historia', popculture: 'Cultura Pop',
+  sports: 'Deportes', food: 'Comida', animals: 'Animales', technology: 'Tecnología',
+  streak: 'Racha', accuracy: 'Precisión', question: 'P',
+  gameOver: 'Fin del Juego', finalScore: 'Puntuación Final',
+  correct: 'Correctas', wrong: 'Incorrectas', timeTaken: 'Tiempo',
+  newBest: '¡Nuevo récord!', playAgain: 'Jugar de nuevo', shareResult: 'Compartir',
+  survived: 'Sobreviviste', questions: 'preguntas',
+  fiftyFifty: '50/50',
+}
+};
+
+const lang = getGameLang();
+const t = getTranslations();
+const tt = TRIVIA_I18N[lang] || TRIVIA_I18N.en;
+
+// ─── Questions Database (80+ questions, all 5 languages) ───
+const CATEGORIES = [
+  {id:'science',icon:'🔬',key:'science'},
+  {id:'geography',icon:'🌍',key:'geography'},
+  {id:'history',icon:'📜',key:'history'},
+  {id:'popculture',icon:'🎬',key:'popculture'},
+  {id:'sports',icon:'⚽',key:'sports'},
+  {id:'food',icon:'🍕',key:'food'},
+  {id:'animals',icon:'🐾',key:'animals'},
+  {id:'technology',icon:'💻',key:'technology'},
+];
+
+// q: {ko,en,ja,zh,es}, a: [{ko,en,ja,zh,es}], correct: index
+const QUESTIONS = {
+science: [
+  {q:{en:"What planet is known as the Red Planet?",ko:"빨간 행성으로 알려진 행성은?",ja:"赤い惑星と呼ばれる惑星は？",zh:"哪颗行星被称为红色星球？",es:"¿Qué planeta es conocido como el Planeta Rojo?"},a:[{en:"Mars",ko:"화성",ja:"火星",zh:"火星",es:"Marte"},{en:"Venus",ko:"금성",ja:"金星",zh:"金星",es:"Venus"},{en:"Jupiter",ko:"목성",ja:"木星",zh:"木星",es:"Júpiter"},{en:"Saturn",ko:"토성",ja:"土星",zh:"土星",es:"Saturno"}],correct:0},
+  {q:{en:"What is the chemical symbol for water?",ko:"물의 화학 기호는?",ja:"水の化学記号は？",zh:"水的化学符号是什么？",es:"¿Cuál es el símbolo químico del agua?"},a:[{en:"H2O",ko:"H2O",ja:"H2O",zh:"H2O",es:"H2O"},{en:"CO2",ko:"CO2",ja:"CO2",zh:"CO2",es:"CO2"},{en:"O2",ko:"O2",ja:"O2",zh:"O2",es:"O2"},{en:"NaCl",ko:"NaCl",ja:"NaCl",zh:"NaCl",es:"NaCl"}],correct:0},
+  {q:{en:"How many bones are in the adult human body?",ko:"성인의 뼈는 몇 개인가요?",ja:"成人の骨の数は？",zh:"成年人体有多少块骨头？",es:"¿Cuántos huesos tiene el cuerpo humano adulto?"},a:[{en:"206",ko:"206",ja:"206",zh:"206",es:"206"},{en:"186",ko:"186",ja:"186",zh:"186",es:"186"},{en:"256",ko:"256",ja:"256",zh:"256",es:"256"},{en:"300",ko:"300",ja:"300",zh:"300",es:"300"}],correct:0},
+  {q:{en:"What gas do plants absorb from the atmosphere?",ko:"식물이 대기에서 흡수하는 기체는?",ja:"植物が大気から吸収する気体は？",zh:"植物从大气中吸收什么气体？",es:"¿Qué gas absorben las plantas de la atmósfera?"},a:[{en:"Carbon dioxide",ko:"이산화탄소",ja:"二酸化炭素",zh:"二氧化碳",es:"Dióxido de carbono"},{en:"Oxygen",ko:"산소",ja:"酸素",zh:"氧气",es:"Oxígeno"},{en:"Nitrogen",ko:"질소",ja:"窒素",zh:"氮气",es:"Nitrógeno"},{en:"Hydrogen",ko:"수소",ja:"水素",zh:"氢气",es:"Hidrógeno"}],correct:0},
+  {q:{en:"What is the speed of light approximately?",ko:"빛의 속도는 대략?",ja:"光の速度は約？",zh:"光速大约是多少？",es:"¿Cuál es la velocidad de la luz aproximadamente?"},a:[{en:"300,000 km/s",ko:"300,000 km/s",ja:"300,000 km/s",zh:"300,000 km/s",es:"300,000 km/s"},{en:"150,000 km/s",ko:"150,000 km/s",ja:"150,000 km/s",zh:"150,000 km/s",es:"150,000 km/s"},{en:"500,000 km/s",ko:"500,000 km/s",ja:"500,000 km/s",zh:"500,000 km/s",es:"500,000 km/s"},{en:"1,000,000 km/s",ko:"1,000,000 km/s",ja:"1,000,000 km/s",zh:"1,000,000 km/s",es:"1,000,000 km/s"}],correct:0},
+  {q:{en:"What is the hardest natural substance?",ko:"가장 단단한 천연 물질은?",ja:"最も硬い天然物質は？",zh:"最硬的天然物质是什么？",es:"¿Cuál es la sustancia natural más dura?"},a:[{en:"Diamond",ko:"다이아몬드",ja:"ダイヤモンド",zh:"钻石",es:"Diamante"},{en:"Iron",ko:"철",ja:"鉄",zh:"铁",es:"Hierro"},{en:"Quartz",ko:"석영",ja:"石英",zh:"石英",es:"Cuarzo"},{en:"Gold",ko:"금",ja:"金",zh:"金",es:"Oro"}],correct:0},
+  {q:{en:"What organ pumps blood through the body?",ko:"몸에 혈액을 펌프하는 기관은?",ja:"体中に血液を送る器官は？",zh:"哪个器官将血液泵送全身？",es:"¿Qué órgano bombea sangre por el cuerpo?"},a:[{en:"Heart",ko:"심장",ja:"心臓",zh:"心脏",es:"Corazón"},{en:"Liver",ko:"간",ja:"肝臓",zh:"肝脏",es:"Hígado"},{en:"Brain",ko:"뇌",ja:"脳",zh:"大脑",es:"Cerebro"},{en:"Lungs",ko:"폐",ja:"肺",zh:"肺",es:"Pulmones"}],correct:0},
+  {q:{en:"What is the closest star to Earth?",ko:"지구에서 가장 가까운 별은?",ja:"地球に最も近い恒星は？",zh:"离地球最近的恒星是？",es:"¿Cuál es la estrella más cercana a la Tierra?"},a:[{en:"The Sun",ko:"태양",ja:"太陽",zh:"太阳",es:"El Sol"},{en:"Proxima Centauri",ko:"프록시마 센타우리",ja:"プロキシマ・ケンタウリ",zh:"比邻星",es:"Próxima Centauri"},{en:"Sirius",ko:"시리우스",ja:"シリウス",zh:"天狼星",es:"Sirio"},{en:"Alpha Centauri",ko:"알파 센타우리",ja:"アルファ・ケンタウリ",zh:"南门二",es:"Alfa Centauri"}],correct:0},
+  {q:{en:"What is the boiling point of water in Celsius?",ko:"물의 끓는점은 섭씨 몇 도?",ja:"水の沸点は摂氏何度？",zh:"水的沸点是多少摄氏度？",es:"¿Cuál es el punto de ebullición del agua en Celsius?"},a:[{en:"100°C",ko:"100°C",ja:"100°C",zh:"100°C",es:"100°C"},{en:"90°C",ko:"90°C",ja:"90°C",zh:"90°C",es:"90°C"},{en:"110°C",ko:"110°C",ja:"110°C",zh:"110°C",es:"110°C"},{en:"80°C",ko:"80°C",ja:"80°C",zh:"80°C",es:"80°C"}],correct:0},
+  {q:{en:"Which element has the atomic number 1?",ko:"원자번호 1인 원소는?",ja:"原子番号1の元素は？",zh:"原子序数为1的元素是？",es:"¿Qué elemento tiene el número atómico 1?"},a:[{en:"Hydrogen",ko:"수소",ja:"水素",zh:"氢",es:"Hidrógeno"},{en:"Helium",ko:"헬륨",ja:"ヘリウム",zh:"氦",es:"Helio"},{en:"Lithium",ko:"리튬",ja:"リチウム",zh:"锂",es:"Litio"},{en:"Carbon",ko:"탄소",ja:"炭素",zh:"碳",es:"Carbono"}],correct:0},
+],
+geography: [
+  {q:{en:"What is the largest ocean?",ko:"가장 큰 바다는?",ja:"最大の海は？",zh:"最大的海洋是？",es:"¿Cuál es el océano más grande?"},a:[{en:"Pacific",ko:"태평양",ja:"太平洋",zh:"太平洋",es:"Pacífico"},{en:"Atlantic",ko:"대서양",ja:"大西洋",zh:"大西洋",es:"Atlántico"},{en:"Indian",ko:"인도양",ja:"インド洋",zh:"印度洋",es:"Índico"},{en:"Arctic",ko:"북극해",ja:"北極海",zh:"北冰洋",es:"Ártico"}],correct:0},
+  {q:{en:"What is the capital of Japan?",ko:"일본의 수도는?",ja:"日本の首都は？",zh:"日本的首都是？",es:"¿Cuál es la capital de Japón?"},a:[{en:"Tokyo",ko:"도쿄",ja:"東京",zh:"东京",es:"Tokio"},{en:"Osaka",ko:"오사카",ja:"大阪",zh:"大阪",es:"Osaka"},{en:"Kyoto",ko:"교토",ja:"京都",zh:"京都",es:"Kioto"},{en:"Seoul",ko:"서울",ja:"ソウル",zh:"首尔",es:"Seúl"}],correct:0},
+  {q:{en:"What is the longest river in the world?",ko:"세계에서 가장 긴 강은?",ja:"世界最長の川は？",zh:"世界上最长的河流是？",es:"¿Cuál es el río más largo del mundo?"},a:[{en:"Nile",ko:"나일강",ja:"ナイル川",zh:"尼罗河",es:"Nilo"},{en:"Amazon",ko:"아마존강",ja:"アマゾン川",zh:"亚马逊河",es:"Amazonas"},{en:"Yangtze",ko:"양쯔강",ja:"長江",zh:"长江",es:"Yangtsé"},{en:"Mississippi",ko:"미시시피강",ja:"ミシシッピ川",zh:"密西西比河",es:"Misisipi"}],correct:0},
+  {q:{en:"Which country has the most people?",ko:"인구가 가장 많은 나라는?",ja:"最も人口が多い国は？",zh:"哪个国家人口最多？",es:"¿Qué país tiene más habitantes?"},a:[{en:"India",ko:"인도",ja:"インド",zh:"印度",es:"India"},{en:"China",ko:"중국",ja:"中国",zh:"中国",es:"China"},{en:"USA",ko:"미국",ja:"アメリカ",zh:"美国",es:"EE.UU."},{en:"Indonesia",ko:"인도네시아",ja:"インドネシア",zh:"印度尼西亚",es:"Indonesia"}],correct:0},
+  {q:{en:"What is the smallest country in the world?",ko:"세계에서 가장 작은 나라는?",ja:"世界最小の国は？",zh:"世界上最小的国家是？",es:"¿Cuál es el país más pequeño del mundo?"},a:[{en:"Vatican City",ko:"바티칸",ja:"バチカン市国",zh:"梵蒂冈",es:"Ciudad del Vaticano"},{en:"Monaco",ko:"모나코",ja:"モナコ",zh:"摩纳哥",es:"Mónaco"},{en:"San Marino",ko:"산마리노",ja:"サンマリノ",zh:"圣马力诺",es:"San Marino"},{en:"Liechtenstein",ko:"리히텐슈타인",ja:"リヒテンシュタイン",zh:"列支敦士登",es:"Liechtenstein"}],correct:0},
+  {q:{en:"On which continent is Egypt?",ko:"이집트는 어떤 대륙에 있나요?",ja:"エジプトはどの大陸？",zh:"埃及在哪个洲？",es:"¿En qué continente está Egipto?"},a:[{en:"Africa",ko:"아프리카",ja:"アフリカ",zh:"非洲",es:"África"},{en:"Asia",ko:"아시아",ja:"アジア",zh:"亚洲",es:"Asia"},{en:"Europe",ko:"유럽",ja:"ヨーロッパ",zh:"欧洲",es:"Europa"},{en:"South America",ko:"남아메리카",ja:"南アメリカ",zh:"南美洲",es:"Sudamérica"}],correct:0},
+  {q:{en:"What is the largest desert in the world?",ko:"세계에서 가장 큰 사막은?",ja:"世界最大の砂漠は？",zh:"世界上最大的沙漠是？",es:"¿Cuál es el desierto más grande del mundo?"},a:[{en:"Antarctic",ko:"남극 사막",ja:"南極砂漠",zh:"南极沙漠",es:"Antártico"},{en:"Sahara",ko:"사하라",ja:"サハラ",zh:"撒哈拉",es:"Sahara"},{en:"Arabian",ko:"아라비아",ja:"アラビア",zh:"阿拉伯",es:"Arábigo"},{en:"Gobi",ko:"고비",ja:"ゴビ",zh:"戈壁",es:"Gobi"}],correct:0},
+  {q:{en:"Which city is known as the Big Apple?",ko:"빅 애플로 알려진 도시는?",ja:"ビッグアップルと呼ばれる都市は？",zh:"哪个城市被称为大苹果？",es:"¿Qué ciudad es conocida como la Gran Manzana?"},a:[{en:"New York",ko:"뉴욕",ja:"ニューヨーク",zh:"纽约",es:"Nueva York"},{en:"Los Angeles",ko:"로스앤젤레스",ja:"ロサンゼルス",zh:"洛杉矶",es:"Los Ángeles"},{en:"Chicago",ko:"시카고",ja:"シカゴ",zh:"芝加哥",es:"Chicago"},{en:"London",ko:"런던",ja:"ロンドン",zh:"伦敦",es:"Londres"}],correct:0},
+  {q:{en:"What is the capital of Australia?",ko:"호주의 수도는?",ja:"オーストラリアの首都は？",zh:"澳大利亚的首都是？",es:"¿Cuál es la capital de Australia?"},a:[{en:"Canberra",ko:"캔버라",ja:"キャンベラ",zh:"堪培拉",es:"Canberra"},{en:"Sydney",ko:"시드니",ja:"シドニー",zh:"悉尼",es:"Sídney"},{en:"Melbourne",ko:"멜버른",ja:"メルボルン",zh:"墨尔本",es:"Melbourne"},{en:"Brisbane",ko:"브리즈번",ja:"ブリスベン",zh:"布里斯班",es:"Brisbane"}],correct:0},
+  {q:{en:"Mount Everest is in which mountain range?",ko:"에베레스트 산은 어느 산맥에 있나요?",ja:"エベレストはどの山脈？",zh:"珠穆朗玛峰在哪个山脉？",es:"¿En qué cordillera está el Everest?"},a:[{en:"Himalayas",ko:"히말라야",ja:"ヒマラヤ",zh:"喜马拉雅",es:"Himalaya"},{en:"Andes",ko:"안데스",ja:"アンデス",zh:"安第斯",es:"Andes"},{en:"Alps",ko:"알프스",ja:"アルプス",zh:"阿尔卑斯",es:"Alpes"},{en:"Rockies",ko:"로키",ja:"ロッキー",zh:"落基",es:"Rocosas"}],correct:0},
+],
+history: [
+  {q:{en:"In what year did World War II end?",ko:"제2차 세계대전이 끝난 해는?",ja:"第二次世界大戦が終わった年は？",zh:"第二次世界大战哪年结束？",es:"¿En qué año terminó la Segunda Guerra Mundial?"},a:[{en:"1945",ko:"1945",ja:"1945",zh:"1945",es:"1945"},{en:"1944",ko:"1944",ja:"1944",zh:"1944",es:"1944"},{en:"1946",ko:"1946",ja:"1946",zh:"1946",es:"1946"},{en:"1943",ko:"1943",ja:"1943",zh:"1943",es:"1943"}],correct:0},
+  {q:{en:"Who painted the Mona Lisa?",ko:"모나리자를 그린 사람은?",ja:"モナ・リザを描いたのは？",zh:"谁画了蒙娜丽莎？",es:"¿Quién pintó la Mona Lisa?"},a:[{en:"Leonardo da Vinci",ko:"레오나르도 다 빈치",ja:"レオナルド・ダ・ヴィンチ",zh:"达芬奇",es:"Leonardo da Vinci"},{en:"Michelangelo",ko:"미켈란젤로",ja:"ミケランジェロ",zh:"米开朗基罗",es:"Miguel Ángel"},{en:"Raphael",ko:"라파엘로",ja:"ラファエロ",zh:"拉斐尔",es:"Rafael"},{en:"Picasso",ko:"피카소",ja:"ピカソ",zh:"毕加索",es:"Picasso"}],correct:0},
+  {q:{en:"Who was the first president of the USA?",ko:"미국의 초대 대통령은?",ja:"アメリカ初代大統領は？",zh:"美国第一任总统是谁？",es:"¿Quién fue el primer presidente de EE.UU.?"},a:[{en:"George Washington",ko:"조지 워싱턴",ja:"ジョージ・ワシントン",zh:"乔治·华盛顿",es:"George Washington"},{en:"Thomas Jefferson",ko:"토머스 제퍼슨",ja:"トーマス・ジェファーソン",zh:"托马斯·杰斐逊",es:"Thomas Jefferson"},{en:"Abraham Lincoln",ko:"에이브러햄 링컨",ja:"エイブラハム・リンカーン",zh:"亚伯拉罕·林肯",es:"Abraham Lincoln"},{en:"John Adams",ko:"존 애덤스",ja:"ジョン・アダムズ",zh:"约翰·亚当斯",es:"John Adams"}],correct:0},
+  {q:{en:"The ancient pyramids are in which country?",ko:"고대 피라미드가 있는 나라는?",ja:"古代ピラミッドがある国は？",zh:"古代金字塔在哪个国家？",es:"¿En qué país están las pirámides antiguas?"},a:[{en:"Egypt",ko:"이집트",ja:"エジプト",zh:"埃及",es:"Egipto"},{en:"Mexico",ko:"멕시코",ja:"メキシコ",zh:"墨西哥",es:"México"},{en:"Peru",ko:"페루",ja:"ペルー",zh:"秘鲁",es:"Perú"},{en:"Iraq",ko:"이라크",ja:"イラク",zh:"伊拉克",es:"Irak"}],correct:0},
+  {q:{en:"In what year did the Titanic sink?",ko:"타이타닉호가 침몰한 해는?",ja:"タイタニック号が沈んだ年は？",zh:"泰坦尼克号哪年沉没？",es:"¿En qué año se hundió el Titanic?"},a:[{en:"1912",ko:"1912",ja:"1912",zh:"1912",es:"1912"},{en:"1905",ko:"1905",ja:"1905",zh:"1905",es:"1905"},{en:"1920",ko:"1920",ja:"1920",zh:"1920",es:"1920"},{en:"1898",ko:"1898",ja:"1898",zh:"1898",es:"1898"}],correct:0},
+  {q:{en:"Who discovered America in 1492?",ko:"1492년에 아메리카를 발견한 사람은?",ja:"1492年にアメリカを発見したのは？",zh:"1492年谁发现了美洲？",es:"¿Quién descubrió América en 1492?"},a:[{en:"Columbus",ko:"콜럼버스",ja:"コロンブス",zh:"哥伦布",es:"Colón"},{en:"Magellan",ko:"마젤란",ja:"マゼラン",zh:"麦哲伦",es:"Magallanes"},{en:"Vespucci",ko:"베스푸치",ja:"ヴェスプッチ",zh:"韦斯普奇",es:"Vespucio"},{en:"Drake",ko:"드레이크",ja:"ドレイク",zh:"德雷克",es:"Drake"}],correct:0},
+  {q:{en:"The Berlin Wall fell in which year?",ko:"베를린 장벽이 무너진 해는?",ja:"ベルリンの壁が崩壊した年は？",zh:"柏林墙哪年倒塌？",es:"¿En qué año cayó el Muro de Berlín?"},a:[{en:"1989",ko:"1989",ja:"1989",zh:"1989",es:"1989"},{en:"1991",ko:"1991",ja:"1991",zh:"1991",es:"1991"},{en:"1985",ko:"1985",ja:"1985",zh:"1985",es:"1985"},{en:"1990",ko:"1990",ja:"1990",zh:"1990",es:"1990"}],correct:0},
+  {q:{en:"Who wrote Romeo and Juliet?",ko:"로미오와 줄리엣을 쓴 사람은?",ja:"ロミオとジュリエットの作者は？",zh:"谁写了罗密欧与朱丽叶？",es:"¿Quién escribió Romeo y Julieta?"},a:[{en:"Shakespeare",ko:"셰익스피어",ja:"シェイクスピア",zh:"莎士比亚",es:"Shakespeare"},{en:"Dickens",ko:"디킨스",ja:"ディケンズ",zh:"狄更斯",es:"Dickens"},{en:"Hemingway",ko:"헤밍웨이",ja:"ヘミングウェイ",zh:"海明威",es:"Hemingway"},{en:"Tolstoy",ko:"톨스토이",ja:"トルストイ",zh:"托尔斯泰",es:"Tolstói"}],correct:0},
+  {q:{en:"Which empire built the Colosseum?",ko:"콜로세움을 지은 제국은?",ja:"コロッセオを建てた帝国は？",zh:"哪个帝国建造了斗兽场？",es:"¿Qué imperio construyó el Coliseo?"},a:[{en:"Roman",ko:"로마",ja:"ローマ",zh:"罗马",es:"Romano"},{en:"Greek",ko:"그리스",ja:"ギリシャ",zh:"希腊",es:"Griego"},{en:"Ottoman",ko:"오스만",ja:"オスマン",zh:"奥斯曼",es:"Otomano"},{en:"Persian",ko:"페르시아",ja:"ペルシャ",zh:"波斯",es:"Persa"}],correct:0},
+  {q:{en:"What was the first country to land on the moon?",ko:"달에 처음 착륙한 나라는?",ja:"初めて月面着陸した国は？",zh:"第一个登月的国家是？",es:"¿Qué país llegó primero a la Luna?"},a:[{en:"USA",ko:"미국",ja:"アメリカ",zh:"美国",es:"EE.UU."},{en:"USSR",ko:"소련",ja:"ソ連",zh:"苏联",es:"URSS"},{en:"China",ko:"중국",ja:"中国",zh:"中国",es:"China"},{en:"UK",ko:"영국",ja:"イギリス",zh:"英国",es:"Reino Unido"}],correct:0},
+],
+popculture: [
+  {q:{en:"Who played Iron Man in the MCU?",ko:"MCU에서 아이언맨 역은?",ja:"MCUでアイアンマンを演じたのは？",zh:"谁在MCU中饰演钢铁侠？",es:"¿Quién interpretó a Iron Man en el MCU?"},a:[{en:"Robert Downey Jr.",ko:"로버트 다우니 주니어",ja:"ロバート・ダウニー・Jr",zh:"小罗伯特·唐尼",es:"Robert Downey Jr."},{en:"Chris Evans",ko:"크리스 에반스",ja:"クリス・エヴァンス",zh:"克里斯·埃文斯",es:"Chris Evans"},{en:"Chris Hemsworth",ko:"크리스 헴스워스",ja:"クリス・ヘムズワース",zh:"克里斯·海姆斯沃斯",es:"Chris Hemsworth"},{en:"Mark Ruffalo",ko:"마크 러팔로",ja:"マーク・ラファロ",zh:"马克·鲁法洛",es:"Mark Ruffalo"}],correct:0},
+  {q:{en:"What is the name of Harry Potter's school?",ko:"해리 포터의 학교 이름은?",ja:"ハリー・ポッターの学校は？",zh:"哈利波特的学校叫什么？",es:"¿Cómo se llama la escuela de Harry Potter?"},a:[{en:"Hogwarts",ko:"호그와트",ja:"ホグワーツ",zh:"霍格沃茨",es:"Hogwarts"},{en:"Narnia",ko:"나니아",ja:"ナルニア",zh:"纳尼亚",es:"Narnia"},{en:"Mordor",ko:"모르도르",ja:"モルドール",zh:"魔多",es:"Mordor"},{en:"Westeros",ko:"웨스테로스",ja:"ウェスタロス",zh:"维斯特洛",es:"Westeros"}],correct:0},
+  {q:{en:"Which band sang 'Bohemian Rhapsody'?",ko:"'Bohemian Rhapsody'를 부른 밴드는?",ja:"「ボヘミアン・ラプソディ」を歌ったバンドは？",zh:"哪个乐队唱了波西米亚狂想曲？",es:"¿Qué banda cantó 'Bohemian Rhapsody'?"},a:[{en:"Queen",ko:"퀸",ja:"クイーン",zh:"皇后乐队",es:"Queen"},{en:"Beatles",ko:"비틀즈",ja:"ビートルズ",zh:"披头士",es:"Beatles"},{en:"Led Zeppelin",ko:"레드 제플린",ja:"レッド・ツェッペリン",zh:"齐柏林飞船",es:"Led Zeppelin"},{en:"Pink Floyd",ko:"핑크 플로이드",ja:"ピンク・フロイド",zh:"平克·弗洛伊德",es:"Pink Floyd"}],correct:0},
+  {q:{en:"In 'The Lion King', what is Simba's father's name?",ko:"'라이온 킹'에서 심바의 아버지 이름은?",ja:"「ライオンキング」でシンバの父の名前は？",zh:"《狮子王》中辛巴的父亲叫什么？",es:"¿Cómo se llama el padre de Simba?"},a:[{en:"Mufasa",ko:"무파사",ja:"ムファサ",zh:"木法沙",es:"Mufasa"},{en:"Scar",ko:"스카",ja:"スカー",zh:"刀疤",es:"Scar"},{en:"Rafiki",ko:"라피키",ja:"ラフィキ",zh:"拉飞奇",es:"Rafiki"},{en:"Zazu",ko:"자주",ja:"ザズー",zh:"沙祖",es:"Zazú"}],correct:0},
+  {q:{en:"What fictional city is Batman from?",ko:"배트맨이 사는 가상 도시는?",ja:"バットマンの架空の都市は？",zh:"蝙蝠侠来自哪个虚构城市？",es:"¿De qué ciudad ficticia es Batman?"},a:[{en:"Gotham",ko:"고담",ja:"ゴッサム",zh:"哥谭",es:"Gotham"},{en:"Metropolis",ko:"메트로폴리스",ja:"メトロポリス",zh:"大都会",es:"Metrópolis"},{en:"Star City",ko:"스타 시티",ja:"スターシティ",zh:"星城",es:"Star City"},{en:"Central City",ko:"센트럴 시티",ja:"セントラルシティ",zh:"中心城",es:"Central City"}],correct:0},
+  {q:{en:"What is the highest-grossing film of all time?",ko:"역대 최고 흥행 영화는?",ja:"歴代最高興行収入の映画は？",zh:"史上票房最高的电影是？",es:"¿Cuál es la película más taquillera de la historia?"},a:[{en:"Avatar",ko:"아바타",ja:"アバター",zh:"阿凡达",es:"Avatar"},{en:"Avengers: Endgame",ko:"어벤져스: 엔드게임",ja:"アベンジャーズ：エンドゲーム",zh:"复仇者联盟4",es:"Avengers: Endgame"},{en:"Titanic",ko:"타이타닉",ja:"タイタニック",zh:"泰坦尼克号",es:"Titanic"},{en:"Star Wars",ko:"스타워즈",ja:"スター・ウォーズ",zh:"星球大战",es:"Star Wars"}],correct:0},
+  {q:{en:"Which K-pop group is known as BTS?",ko:"방탄소년단의 영어 약칭은?",ja:"防弾少年団の英語略称は？",zh:"防弹少年团的英文缩写是？",es:"¿Cuál es la abreviatura de Bangtan Sonyeondan?"},a:[{en:"BTS",ko:"BTS",ja:"BTS",zh:"BTS",es:"BTS"},{en:"EXO",ko:"EXO",ja:"EXO",zh:"EXO",es:"EXO"},{en:"NCT",ko:"NCT",ja:"NCT",zh:"NCT",es:"NCT"},{en:"TWICE",ko:"TWICE",ja:"TWICE",zh:"TWICE",es:"TWICE"}],correct:0},
+  {q:{en:"Who directed 'Jurassic Park'?",ko:"'쥬라기 공원'의 감독은?",ja:"「ジュラシック・パーク」の監督は？",zh:"谁导演了《侏罗纪公园》？",es:"¿Quién dirigió 'Jurassic Park'?"},a:[{en:"Steven Spielberg",ko:"스티븐 스필버그",ja:"スティーブン・スピルバーグ",zh:"史蒂文·斯皮尔伯格",es:"Steven Spielberg"},{en:"James Cameron",ko:"제임스 카메론",ja:"ジェームズ・キャメロン",zh:"詹姆斯·卡梅隆",es:"James Cameron"},{en:"George Lucas",ko:"조지 루카스",ja:"ジョージ・ルーカス",zh:"乔治·卢卡斯",es:"George Lucas"},{en:"Ridley Scott",ko:"리들리 스콧",ja:"リドリー・スコット",zh:"雷德利·斯科特",es:"Ridley Scott"}],correct:0},
+  {q:{en:"What is Mario's brother's name?",ko:"마리오의 형제 이름은?",ja:"マリオの兄弟の名前は？",zh:"马里奥的兄弟叫什么？",es:"¿Cómo se llama el hermano de Mario?"},a:[{en:"Luigi",ko:"루이지",ja:"ルイージ",zh:"路易吉",es:"Luigi"},{en:"Wario",ko:"와리오",ja:"ワリオ",zh:"瓦力欧",es:"Wario"},{en:"Toad",ko:"토드",ja:"トード",zh:"奇诺比奥",es:"Toad"},{en:"Yoshi",ko:"요시",ja:"ヨッシー",zh:"耀西",es:"Yoshi"}],correct:0},
+  {q:{en:"Which show features dragons and the Iron Throne?",ko:"드래곤과 철왕좌가 나오는 드라마는?",ja:"ドラゴンと鉄の玉座が登場するドラマは？",zh:"哪部剧有龙和铁王座？",es:"¿Qué serie tiene dragones y el Trono de Hierro?"},a:[{en:"Game of Thrones",ko:"왕좌의 게임",ja:"ゲーム・オブ・スローンズ",zh:"权力的游戏",es:"Juego de Tronos"},{en:"The Witcher",ko:"더 위쳐",ja:"ウィッチャー",zh:"猎魔人",es:"The Witcher"},{en:"Lord of the Rings",ko:"반지의 제왕",ja:"ロード・オブ・ザ・リング",zh:"指环王",es:"El Señor de los Anillos"},{en:"Vikings",ko:"바이킹스",ja:"ヴァイキング",zh:"维京传奇",es:"Vikingos"}],correct:0},
+],
+sports: [
+  {q:{en:"How many players on a soccer team on the field?",ko:"축구 한 팀 경기 인원은?",ja:"サッカーの1チームのフィールド人数は？",zh:"足球场上一队几人？",es:"¿Cuántos jugadores hay en un equipo de fútbol en el campo?"},a:[{en:"11",ko:"11",ja:"11",zh:"11",es:"11"},{en:"9",ko:"9",ja:"9",zh:"9",es:"9"},{en:"10",ko:"10",ja:"10",zh:"10",es:"10"},{en:"12",ko:"12",ja:"12",zh:"12",es:"12"}],correct:0},
+  {q:{en:"In which sport is a 'slam dunk' performed?",ko:"'슬램덩크'를 하는 스포츠는?",ja:"「スラムダンク」を行うスポーツは？",zh:"哪项运动有灌篮？",es:"¿En qué deporte se hace un 'slam dunk'?"},a:[{en:"Basketball",ko:"농구",ja:"バスケットボール",zh:"篮球",es:"Baloncesto"},{en:"Volleyball",ko:"배구",ja:"バレーボール",zh:"排球",es:"Voleibol"},{en:"Tennis",ko:"테니스",ja:"テニス",zh:"网球",es:"Tenis"},{en:"Baseball",ko:"야구",ja:"野球",zh:"棒球",es:"Béisbol"}],correct:0},
+  {q:{en:"How often are the Summer Olympics held?",ko:"하계 올림픽은 몇 년마다 열리나요?",ja:"夏季オリンピックは何年ごと？",zh:"夏季奥运会几年一届？",es:"¿Cada cuántos años son los Juegos Olímpicos de Verano?"},a:[{en:"Every 4 years",ko:"4년마다",ja:"4年ごと",zh:"每4年",es:"Cada 4 años"},{en:"Every 2 years",ko:"2년마다",ja:"2年ごと",zh:"每2年",es:"Cada 2 años"},{en:"Every 3 years",ko:"3년마다",ja:"3年ごと",zh:"每3年",es:"Cada 3 años"},{en:"Every 5 years",ko:"5년마다",ja:"5年ごと",zh:"每5年",es:"Cada 5 años"}],correct:0},
+  {q:{en:"What sport uses a shuttlecock?",ko:"셔틀콕을 사용하는 스포츠는?",ja:"シャトルコックを使うスポーツは？",zh:"哪项运动使用羽毛球？",es:"¿Qué deporte usa un volante?"},a:[{en:"Badminton",ko:"배드민턴",ja:"バドミントン",zh:"羽毛球",es:"Bádminton"},{en:"Tennis",ko:"테니스",ja:"テニス",zh:"网球",es:"Tenis"},{en:"Table Tennis",ko:"탁구",ja:"卓球",zh:"乒乓球",es:"Tenis de mesa"},{en:"Squash",ko:"스쿼시",ja:"スカッシュ",zh:"壁球",es:"Squash"}],correct:0},
+  {q:{en:"Which country hosted the 2022 FIFA World Cup?",ko:"2022 FIFA 월드컵 개최국은?",ja:"2022年FIFAワールドカップの開催国は？",zh:"2022年世界杯在哪国举办？",es:"¿Qué país organizó el Mundial 2022?"},a:[{en:"Qatar",ko:"카타르",ja:"カタール",zh:"卡塔尔",es:"Catar"},{en:"Russia",ko:"러시아",ja:"ロシア",zh:"俄罗斯",es:"Rusia"},{en:"Brazil",ko:"브라질",ja:"ブラジル",zh:"巴西",es:"Brasil"},{en:"Japan",ko:"일본",ja:"日本",zh:"日本",es:"Japón"}],correct:0},
+  {q:{en:"What is the highest score in bowling?",ko:"볼링 최고 점수는?",ja:"ボウリングの最高スコアは？",zh:"保龄球最高分是多少？",es:"¿Cuál es la puntuación máxima en bolos?"},a:[{en:"300",ko:"300",ja:"300",zh:"300",es:"300"},{en:"200",ko:"200",ja:"200",zh:"200",es:"200"},{en:"400",ko:"400",ja:"400",zh:"400",es:"400"},{en:"250",ko:"250",ja:"250",zh:"250",es:"250"}],correct:0},
+  {q:{en:"How many sets does a tennis player need to win in a Grand Slam men's match?",ko:"그랜드슬램 남자 경기에서 필요한 세트 수는?",ja:"グランドスラム男子の勝利セット数は？",zh:"大满贯男子比赛需要赢几盘？",es:"¿Cuántos sets necesita ganar en un Grand Slam masculino?"},a:[{en:"3",ko:"3",ja:"3",zh:"3",es:"3"},{en:"2",ko:"2",ja:"2",zh:"2",es:"2"},{en:"4",ko:"4",ja:"4",zh:"4",es:"4"},{en:"5",ko:"5",ja:"5",zh:"5",es:"5"}],correct:0},
+  {q:{en:"Which sport is known as 'the king of sports'?",ko:"'스포츠의 왕'이라 불리는 종목은?",ja:"「スポーツの王様」と呼ばれるのは？",zh:"哪项运动被称为"运动之王"？",es:"¿Cuál es el 'rey de los deportes'?"},a:[{en:"Soccer/Football",ko:"축구",ja:"サッカー",zh:"足球",es:"Fútbol"},{en:"Basketball",ko:"농구",ja:"バスケットボール",zh:"篮球",es:"Baloncesto"},{en:"Baseball",ko:"야구",ja:"野球",zh:"棒球",es:"Béisbol"},{en:"Cricket",ko:"크리켓",ja:"クリケット",zh:"板球",es:"Críquet"}],correct:0},
+  {q:{en:"What is the diameter of a basketball hoop in inches?",ko:"농구 골대 지름은 몇 인치?",ja:"バスケットゴールの直径は何インチ？",zh:"篮筐直径是多少英寸？",es:"¿Cuál es el diámetro del aro de baloncesto en pulgadas?"},a:[{en:"18",ko:"18",ja:"18",zh:"18",es:"18"},{en:"16",ko:"16",ja:"16",zh:"16",es:"16"},{en:"20",ko:"20",ja:"20",zh:"20",es:"20"},{en:"22",ko:"22",ja:"22",zh:"22",es:"22"}],correct:0},
+  {q:{en:"In golf, what is one under par called?",ko:"골프에서 1언더파를 뭐라 하나요?",ja:"ゴルフで1アンダーパーは何という？",zh:"高尔夫低于标准杆一杆叫什么？",es:"¿Cómo se llama uno bajo par en golf?"},a:[{en:"Birdie",ko:"버디",ja:"バーディ",zh:"小鸟球",es:"Birdie"},{en:"Eagle",ko:"이글",ja:"イーグル",zh:"老鹰球",es:"Eagle"},{en:"Bogey",ko:"보기",ja:"ボギー",zh:"柏忌",es:"Bogey"},{en:"Albatross",ko:"알바트로스",ja:"アルバトロス",zh:"信天翁",es:"Albatros"}],correct:0},
+],
+food: [
+  {q:{en:"What country is sushi originally from?",ko:"스시의 원산지는?",ja:"寿司の発祥地は？",zh:"寿司起源于哪个国家？",es:"¿De qué país es originario el sushi?"},a:[{en:"Japan",ko:"일본",ja:"日本",zh:"日本",es:"Japón"},{en:"China",ko:"중국",ja:"中国",zh:"中国",es:"China"},{en:"Korea",ko:"한국",ja:"韓国",zh:"韩国",es:"Corea"},{en:"Thailand",ko:"태국",ja:"タイ",zh:"泰国",es:"Tailandia"}],correct:0},
+  {q:{en:"What is the main ingredient of guacamole?",ko:"과카몰리의 주재료는?",ja:"ワカモレの主な材料は？",zh:"鳄梨酱的主要成分是？",es:"¿Cuál es el ingrediente principal del guacamole?"},a:[{en:"Avocado",ko:"아보카도",ja:"アボカド",zh:"牛油果",es:"Aguacate"},{en:"Tomato",ko:"토마토",ja:"トマト",zh:"番茄",es:"Tomate"},{en:"Onion",ko:"양파",ja:"玉ねぎ",zh:"洋葱",es:"Cebolla"},{en:"Pepper",ko:"고추",ja:"唐辛子",zh:"辣椒",es:"Pimiento"}],correct:0},
+  {q:{en:"Which country is famous for croissants?",ko:"크루아상으로 유명한 나라는?",ja:"クロワッサンで有名な国は？",zh:"哪个国家以可颂闻名？",es:"¿Qué país es famoso por los croissants?"},a:[{en:"France",ko:"프랑스",ja:"フランス",zh:"法国",es:"Francia"},{en:"Italy",ko:"이탈리아",ja:"イタリア",zh:"意大利",es:"Italia"},{en:"Spain",ko:"스페인",ja:"スペイン",zh:"西班牙",es:"España"},{en:"Germany",ko:"독일",ja:"ドイツ",zh:"德国",es:"Alemania"}],correct:0},
+  {q:{en:"What is the most consumed fruit in the world?",ko:"세계에서 가장 많이 소비되는 과일은?",ja:"世界で最も消費される果物は？",zh:"世界上消费最多的水果是？",es:"¿Cuál es la fruta más consumida del mundo?"},a:[{en:"Banana",ko:"바나나",ja:"バナナ",zh:"香蕉",es:"Plátano"},{en:"Apple",ko:"사과",ja:"りんご",zh:"苹果",es:"Manzana"},{en:"Orange",ko:"오렌지",ja:"オレンジ",zh:"橙子",es:"Naranja"},{en:"Grape",ko:"포도",ja:"ぶどう",zh:"葡萄",es:"Uva"}],correct:0},
+  {q:{en:"What spice is known as 'red gold'?",ko:"'빨간 금'으로 불리는 향신료는?",ja:"「赤い金」と呼ばれるスパイスは？",zh:"哪种香料被称为"红色黄金"？",es:"¿Qué especia se conoce como 'oro rojo'?"},a:[{en:"Saffron",ko:"사프란",ja:"サフラン",zh:"藏红花",es:"Azafrán"},{en:"Paprika",ko:"파프리카",ja:"パプリカ",zh:"辣椒粉",es:"Pimentón"},{en:"Turmeric",ko:"강황",ja:"ターメリック",zh:"姜黄",es:"Cúrcuma"},{en:"Chili",ko:"칠리",ja:"チリ",zh:"辣椒",es:"Chile"}],correct:0},
+  {q:{en:"Kimchi is a traditional food of which country?",ko:"김치는 어느 나라의 전통 음식?",ja:"キムチはどの国の伝統食？",zh:"泡菜是哪国的传统食品？",es:"¿De qué país es el kimchi?"},a:[{en:"Korea",ko:"한국",ja:"韓国",zh:"韩国",es:"Corea"},{en:"Japan",ko:"일본",ja:"日本",zh:"日本",es:"Japón"},{en:"China",ko:"중국",ja:"中国",zh:"中国",es:"China"},{en:"Vietnam",ko:"베트남",ja:"ベトナム",zh:"越南",es:"Vietnam"}],correct:0},
+  {q:{en:"What type of pasta is shaped like a bow tie?",ko:"나비넥타이 모양의 파스타는?",ja:"蝶ネクタイ型のパスタは？",zh:"蝴蝶结形状的意面是？",es:"¿Qué pasta tiene forma de corbata de moño?"},a:[{en:"Farfalle",ko:"파르팔레",ja:"ファルファッレ",zh:"蝴蝶面",es:"Farfalle"},{en:"Penne",ko:"펜네",ja:"ペンネ",zh:"通心粉",es:"Penne"},{en:"Fusilli",ko:"푸실리",ja:"フジッリ",zh:"螺旋面",es:"Fusilli"},{en:"Rigatoni",ko:"리가토니",ja:"リガトーニ",zh:"管面",es:"Rigatoni"}],correct:0},
+  {q:{en:"What is tofu made from?",ko:"두부는 무엇으로 만드나요?",ja:"豆腐は何から作られる？",zh:"豆腐是用什么做的？",es:"¿De qué está hecho el tofu?"},a:[{en:"Soybeans",ko:"대두",ja:"大豆",zh:"大豆",es:"Soja"},{en:"Rice",ko:"쌀",ja:"米",zh:"大米",es:"Arroz"},{en:"Wheat",ko:"밀",ja:"小麦",zh:"小麦",es:"Trigo"},{en:"Corn",ko:"옥수수",ja:"トウモロコシ",zh:"玉米",es:"Maíz"}],correct:0},
+  {q:{en:"Which country invented pizza?",ko:"피자를 발명한 나라는?",ja:"ピザを発明した国は？",zh:"哪个国家发明了披萨？",es:"¿Qué país inventó la pizza?"},a:[{en:"Italy",ko:"이탈리아",ja:"イタリア",zh:"意大利",es:"Italia"},{en:"USA",ko:"미국",ja:"アメリカ",zh:"美国",es:"EE.UU."},{en:"Greece",ko:"그리스",ja:"ギリシャ",zh:"希腊",es:"Grecia"},{en:"France",ko:"프랑스",ja:"フランス",zh:"法国",es:"Francia"}],correct:0},
+  {q:{en:"What is the most expensive spice by weight?",ko:"무게 기준 가장 비싼 향신료는?",ja:"重さあたり最も高価なスパイスは？",zh:"按重量计最贵的香料是？",es:"¿Cuál es la especia más cara por peso?"},a:[{en:"Saffron",ko:"사프란",ja:"サフラン",zh:"藏红花",es:"Azafrán"},{en:"Vanilla",ko:"바닐라",ja:"バニラ",zh:"香草",es:"Vainilla"},{en:"Cardamom",ko:"카다몬",ja:"カルダモン",zh:"豆蔻",es:"Cardamomo"},{en:"Cinnamon",ko:"시나몬",ja:"シナモン",zh:"肉桂",es:"Canela"}],correct:0},
+],
+animals: [
+  {q:{en:"What is the largest animal on Earth?",ko:"지구에서 가장 큰 동물은?",ja:"地球最大の動物は？",zh:"地球上最大的动物是？",es:"¿Cuál es el animal más grande de la Tierra?"},a:[{en:"Blue whale",ko:"대왕고래",ja:"シロナガスクジラ",zh:"蓝鲸",es:"Ballena azul"},{en:"Elephant",ko:"코끼리",ja:"ゾウ",zh:"大象",es:"Elefante"},{en:"Giraffe",ko:"기린",ja:"キリン",zh:"长颈鹿",es:"Jirafa"},{en:"Shark",ko:"상어",ja:"サメ",zh:"鲨鱼",es:"Tiburón"}],correct:0},
+  {q:{en:"How many legs does a spider have?",ko:"거미의 다리는 몇 개?",ja:"クモの足は何本？",zh:"蜘蛛有几条腿？",es:"¿Cuántas patas tiene una araña?"},a:[{en:"8",ko:"8",ja:"8",zh:"8",es:"8"},{en:"6",ko:"6",ja:"6",zh:"6",es:"6"},{en:"10",ko:"10",ja:"10",zh:"10",es:"10"},{en:"4",ko:"4",ja:"4",zh:"4",es:"4"}],correct:0},
+  {q:{en:"What is a group of wolves called?",ko:"늑대 무리를 뭐라 부르나요?",ja:"オオカミの群れは何と呼ぶ？",zh:"一群狼叫什么？",es:"¿Cómo se llama un grupo de lobos?"},a:[{en:"Pack",ko:"팩",ja:"パック",zh:"狼群",es:"Manada"},{en:"Herd",ko:"허드",ja:"ハード",zh:"兽群",es:"Rebaño"},{en:"Flock",ko:"플록",ja:"フロック",zh:"鸟群",es:"Bandada"},{en:"School",ko:"스쿨",ja:"スクール",zh:"鱼群",es:"Banco"}],correct:0},
+  {q:{en:"Which bird can fly backwards?",ko:"뒤로 날 수 있는 새는?",ja:"後ろに飛べる鳥は？",zh:"哪种鸟能倒着飞？",es:"¿Qué ave puede volar hacia atrás?"},a:[{en:"Hummingbird",ko:"벌새",ja:"ハチドリ",zh:"蜂鸟",es:"Colibrí"},{en:"Eagle",ko:"독수리",ja:"ワシ",zh:"鹰",es:"Águila"},{en:"Parrot",ko:"앵무새",ja:"オウム",zh:"鹦鹉",es:"Loro"},{en:"Owl",ko:"올빼미",ja:"フクロウ",zh:"猫头鹰",es:"Búho"}],correct:0},
+  {q:{en:"What is the fastest land animal?",ko:"가장 빠른 육상 동물은?",ja:"最速の陸上動物は？",zh:"最快的陆地动物是？",es:"¿Cuál es el animal terrestre más rápido?"},a:[{en:"Cheetah",ko:"치타",ja:"チーター",zh:"猎豹",es:"Guepardo"},{en:"Lion",ko:"사자",ja:"ライオン",zh:"狮子",es:"León"},{en:"Horse",ko:"말",ja:"馬",zh:"马",es:"Caballo"},{en:"Greyhound",ko:"그레이하운드",ja:"グレイハウンド",zh:"灰狗",es:"Galgo"}],correct:0},
+  {q:{en:"How many hearts does an octopus have?",ko:"문어의 심장은 몇 개?",ja:"タコの心臓はいくつ？",zh:"章鱼有几个心脏？",es:"¿Cuántos corazones tiene un pulpo?"},a:[{en:"3",ko:"3",ja:"3",zh:"3",es:"3"},{en:"1",ko:"1",ja:"1",zh:"1",es:"1"},{en:"2",ko:"2",ja:"2",zh:"2",es:"2"},{en:"4",ko:"4",ja:"4",zh:"4",es:"4"}],correct:0},
+  {q:{en:"What animal is known for its black and white stripes?",ko:"흑백 줄무늬로 유명한 동물은?",ja:"白黒の縞模様で知られる動物は？",zh:"以黑白条纹闻名的动物是？",es:"¿Qué animal es conocido por sus rayas blancas y negras?"},a:[{en:"Zebra",ko:"얼룩말",ja:"シマウマ",zh:"斑马",es:"Cebra"},{en:"Panda",ko:"판다",ja:"パンダ",zh:"熊猫",es:"Panda"},{en:"Skunk",ko:"스컹크",ja:"スカンク",zh:"臭鼬",es:"Mofeta"},{en:"Penguin",ko:"펭귄",ja:"ペンギン",zh:"企鹅",es:"Pingüino"}],correct:0},
+  {q:{en:"Which mammal can fly?",ko:"날 수 있는 포유류는?",ja:"飛べる哺乳類は？",zh:"哪种哺乳动物能飞？",es:"¿Qué mamífero puede volar?"},a:[{en:"Bat",ko:"박쥐",ja:"コウモリ",zh:"蝙蝠",es:"Murciélago"},{en:"Flying squirrel",ko:"날다람쥐",ja:"ムササビ",zh:"飞鼠",es:"Ardilla voladora"},{en:"Sugar glider",ko:"슈가글라이더",ja:"フクロモモンガ",zh:"蜜袋鼯",es:"Petauro del azúcar"},{en:"Flying fish",ko:"날치",ja:"トビウオ",zh:"飞鱼",es:"Pez volador"}],correct:0},
+  {q:{en:"What is the tallest animal?",ko:"가장 키가 큰 동물은?",ja:"最も背の高い動物は？",zh:"最高的动物是？",es:"¿Cuál es el animal más alto?"},a:[{en:"Giraffe",ko:"기린",ja:"キリン",zh:"长颈鹿",es:"Jirafa"},{en:"Elephant",ko:"코끼리",ja:"ゾウ",zh:"大象",es:"Elefante"},{en:"Ostrich",ko:"타조",ja:"ダチョウ",zh:"鸵鸟",es:"Avestruz"},{en:"Camel",ko:"낙타",ja:"ラクダ",zh:"骆驼",es:"Camello"}],correct:0},
+  {q:{en:"Which animal sleeps standing up?",ko:"서서 자는 동물은?",ja:"立ったまま寝る動物は？",zh:"哪种动物站着睡觉？",es:"¿Qué animal duerme de pie?"},a:[{en:"Horse",ko:"말",ja:"馬",zh:"马",es:"Caballo"},{en:"Cow",ko:"소",ja:"牛",zh:"牛",es:"Vaca"},{en:"Dog",ko:"개",ja:"犬",zh:"狗",es:"Perro"},{en:"Cat",ko:"고양이",ja:"猫",zh:"猫",es:"Gato"}],correct:0},
+],
+technology: [
+  {q:{en:"Who founded Apple?",ko:"애플의 창립자는?",ja:"Appleの創業者は？",zh:"谁创立了苹果公司？",es:"¿Quién fundó Apple?"},a:[{en:"Steve Jobs",ko:"스티브 잡스",ja:"スティーブ・ジョブズ",zh:"史蒂夫·乔布斯",es:"Steve Jobs"},{en:"Bill Gates",ko:"빌 게이츠",ja:"ビル・ゲイツ",zh:"比尔·盖茨",es:"Bill Gates"},{en:"Elon Musk",ko:"일론 머스크",ja:"イーロン・マスク",zh:"埃隆·马斯克",es:"Elon Musk"},{en:"Jeff Bezos",ko:"제프 베이조스",ja:"ジェフ・ベゾス",zh:"杰夫·贝索斯",es:"Jeff Bezos"}],correct:0},
+  {q:{en:"What does 'HTML' stand for?",ko:"HTML은 무엇의 약자?",ja:"HTMLは何の略？",zh:"HTML代表什么？",es:"¿Qué significa HTML?"},a:[{en:"HyperText Markup Language",ko:"HyperText Markup Language",ja:"HyperText Markup Language",zh:"HyperText Markup Language",es:"HyperText Markup Language"},{en:"High Tech Modern Language",ko:"High Tech Modern Language",ja:"High Tech Modern Language",zh:"High Tech Modern Language",es:"High Tech Modern Language"},{en:"Home Tool Markup Language",ko:"Home Tool Markup Language",ja:"Home Tool Markup Language",zh:"Home Tool Markup Language",es:"Home Tool Markup Language"},{en:"Hyper Transfer Markup Language",ko:"Hyper Transfer Markup Language",ja:"Hyper Transfer Markup Language",zh:"Hyper Transfer Markup Language",es:"Hyper Transfer Markup Language"}],correct:0},
+  {q:{en:"What year was the first iPhone released?",ko:"첫 아이폰 출시 연도는?",ja:"初代iPhoneの発売年は？",zh:"第一部iPhone是哪年发布的？",es:"¿En qué año se lanzó el primer iPhone?"},a:[{en:"2007",ko:"2007",ja:"2007",zh:"2007",es:"2007"},{en:"2005",ko:"2005",ja:"2005",zh:"2005",es:"2005"},{en:"2008",ko:"2008",ja:"2008",zh:"2008",es:"2008"},{en:"2010",ko:"2010",ja:"2010",zh:"2010",es:"2010"}],correct:0},
+  {q:{en:"What does 'CPU' stand for?",ko:"CPU는 무엇의 약자?",ja:"CPUは何の略？",zh:"CPU代表什么？",es:"¿Qué significa CPU?"},a:[{en:"Central Processing Unit",ko:"Central Processing Unit",ja:"Central Processing Unit",zh:"Central Processing Unit",es:"Central Processing Unit"},{en:"Computer Personal Unit",ko:"Computer Personal Unit",ja:"Computer Personal Unit",zh:"Computer Personal Unit",es:"Computer Personal Unit"},{en:"Central Program Utility",ko:"Central Program Utility",ja:"Central Program Utility",zh:"Central Program Utility",es:"Central Program Utility"},{en:"Core Processing Unit",ko:"Core Processing Unit",ja:"Core Processing Unit",zh:"Core Processing Unit",es:"Core Processing Unit"}],correct:0},
+  {q:{en:"Which company created Android?",ko:"안드로이드를 만든 회사는?",ja:"Androidを作った会社は？",zh:"哪家公司创建了安卓？",es:"¿Qué empresa creó Android?"},a:[{en:"Google",ko:"구글",ja:"Google",zh:"谷歌",es:"Google"},{en:"Apple",ko:"애플",ja:"Apple",zh:"苹果",es:"Apple"},{en:"Microsoft",ko:"마이크로소프트",ja:"Microsoft",zh:"微软",es:"Microsoft"},{en:"Samsung",ko:"삼성",ja:"サムスン",zh:"三星",es:"Samsung"}],correct:0},
+  {q:{en:"What is the most used programming language for web?",ko:"웹에서 가장 많이 쓰이는 프로그래밍 언어는?",ja:"ウェブで最も使われるプログラミング言語は？",zh:"网页开发最常用的编程语言是？",es:"¿Cuál es el lenguaje de programación más usado en la web?"},a:[{en:"JavaScript",ko:"JavaScript",ja:"JavaScript",zh:"JavaScript",es:"JavaScript"},{en:"Python",ko:"Python",ja:"Python",zh:"Python",es:"Python"},{en:"Java",ko:"Java",ja:"Java",zh:"Java",es:"Java"},{en:"C++",ko:"C++",ja:"C++",zh:"C++",es:"C++"}],correct:0},
+  {q:{en:"What does 'Wi-Fi' stand for?",ko:"Wi-Fi는 무엇의 약자?",ja:"Wi-Fiは何の略？",zh:"Wi-Fi代表什么？",es:"¿Qué significa Wi-Fi?"},a:[{en:"Wireless Fidelity",ko:"Wireless Fidelity",ja:"Wireless Fidelity",zh:"Wireless Fidelity",es:"Wireless Fidelity"},{en:"Wired Fiber",ko:"Wired Fiber",ja:"Wired Fiber",zh:"Wired Fiber",es:"Wired Fiber"},{en:"Wide Field",ko:"Wide Field",ja:"Wide Field",zh:"Wide Field",es:"Wide Field"},{en:"Web Interface",ko:"Web Interface",ja:"Web Interface",zh:"Web Interface",es:"Web Interface"}],correct:0},
+  {q:{en:"Who is the CEO of Tesla?",ko:"테슬라의 CEO는?",ja:"テスラのCEOは？",zh:"特斯拉的CEO是谁？",es:"¿Quién es el CEO de Tesla?"},a:[{en:"Elon Musk",ko:"일론 머스크",ja:"イーロン・マスク",zh:"埃隆·马斯克",es:"Elon Musk"},{en:"Tim Cook",ko:"팀 쿡",ja:"ティム・クック",zh:"蒂姆·库克",es:"Tim Cook"},{en:"Jeff Bezos",ko:"제프 베이조스",ja:"ジェフ・ベゾス",zh:"杰夫·贝索斯",es:"Jeff Bezos"},{en:"Sundar Pichai",ko:"순다르 피차이",ja:"サンダー・ピチャイ",zh:"桑达尔·皮查伊",es:"Sundar Pichai"}],correct:0},
+  {q:{en:"What does 'AI' stand for?",ko:"AI는 무엇의 약자?",ja:"AIは何の略？",zh:"AI代表什么？",es:"¿Qué significa AI?"},a:[{en:"Artificial Intelligence",ko:"Artificial Intelligence",ja:"Artificial Intelligence",zh:"Artificial Intelligence",es:"Artificial Intelligence"},{en:"Automated Integration",ko:"Automated Integration",ja:"Automated Integration",zh:"Automated Integration",es:"Automated Integration"},{en:"Advanced Internet",ko:"Advanced Internet",ja:"Advanced Internet",zh:"Advanced Internet",es:"Advanced Internet"},{en:"Analog Interface",ko:"Analog Interface",ja:"Analog Interface",zh:"Analog Interface",es:"Analog Interface"}],correct:0},
+  {q:{en:"In what year was Google founded?",ko:"구글이 설립된 해는?",ja:"Googleの設立年は？",zh:"谷歌是哪年成立的？",es:"¿En qué año se fundó Google?"},a:[{en:"1998",ko:"1998",ja:"1998",zh:"1998",es:"1998"},{en:"2000",ko:"2000",ja:"2000",zh:"2000",es:"2000"},{en:"1995",ko:"1995",ja:"1995",zh:"1995",es:"1995"},{en:"2002",ko:"2002",ja:"2002",zh:"2002",es:"2002"}],correct:0},
+],
+};
+
+// ─── Audio ───
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function ensureAudio(){if(!audioCtx)audioCtx=new AudioCtx()}
+function playTone(freq,dur,type='sine',vol=.13){
+  ensureAudio();const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type=type;o.frequency.value=freq;g.gain.value=vol;
+  o.connect(g);g.connect(audioCtx.destination);
+  o.start();g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);
+  o.stop(audioCtx.currentTime+dur);
+}
+function sfxCorrect(){playTone(523,.08);setTimeout(()=>playTone(659,.08),80);setTimeout(()=>playTone(784,.15),160)}
+function sfxWrong(){playTone(200,.15,'sawtooth',.1);setTimeout(()=>playTone(160,.2,'sawtooth',.1),120)}
+function sfxTick(){playTone(800,.03,'sine',.06)}
+function sfxSelect(){playTone(440,.06);setTimeout(()=>playTone(554,.06),60)}
+function sfxGameOver(){playTone(400,.15,'triangle',.1);setTimeout(()=>playTone(350,.15,'triangle',.1),150);setTimeout(()=>playTone(300,.25,'triangle',.1),300)}
+function sfxNewBest(){playTone(523,.1);setTimeout(()=>playTone(659,.1),100);setTimeout(()=>playTone(784,.1),200);setTimeout(()=>playTone(1047,.2),300)}
+
+// ─── Game State ───
+let mode=''; // quick, category, marathon
+let selectedCategory='';
+let questions=[];
+let currentQ=0;
+let score=0;
+let streak=0;
+let bestStreak=0;
+let correctCount=0;
+let wrongCount=0;
+let lives=3;
+let fiftyUses=3;
+let timerInterval=null;
+let timeLeft=15;
+let totalTime=0;
+let gameActive=false;
+
+// ─── DOM refs ───
+const $=id=>document.getElementById(id);
+const scoreBar=$('scoreBar');
+const timerWrap=$('timerWrap');
+const progressWrap=$('progressWrap');
+const questionBox=$('questionBox');
+const questionText=$('questionText');
+const catBadge=$('catBadge');
+const answersGrid=$('answersGrid');
+const lifelineBar=$('lifelineBar');
+const livesDisplay=$('livesDisplay');
+const scoreDisplay=$('scoreDisplay');
+const streakDisplay=$('streakDisplay');
+const accuracyDisplay=$('accuracyDisplay');
+const bestDisplay=$('bestDisplay');
+const timerFill=$('timerFill');
+const timerText=$('timerText');
+const progressFill=$('progressFill');
+const progressText=$('progressText');
+const fiftyBtn=$('fiftyBtn');
+const fiftyCount=$('fiftyCount');
+const streakPopup=$('streakPopup');
+
+// ─── Init ───
+function init(){
+  $('gameTitle').textContent=tt.gameTitle;
+  $('streakLabel').textContent=tt.streak;
+  $('accuracyLabel').textContent=tt.accuracy;
+  applyGameI18n();
+  showModeSelect();
+}
+
+// ─── Mode Select ───
+function showModeSelect(){
+  gameActive=false;
+  scoreBar.style.display='none';
+  timerWrap.style.display='none';
+  progressWrap.style.display='none';
+  questionBox.style.display='none';
+  answersGrid.style.display='none';
+  lifelineBar.style.display='none';
+  livesDisplay.style.display='none';
+
+  const box=$('modeBox');
+  box.innerHTML=`
+    <h2>${tt.gameTitle}</h2>
+    <div class="subtitle">${tt.selectMode}</div>
+    <div class="mode-buttons">
+      <button class="mode-btn" onclick="selectMode('quick')"><span>${tt.quickPlay}</span><span class="mode-desc">${tt.quickDesc}</span></button>
+      <button class="mode-btn" onclick="selectMode('category')"><span>${tt.categoryPlay}</span><span class="mode-desc">${tt.catDesc}</span></button>
+      <button class="mode-btn" onclick="selectMode('marathon')"><span>${tt.marathon}</span><span class="mode-desc">${tt.marathonDesc}</span></button>
+    </div>`;
+  $('modeOverlay').classList.add('show');
+  $('catOverlay').classList.remove('show');
+  $('overOverlay').classList.remove('show');
+}
+
+function selectMode(m){
+  sfxSelect();
+  mode=m;
+  $('modeOverlay').classList.remove('show');
+  if(m==='category'){
+    showCategorySelect();
+  } else {
+    startGame();
+  }
+}
+
+// ─── Category Select ───
+function showCategorySelect(){
+  const box=$('catBox');
+  let html=`<h2>${tt.selectCategory}</h2><div class="category-grid">`;
+  CATEGORIES.forEach(c=>{
+    html+=`<button class="cat-btn" onclick="selectCategory('${c.id}')"><span class="cat-icon">${c.icon}</span><span class="cat-name">${tt[c.key]}</span></button>`;
+  });
+  html+=`</div>`;
+  box.innerHTML=html;
+  $('catOverlay').classList.add('show');
+}
+
+function selectCategory(cat){
+  sfxSelect();
+  selectedCategory=cat;
+  $('catOverlay').classList.remove('show');
+  startGame();
+}
+
+// ─── Start Game ───
+function startGame(){
+  // Reset state
+  currentQ=0; score=0; streak=0; bestStreak=0; correctCount=0; wrongCount=0;
+  lives=3; fiftyUses=3; totalTime=0; gameActive=true;
+
+  // Build question list
+  if(mode==='quick'){
+    let all=[];
+    Object.keys(QUESTIONS).forEach(cat=>{
+      QUESTIONS[cat].forEach(q=>all.push({...q,cat}));
+    });
+    shuffle(all);
+    questions=all.slice(0,10);
+  } else if(mode==='category'){
+    let catQs=QUESTIONS[selectedCategory].map(q=>({...q,cat:selectedCategory}));
+    shuffle(catQs);
+    questions=catQs.slice(0,10);
+  } else { // marathon
+    let all=[];
+    Object.keys(QUESTIONS).forEach(cat=>{
+      QUESTIONS[cat].forEach(q=>all.push({...q,cat}));
+    });
+    shuffle(all);
+    questions=all;
+  }
+
+  // Show UI
+  scoreBar.style.display='flex';
+  questionBox.style.display='flex';
+  answersGrid.style.display='grid';
+  lifelineBar.style.display='flex';
+  timerWrap.style.display='block';
+
+  if(mode==='marathon'){
+    livesDisplay.style.display='flex';
+    progressWrap.style.display='none';
+    updateLives();
+  } else {
+    livesDisplay.style.display='none';
+    progressWrap.style.display='block';
+  }
+
+  // Load best
+  const bestKey=getBestKey();
+  const best=parseInt(localStorage.getItem(bestKey))||0;
+  bestDisplay.textContent=best;
+
+  fiftyCount.textContent=fiftyUses;
+  fiftyBtn.disabled=false;
+  updateScore();
+  showQuestion();
+}
+
+function getBestKey(){
+  if(mode==='category') return 'trivia_best_'+mode+'_'+selectedCategory;
+  return 'trivia_best_'+mode;
+}
+
+// ─── Show Question ───
+function showQuestion(){
+  if(!gameActive) return;
+  if(mode!=='marathon' && currentQ>=questions.length){
+    endGame(); return;
+  }
+  if(mode==='marathon' && currentQ>=questions.length){
+    // Reshuffle if we run out
+    let all=[];
+    Object.keys(QUESTIONS).forEach(cat=>{
+      QUESTIONS[cat].forEach(q=>all.push({...q,cat}));
+    });
+    shuffle(all);
+    questions=questions.concat(all);
+  }
+
+  const q=questions[currentQ];
+  const catObj=CATEGORIES.find(c=>c.id===q.cat);
+  catBadge.textContent=catObj?catObj.icon+' '+tt[catObj.key]:'';
+  questionText.textContent=q.q[lang]||q.q.en;
+
+  // Shuffle answer order
+  const indices=[0,1,2,3];
+  shuffle(indices);
+
+  for(let i=0;i<4;i++){
+    const btn=$('ans'+i);
+    btn.className='answer-btn';
+    btn.style.opacity='1';btn.style.pointerEvents='auto';btn.style.transform='';
+    const aIdx=indices[i];
+    btn.textContent=q.a[aIdx][lang]||q.a[aIdx].en;
+    btn.dataset.idx=aIdx;
+    btn.onclick=()=>selectAnswer(i,aIdx);
+  }
+
+  // Update progress
+  if(mode!=='marathon'){
+    const pct=((currentQ)/questions.length)*100;
+    progressFill.style.width=pct+'%';
+    progressText.textContent=`${tt.question} ${currentQ+1}/${questions.length}`;
+  }
+
+  // Start timer
+  startTimer();
+}
+
+// ─── Timer ───
+function startTimer(){
+  clearInterval(timerInterval);
+  timeLeft=15;
+  timerFill.style.width='100%';
+  timerFill.classList.remove('urgent');
+  timerText.classList.remove('urgent');
+  timerText.textContent='15s';
+
+  timerInterval=setInterval(()=>{
+    timeLeft-=0.1;
+    if(timeLeft<=0){
+      timeLeft=0;
+      clearInterval(timerInterval);
+      timeUp();
+    }
+    const pct=(timeLeft/15)*100;
+    timerFill.style.width=pct+'%';
+    timerText.textContent=Math.ceil(timeLeft)+'s';
+    if(timeLeft<=5){
+      timerFill.classList.add('urgent');
+      timerText.classList.add('urgent');
+      if(Math.ceil(timeLeft)!==Math.ceil(timeLeft+0.1)) sfxTick();
+    }
+  },100);
+}
+
+function timeUp(){
+  // Treat as wrong
+  handleWrong(-1);
+}
+
+// ─── Answer Selection ───
+function selectAnswer(btnIdx, ansIdx){
+  if(!gameActive) return;
+  clearInterval(timerInterval);
+  const q=questions[currentQ];
+  const timeBonus=Math.round(timeLeft*10);
+  totalTime+=(15-timeLeft);
+
+  // Disable all buttons
+  for(let i=0;i<4;i++) $('ans'+i).onclick=null;
+
+  if(ansIdx===q.correct){
+    handleCorrect(btnIdx, timeBonus);
+  } else {
+    handleWrong(btnIdx);
+  }
+}
+
+function handleCorrect(btnIdx, timeBonus){
+  sfxCorrect();
+  if(btnIdx>=0) $('ans'+btnIdx).classList.add('correct');
+  correctCount++;
+  streak++;
+  if(streak>bestStreak) bestStreak=streak;
+  const pts=100+timeBonus+(streak>1?streak*10:0);
+  score+=pts;
+  updateScore();
+
+  if(streak>=3) showStreakPopup(streak);
+
+  setTimeout(()=>{
+    currentQ++;
+    showQuestion();
+  },800);
+}
+
+function handleWrong(btnIdx){
+  sfxWrong();
+  const q=questions[currentQ];
+  if(btnIdx>=0) $('ans'+btnIdx).classList.add('wrong');
+  wrongCount++;
+  streak=0;
+
+  // Reveal correct
+  for(let i=0;i<4;i++){
+    if(parseInt($('ans'+i).dataset.idx)===q.correct){
+      $('ans'+i).classList.add('reveal-correct');
+    }
+  }
+
+  if(mode==='marathon'){
+    lives--;
+    updateLives();
+    if(lives<=0){
+      setTimeout(()=>endGame(),1000);
+      return;
+    }
+  }
+
+  updateScore();
+
+  setTimeout(()=>{
+    currentQ++;
+    showQuestion();
+  },1200);
+}
+
+// ─── 50/50 Lifeline ───
+function useFiftyFifty(){
+  if(fiftyUses<=0||!gameActive) return;
+  sfxSelect();
+  fiftyUses--;
+  fiftyCount.textContent=fiftyUses;
+  if(fiftyUses<=0) fiftyBtn.disabled=true;
+
+  const q=questions[currentQ];
+  // Find 2 wrong answers to hide
+  let wrongBtns=[];
+  for(let i=0;i<4;i++){
+    if(parseInt($('ans'+i).dataset.idx)!==q.correct) wrongBtns.push(i);
+  }
+  shuffle(wrongBtns);
+  const toHide=wrongBtns.slice(0,2);
+  toHide.forEach(i=>{
+    $('ans'+i).classList.add('hidden-5050');
+  });
+}
+
+// ─── UI Updates ───
+function updateScore(){
+  scoreDisplay.textContent=score;
+  streakDisplay.textContent=streak;
+  const total=correctCount+wrongCount;
+  accuracyDisplay.textContent=total>0?Math.round((correctCount/total)*100)+'%':'0%';
+}
+
+function updateLives(){
+  let html='';
+  for(let i=0;i<3;i++){
+    html+=`<span class="life${i>=lives?' lost':''}">${i<lives?'❤️':'🖤'}</span>`;
+  }
+  livesDisplay.innerHTML=html;
+}
+
+function showStreakPopup(s){
+  const colors=['#fbbf24','#f59e0b','#ec4899','#a855f7'];
+  streakPopup.textContent=`🔥 ${s} ${tt.streak}!`;
+  streakPopup.style.fontSize=s>=10?'42px':s>=5?'36px':'30px';
+  streakPopup.style.color=colors[Math.min(s-3,colors.length-1)];
+  streakPopup.className='streak-display show';
+  setTimeout(()=>streakPopup.className='streak-display',700);
+}
+
+// ─── End Game ───
+function endGame(){
+  gameActive=false;
+  clearInterval(timerInterval);
+  timerWrap.style.display='none';
+
+  const bestKey=getBestKey();
+  const prevBest=parseInt(localStorage.getItem(bestKey))||0;
+  const isNewBest=score>prevBest;
+  if(isNewBest) localStorage.setItem(bestKey,score);
+
+  if(isNewBest) sfxNewBest(); else sfxGameOver();
+
+  const total=correctCount+wrongCount;
+  const acc=total>0?Math.round((correctCount/total)*100):0;
+  const avgTime=total>0?(totalTime/total).toFixed(1):'0';
+
+  let extraStat='';
+  if(mode==='marathon'){
+    extraStat=`<div class="stat-item"><div class="stat-val">${currentQ}</div><div class="stat-lbl">${tt.survived}</div></div>`;
+  }
+
+  const box=$('overBox');
+  box.innerHTML=`
+    <h2>${tt.gameOver}</h2>
+    <div class="subtitle">${isNewBest?tt.newBest:tt.finalScore}</div>
+    <div class="final-score" id="animScore">0</div>
+    <div class="stat-row">
+      <div class="stat-item"><div class="stat-val">${correctCount}</div><div class="stat-lbl">${tt.correct}</div></div>
+      <div class="stat-item"><div class="stat-val">${wrongCount}</div><div class="stat-lbl">${tt.wrong}</div></div>
+      <div class="stat-item"><div class="stat-val">${acc}%</div><div class="stat-lbl">${tt.accuracy}</div></div>
+      ${extraStat}
+    </div>
+    <div class="stat-row">
+      <div class="stat-item"><div class="stat-val">${bestStreak}🔥</div><div class="stat-lbl">${tt.streak}</div></div>
+      <div class="stat-item"><div class="stat-val">${avgTime}s</div><div class="stat-lbl">${tt.timeTaken}</div></div>
+    </div>
+    ${isNewBest?`<div class="best-label">🏆 ${tt.newBest}</div>`:''}
+    <button class="primary-btn" onclick="restart()">${tt.playAgain}</button>
+    <br>
+    <button class="share-btn" onclick="shareResult()">${tt.shareResult}</button>
+  `;
+  $('overOverlay').classList.add('show');
+
+  // Animate score counter
+  animateCounter('animScore',score);
+}
+
+function animateCounter(elId,target){
+  const el=$(elId);
+  let cur=0;
+  const step=Math.max(1,Math.floor(target/40));
+  const iv=setInterval(()=>{
+    cur+=step;
+    if(cur>=target){cur=target;clearInterval(iv)}
+    el.textContent=cur;
+  },25);
+}
+
+function restart(){
+  $('overOverlay').classList.remove('show');
+  showModeSelect();
+}
+
+function shareResult(){
+  const total=correctCount+wrongCount;
+  const acc=total>0?Math.round((correctCount/total)*100):0;
+  if(typeof PuzzleShare!=='undefined'){
+    PuzzleShare.showShareModal({
+      title:tt.gameTitle,
+      score:score,
+      message:`${correctCount}/${total} (${acc}%) | ${tt.streak}: ${bestStreak}🔥`,
+      lang:lang,
+      gameName:'Trivia Challenge'
+    });
+  }
+}
+
+// ─── Utils ───
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+// Start
+init();
+</script>
+</body>
+</html>
