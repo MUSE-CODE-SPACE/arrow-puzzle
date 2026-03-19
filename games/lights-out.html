@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>라이츠 아웃 - 불을 꺼라!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a1a;
+  --surface: #12122a;
+  --surface2: #1a1a3a;
+  --text: #e8e8f0;
+  --text-dim: #8888aa;
+  --glow-color: #39ff14;
+  --glow-rgb: 57, 255, 20;
+  --accent: #39ff14;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* Screens */
+.screen { display: none; flex-direction: column; align-items: center; min-height: 100dvh; }
+.screen.active { display: flex; }
+
+/* Header */
+.top-bar {
+  width: 100%; max-width: 600px; padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.back-btn {
+  background: none; border: none; color: var(--text-dim); font-size: 14px;
+  font-family: 'Outfit', sans-serif; cursor: pointer; padding: 8px 12px;
+  border-radius: 8px; transition: all 0.2s;
+}
+.back-btn:hover { background: var(--surface); color: var(--text); }
+.sound-btn {
+  background: none; border: 1px solid var(--surface2); color: var(--text-dim);
+  font-size: 18px; cursor: pointer; padding: 6px 10px; border-radius: 8px;
+  transition: all 0.2s;
+}
+.sound-btn:hover { background: var(--surface); }
+
+/* Title Screen */
+.title-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+.game-icon {
+  width: 120px; height: 120px; border-radius: 28px;
+  background: radial-gradient(circle at 40% 40%, rgba(var(--glow-rgb), 0.3), transparent 70%),
+              var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 56px; margin-bottom: 24px;
+  box-shadow: 0 0 40px rgba(var(--glow-rgb), 0.2), inset 0 0 30px rgba(var(--glow-rgb), 0.1);
+  animation: iconPulse 3s ease-in-out infinite;
+}
+@keyframes iconPulse {
+  0%, 100% { box-shadow: 0 0 40px rgba(var(--glow-rgb), 0.2), inset 0 0 30px rgba(var(--glow-rgb), 0.1); }
+  50% { box-shadow: 0 0 60px rgba(var(--glow-rgb), 0.35), inset 0 0 40px rgba(var(--glow-rgb), 0.2); }
+}
+.game-title { font-size: 32px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+.game-subtitle { font-size: 15px; color: var(--text-dim); margin-bottom: 40px; }
+
+.main-btn {
+  background: linear-gradient(135deg, rgba(var(--glow-rgb), 0.2), rgba(var(--glow-rgb), 0.05));
+  border: 1px solid rgba(var(--glow-rgb), 0.4);
+  color: var(--accent); font-family: 'Outfit', sans-serif;
+  font-size: 16px; font-weight: 600; padding: 14px 48px;
+  border-radius: 14px; cursor: pointer; margin-bottom: 12px;
+  transition: all 0.25s; min-width: 200px;
+}
+.main-btn:hover {
+  background: linear-gradient(135deg, rgba(var(--glow-rgb), 0.3), rgba(var(--glow-rgb), 0.1));
+  box-shadow: 0 0 25px rgba(var(--glow-rgb), 0.2);
+  transform: translateY(-1px);
+}
+.secondary-btn {
+  background: var(--surface); border: 1px solid var(--surface2);
+  color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: 14px; font-weight: 500; padding: 12px 36px;
+  border-radius: 12px; cursor: pointer; transition: all 0.2s; min-width: 200px;
+}
+.secondary-btn:hover { background: var(--surface2); }
+
+/* Level Select */
+.level-screen { padding: 0 16px 100px; }
+.level-grid-title {
+  font-size: 14px; font-weight: 600; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 12px;
+  width: 100%; max-width: 400px; text-align: left;
+}
+.level-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 8px; width: 100%; max-width: 400px;
+}
+.level-cell {
+  aspect-ratio: 1; border-radius: 12px; background: var(--surface);
+  border: 1px solid var(--surface2); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; cursor: pointer;
+  transition: all 0.2s; position: relative; font-size: 18px; font-weight: 600;
+}
+.level-cell:hover { background: var(--surface2); transform: scale(1.05); }
+.level-cell.locked { opacity: 0.3; cursor: default; pointer-events: none; }
+.level-cell.completed { border-color: rgba(var(--glow-rgb), 0.3); }
+.level-cell .stars-mini { font-size: 8px; margin-top: 2px; letter-spacing: 1px; }
+.level-cell.current {
+  border-color: rgba(var(--glow-rgb), 0.6);
+  box-shadow: 0 0 15px rgba(var(--glow-rgb), 0.15);
+}
+
+/* Game Screen */
+.game-header {
+  width: 100%; max-width: 500px; padding: 8px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.level-label { font-size: 14px; font-weight: 600; color: var(--text-dim); }
+.game-stats { display: flex; gap: 16px; align-items: center; }
+.stat { text-align: center; }
+.stat-val { font-size: 20px; font-weight: 700; }
+.stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-val.over { color: #ff6b6b; }
+
+.grid-wrapper {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 16px; width: 100%;
+}
+.grid-container {
+  display: grid; gap: 4px; position: relative;
+  max-width: min(90vw, 420px); max-height: min(70vh, 420px);
+  width: 100%; aspect-ratio: 1;
+}
+
+.cell {
+  border-radius: 12px; cursor: pointer; position: relative;
+  transition: background 0.3s, box-shadow 0.3s, transform 0.1s;
+  background: var(--surface); border: 1px solid rgba(255,255,255,0.04);
+  overflow: hidden;
+}
+.cell::before {
+  content: ''; position: absolute; inset: 0; border-radius: 12px;
+  background: radial-gradient(circle at center, rgba(var(--glow-rgb), 0.6) 0%, rgba(var(--glow-rgb), 0.1) 60%, transparent 80%);
+  opacity: 0; transition: opacity 0.35s ease;
+}
+.cell.on::before { opacity: 1; }
+.cell.on {
+  background: rgba(var(--glow-rgb), 0.15);
+  box-shadow: 0 0 20px rgba(var(--glow-rgb), 0.35), 0 0 50px rgba(var(--glow-rgb), 0.15),
+              inset 0 0 15px rgba(var(--glow-rgb), 0.2);
+  border-color: rgba(var(--glow-rgb), 0.3);
+}
+.cell:active { transform: scale(0.92); }
+.cell.hint-highlight {
+  animation: hintPulse 1s ease-in-out 3;
+}
+@keyframes hintPulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
+  50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.6), 0 0 50px rgba(255, 215, 0, 0.3); }
+}
+
+/* Ripple */
+.cell .ripple {
+  position: absolute; border-radius: 50%;
+  background: rgba(var(--glow-rgb), 0.4);
+  transform: scale(0); animation: rippleAnim 0.5s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes rippleAnim {
+  to { transform: scale(2.5); opacity: 0; }
+}
+
+/* Neighbor flash */
+.cell.neighbor-flash::after {
+  content: ''; position: absolute; inset: 0; border-radius: 12px;
+  background: rgba(var(--glow-rgb), 0.3);
+  animation: neighborFlash 0.4s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes neighborFlash {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Bottom bar */
+.game-bottom {
+  width: 100%; max-width: 500px; padding: 12px 16px 24px;
+  display: flex; gap: 8px; justify-content: center;
+}
+.game-btn {
+  background: var(--surface); border: 1px solid var(--surface2);
+  color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: 13px; font-weight: 500; padding: 10px 20px;
+  border-radius: 10px; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 6px;
+}
+.game-btn:hover { background: var(--surface2); }
+.game-btn.hint-btn { color: #ffd700; border-color: rgba(255, 215, 0, 0.3); }
+.hint-count { font-size: 11px; background: rgba(255,215,0,0.15); padding: 1px 6px; border-radius: 6px; }
+
+/* Win overlay */
+.win-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  display: none; align-items: center; justify-content: center; z-index: 100;
+  backdrop-filter: blur(6px);
+}
+.win-overlay.active { display: flex; }
+.win-card {
+  background: var(--surface); border: 1px solid var(--surface2);
+  border-radius: 20px; padding: 36px 32px; text-align: center;
+  max-width: 340px; width: 90%;
+  animation: winPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes winPop {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.win-emoji { font-size: 48px; margin-bottom: 12px; }
+.win-title { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+.win-sub { font-size: 14px; color: var(--text-dim); margin-bottom: 20px; }
+.win-stars { font-size: 36px; margin-bottom: 20px; letter-spacing: 4px; }
+.win-stats { display: flex; justify-content: center; gap: 24px; margin-bottom: 24px; }
+.win-stat-val { font-size: 22px; font-weight: 700; }
+.win-stat-label { font-size: 11px; color: var(--text-dim); }
+.win-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+/* Ad placeholders */
+.ad-placeholder {
+  width: 100%; max-width: 500px; height: 60px; margin: 8px auto;
+  background: var(--surface); border: 1px dashed var(--surface2);
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim); font-size: 11px; letter-spacing: 0.5px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 4px; }
+
+/* Responsive */
+@media (max-width: 380px) {
+  .game-title { font-size: 26px; }
+  .level-grid { gap: 6px; }
+  .cell { border-radius: 8px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TITLE SCREEN -->
+<div id="titleScreen" class="screen active">
+  <div class="top-bar">
+    <a href="../index.html" class="back-btn">← 허브로</a>
+    <button class="sound-btn" id="soundToggle" onclick="toggleSound()">🔊</button>
+  </div>
+  <div class="title-area">
+    <div class="game-icon">💡</div>
+    <div class="game-title">라이츠 아웃</div>
+    <div class="game-subtitle">모든 불을 꺼라!</div>
+    <button class="main-btn" onclick="continueGame()">이어하기</button>
+    <button class="secondary-btn" onclick="showLevels()">레벨 선택</button>
+  </div>
+  <div class="ad-placeholder">광고 영역</div>
+</div>
+
+<!-- LEVEL SELECT SCREEN -->
+<div id="levelScreen" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" onclick="showTitle()">← 뒤로</button>
+    <button class="sound-btn" onclick="toggleSound()">🔊</button>
+  </div>
+  <div class="level-screen" id="levelList"></div>
+  <div class="ad-placeholder">광고 영역</div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="gameScreen" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" onclick="showLevels()">← 레벨</button>
+    <button class="sound-btn" onclick="toggleSound()">🔊</button>
+  </div>
+  <div class="game-header">
+    <div class="level-label" id="levelLabel">레벨 1</div>
+    <div class="game-stats">
+      <div class="stat">
+        <div class="stat-val" id="clickCount">0</div>
+        <div class="stat-label">클릭</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="minClicks">0</div>
+        <div class="stat-label">최소</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="lightsLeft">0</div>
+        <div class="stat-label">남은 불</div>
+      </div>
+    </div>
+  </div>
+  <div class="ad-placeholder">광고 영역</div>
+  <div class="grid-wrapper">
+    <div class="grid-container" id="grid"></div>
+  </div>
+  <div class="game-bottom">
+    <button class="game-btn" onclick="resetLevel()">↺ 초기화</button>
+    <button class="game-btn hint-btn" onclick="showHint()">💡 힌트 <span class="hint-count" id="hintCount">3</span></button>
+    <button class="game-btn" onclick="undoMove()">↶ 되돌리기</button>
+  </div>
+</div>
+
+<!-- WIN OVERLAY -->
+<div class="win-overlay" id="winOverlay">
+  <div class="win-card">
+    <div class="win-emoji">🎉</div>
+    <div class="win-title">클리어!</div>
+    <div class="win-sub" id="winSub">완벽하게 해결했어요!</div>
+    <div class="win-stars" id="winStars">⭐⭐⭐</div>
+    <div class="win-stats">
+      <div class="stat"><div class="win-stat-val" id="winClicks">0</div><div class="win-stat-label">내 클릭</div></div>
+      <div class="stat"><div class="win-stat-val" id="winMin">0</div><div class="win-stat-label">최소 클릭</div></div>
+    </div>
+    <div class="win-btns">
+      <button class="secondary-btn" onclick="showLevels(); closeWin();">레벨 선택</button>
+      <button class="main-btn" onclick="nextLevel()">다음 레벨 →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== SEEDED RNG ====================
+class SeededRNG {
+  constructor(seed) { this.state = seed % 2147483647; if (this.state <= 0) this.state += 2147483646; }
+  next() { this.state = (this.state * 16807) % 2147483647; return (this.state - 1) / 2147483646; }
+  nextInt(min, max) { return Math.floor(this.next() * (max - min + 1)) + min; }
+}
+
+// ==================== AUDIO ====================
+let audioCtx = null;
+let soundEnabled = true;
+
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playToggleOn() {
+  if (!soundEnabled) return;
+  const ctx = getAudio();
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(520, ctx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(780, ctx.currentTime + 0.08);
+  g.gain.setValueAtTime(0.15, ctx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.15);
+}
+
+function playToggleOff() {
+  if (!soundEnabled) return;
+  const ctx = getAudio();
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(440, ctx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(280, ctx.currentTime + 0.1);
+  g.gain.setValueAtTime(0.12, ctx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.15);
+}
+
+function playWin() {
+  if (!soundEnabled) return;
+  const ctx = getAudio();
+  const notes = [523, 659, 784, 1047];
+  notes.forEach((freq, i) => {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, ctx.currentTime + i * 0.12);
+    g.gain.linearRampToValueAtTime(0.12, ctx.currentTime + i * 0.12 + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.3);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(ctx.currentTime + i * 0.12); o.stop(ctx.currentTime + i * 0.12 + 0.3);
+  });
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.querySelectorAll('.sound-btn').forEach(b => b.textContent = soundEnabled ? '🔊' : '🔇');
+  saveProgress();
+}
+
+// ==================== THEMES ====================
+const themes = [
+  { name: 'neon-green', glow: '57, 255, 20', accent: '#39ff14' },
+  { name: 'electric-blue', glow: '0, 180, 255', accent: '#00b4ff' },
+  { name: 'cyber-purple', glow: '160, 80, 255', accent: '#a050ff' },
+  { name: 'hot-pink', glow: '255, 60, 150', accent: '#ff3c96' },
+  { name: 'solar-orange', glow: '255, 140, 30', accent: '#ff8c1e' },
+  { name: 'ice-cyan', glow: '0, 240, 220', accent: '#00f0dc' },
+  { name: 'golden', glow: '255, 200, 50', accent: '#ffc832' },
+];
+
+function applyTheme(levelNum) {
+  const idx = Math.floor((levelNum - 1) / 15) % themes.length;
+  const t = themes[idx];
+  document.documentElement.style.setProperty('--glow-rgb', t.glow);
+  document.documentElement.style.setProperty('--glow-color', t.accent);
+  document.documentElement.style.setProperty('--accent', t.accent);
+}
+
+// ==================== LEVEL GENERATION ====================
+const TOTAL_LEVELS = 120;
+
+function getLevelConfig(level) {
+  let size;
+  if (level <= 10) size = 3;
+  else if (level <= 25) size = 4;
+  else if (level <= 50) size = 5;
+  else if (level <= 80) size = 6;
+  else size = 7;
+
+  // Number of random clicks to generate puzzle (= minimum solution moves)
+  let minClickRange;
+  if (level <= 5) minClickRange = [1, 2];
+  else if (level <= 10) minClickRange = [2, 4];
+  else if (level <= 20) minClickRange = [3, 5];
+  else if (level <= 35) minClickRange = [4, 7];
+  else if (level <= 55) minClickRange = [5, 9];
+  else if (level <= 80) minClickRange = [6, 11];
+  else if (level <= 100) minClickRange = [7, 13];
+  else minClickRange = [8, 15];
+
+  return { size, minClickRange };
+}
+
+function generateLevel(level) {
+  const { size, minClickRange } = getLevelConfig(level);
+  const rng = new SeededRNG(level * 7919 + 1337);
+  const numClicks = rng.nextInt(minClickRange[0], minClickRange[1]);
+
+  // Start from all-off, apply random clicks to get a solvable puzzle
+  const grid = Array.from({ length: size }, () => Array(size).fill(false));
+  const solution = Array.from({ length: size }, () => Array(size).fill(0));
+
+  // Apply random unique clicks
+  const positions = [];
+  for (let i = 0; i < size; i++)
+    for (let j = 0; j < size; j++)
+      positions.push([i, j]);
+
+  // Shuffle and pick
+  for (let i = positions.length - 1; i > 0; i--) {
+    const j = rng.nextInt(0, i);
+    [positions[i], positions[j]] = [positions[j], positions[i]];
+  }
+
+  let actualClicks = 0;
+  for (let k = 0; k < Math.min(numClicks, positions.length); k++) {
+    const [r, c] = positions[k];
+    // Only apply if this cell hasn't been clicked (ensures unique clicks = minimum)
+    if (solution[r][c] === 0) {
+      solution[r][c] = 1;
+      toggleAt(grid, size, r, c);
+      actualClicks++;
+    }
+  }
+
+  // Count lights on
+  let lightsOn = 0;
+  for (let i = 0; i < size; i++)
+    for (let j = 0; j < size; j++)
+      if (grid[i][j]) lightsOn++;
+
+  // If somehow no lights are on, force at least one click
+  if (lightsOn === 0) {
+    const [r, c] = [rng.nextInt(0, size - 1), rng.nextInt(0, size - 1)];
+    solution[r][c] = (solution[r][c] + 1) % 2;
+    toggleAt(grid, size, r, c);
+    actualClicks = 0;
+    for (let i = 0; i < size; i++)
+      for (let j = 0; j < size; j++)
+        actualClicks += solution[i][j];
+  }
+
+  return { size, grid, solution, minClicks: actualClicks };
+}
+
+function toggleAt(grid, size, r, c) {
+  grid[r][c] = !grid[r][c];
+  if (r > 0) grid[r - 1][c] = !grid[r - 1][c];
+  if (r < size - 1) grid[r + 1][c] = !grid[r + 1][c];
+  if (c > 0) grid[r][c - 1] = !grid[r][c - 1];
+  if (c < size - 1) grid[r][c + 1] = !grid[r][c + 1];
+}
+
+// ==================== GAME STATE ====================
+let progress = {
+  unlocked: 1,
+  levels: {},
+  hints: 3,
+  sound: true,
+};
+
+let currentLevel = 1;
+let gameGrid = [];
+let gameSize = 0;
+let gameSolution = [];
+let gameMinClicks = 0;
+let clickCount = 0;
+let moveHistory = [];
+let hintCooldown = false;
+
+function saveProgress() {
+  progress.sound = soundEnabled;
+  localStorage.setItem('lightsout_progress', JSON.stringify(progress));
+}
+
+function loadProgress() {
+  const saved = localStorage.getItem('lightsout_progress');
+  if (saved) {
+    const p = JSON.parse(saved);
+    progress = { ...progress, ...p };
+    soundEnabled = progress.sound !== undefined ? progress.sound : true;
+    document.querySelectorAll('.sound-btn').forEach(b => b.textContent = soundEnabled ? '🔊' : '🔇');
+  }
+}
+
+// ==================== SCREENS ====================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showTitle() { showScreen('titleScreen'); }
+
+function showLevels() {
+  showScreen('levelScreen');
+  renderLevelSelect();
+}
+
+function showGame() { showScreen('gameScreen'); }
+
+function continueGame() {
+  currentLevel = progress.unlocked;
+  startLevel(currentLevel);
+}
+
+function closeWin() {
+  document.getElementById('winOverlay').classList.remove('active');
+}
+
+// ==================== LEVEL SELECT ====================
+function renderLevelSelect() {
+  const container = document.getElementById('levelList');
+  container.innerHTML = '';
+
+  const ranges = [
+    { label: '3×3 기초', start: 1, end: 10 },
+    { label: '4×4 초급', start: 11, end: 25 },
+    { label: '5×5 중급', start: 26, end: 50 },
+    { label: '6×6 고급', start: 51, end: 80 },
+    { label: '7×7 마스터', start: 81, end: 120 },
+  ];
+
+  ranges.forEach(range => {
+    const title = document.createElement('div');
+    title.className = 'level-grid-title';
+    title.textContent = range.label;
+    container.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.className = 'level-grid';
+
+    for (let i = range.start; i <= range.end; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'level-cell';
+      const levelData = progress.levels[i];
+
+      if (i > progress.unlocked) {
+        cell.classList.add('locked');
+        cell.innerHTML = `<span style="opacity:0.4">🔒</span>`;
+      } else {
+        if (levelData && levelData.stars > 0) {
+          cell.classList.add('completed');
+          const starStr = '⭐'.repeat(levelData.stars) + '☆'.repeat(3 - levelData.stars);
+          cell.innerHTML = `${i}<div class="stars-mini">${starStr}</div>`;
+        } else {
+          if (i === progress.unlocked) cell.classList.add('current');
+          cell.textContent = i;
+        }
+        cell.onclick = () => startLevel(i);
+      }
+      grid.appendChild(cell);
+    }
+    container.appendChild(grid);
+  });
+}
+
+// ==================== START LEVEL ====================
+function startLevel(level) {
+  currentLevel = level;
+  applyTheme(level);
+
+  const data = generateLevel(level);
+  gameSize = data.size;
+  gameGrid = data.grid.map(r => [...r]);
+  gameSolution = data.solution;
+  gameMinClicks = data.minClicks;
+  clickCount = 0;
+  moveHistory = [];
+
+  document.getElementById('levelLabel').textContent = `레벨 ${level}`;
+  document.getElementById('clickCount').textContent = '0';
+  document.getElementById('clickCount').className = 'stat-val';
+  document.getElementById('minClicks').textContent = gameMinClicks;
+  document.getElementById('hintCount').textContent = progress.hints;
+  updateLightsLeft();
+
+  renderGrid();
+  showGame();
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  grid.style.gridTemplateColumns = `repeat(${gameSize}, 1fr)`;
+
+  for (let r = 0; r < gameSize; r++) {
+    for (let c = 0; c < gameSize; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (gameGrid[r][c] ? ' on' : '');
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+      cell.onclick = () => handleClick(r, c);
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function getCellEl(r, c) {
+  return document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+}
+
+function updateLightsLeft() {
+  let count = 0;
+  for (let r = 0; r < gameSize; r++)
+    for (let c = 0; c < gameSize; c++)
+      if (gameGrid[r][c]) count++;
+  document.getElementById('lightsLeft').textContent = count;
+}
+
+// ==================== HANDLE CLICK ====================
+function handleClick(r, c) {
+  moveHistory.push(gameGrid.map(row => [...row]));
+
+  // Toggle self + neighbors
+  const targets = [[r, c]];
+  if (r > 0) targets.push([r - 1, c]);
+  if (r < gameSize - 1) targets.push([r + 1, c]);
+  if (c > 0) targets.push([r, c - 1]);
+  if (c < gameSize - 1) targets.push([r, c + 1]);
+
+  targets.forEach(([tr, tc]) => {
+    gameGrid[tr][tc] = !gameGrid[tr][tc];
+  });
+
+  // Audio
+  const anyOn = targets.some(([tr, tc]) => gameGrid[tr][tc]);
+  if (anyOn) playToggleOn(); else playToggleOff();
+
+  // Animate
+  const clickedCell = getCellEl(r, c);
+  if (clickedCell) {
+    const ripple = document.createElement('div');
+    ripple.className = 'ripple';
+    const rect = clickedCell.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 2;
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (rect.width / 2 - size / 2) + 'px';
+    ripple.style.top = (rect.height / 2 - size / 2) + 'px';
+    clickedCell.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 500);
+  }
+
+  targets.forEach(([tr, tc], i) => {
+    const el = getCellEl(tr, tc);
+    if (!el) return;
+    if (gameGrid[tr][tc]) el.classList.add('on'); else el.classList.remove('on');
+    if (i > 0) {
+      el.classList.add('neighbor-flash');
+      setTimeout(() => el.classList.remove('neighbor-flash'), 400);
+    }
+  });
+
+  clickCount++;
+  document.getElementById('clickCount').textContent = clickCount;
+  if (clickCount > gameMinClicks) {
+    document.getElementById('clickCount').className = 'stat-val over';
+  }
+  updateLightsLeft();
+
+  // Check win
+  if (checkWin()) {
+    setTimeout(() => showWinScreen(), 400);
+  }
+}
+
+function checkWin() {
+  for (let r = 0; r < gameSize; r++)
+    for (let c = 0; c < gameSize; c++)
+      if (gameGrid[r][c]) return false;
+  return true;
+}
+
+// ==================== WIN ====================
+function showWinScreen() {
+  playWin();
+
+  const ratio = clickCount / gameMinClicks;
+  let stars;
+  if (ratio <= 1) stars = 3;
+  else if (ratio <= 1.5) stars = 2;
+  else stars = 1;
+
+  const prev = progress.levels[currentLevel];
+  if (!prev || prev.stars < stars) {
+    progress.levels[currentLevel] = { stars, clicks: clickCount };
+  }
+  if (currentLevel >= progress.unlocked && currentLevel < TOTAL_LEVELS) {
+    progress.unlocked = currentLevel + 1;
+  }
+  progress.hints = Math.max(progress.hints, 3); // Ensure minimum hints
+  saveProgress();
+
+  const starStr = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+  document.getElementById('winStars').textContent = starStr;
+  document.getElementById('winClicks').textContent = clickCount;
+  document.getElementById('winMin').textContent = gameMinClicks;
+
+  const msgs = [
+    '완벽한 플레이! 🔥',
+    '잘 했어요! 👏',
+    '클리어! 더 줄여볼 수 있을까요?',
+  ];
+  document.getElementById('winSub').textContent = msgs[3 - stars];
+  document.getElementById('winOverlay').classList.add('active');
+}
+
+function nextLevel() {
+  closeWin();
+  if (currentLevel < TOTAL_LEVELS) {
+    startLevel(currentLevel + 1);
+  } else {
+    showLevels();
+  }
+}
+
+// ==================== TOOLS ====================
+function resetLevel() {
+  startLevel(currentLevel);
+}
+
+function undoMove() {
+  if (moveHistory.length === 0) return;
+  gameGrid = moveHistory.pop();
+  clickCount = Math.max(0, clickCount - 1);
+  document.getElementById('clickCount').textContent = clickCount;
+  document.getElementById('clickCount').className = clickCount > gameMinClicks ? 'stat-val over' : 'stat-val';
+  updateLightsLeft();
+
+  // Re-render cells
+  for (let r = 0; r < gameSize; r++) {
+    for (let c = 0; c < gameSize; c++) {
+      const el = getCellEl(r, c);
+      if (!el) continue;
+      if (gameGrid[r][c]) el.classList.add('on'); else el.classList.remove('on');
+    }
+  }
+  playToggleOff();
+}
+
+function showHint() {
+  if (hintCooldown) return;
+  if (progress.hints <= 0) return;
+
+  // Find optimal move using solution knowledge:
+  // Re-generate and solve from current state using Gaussian elimination on GF(2)
+  const move = findBestMove();
+  if (!move) return;
+
+  progress.hints--;
+  document.getElementById('hintCount').textContent = progress.hints;
+  saveProgress();
+
+  const el = getCellEl(move[0], move[1]);
+  if (el) {
+    el.classList.add('hint-highlight');
+    setTimeout(() => el.classList.remove('hint-highlight'), 3100);
+  }
+
+  hintCooldown = true;
+  setTimeout(() => hintCooldown = false, 3200);
+}
+
+// Gaussian elimination on GF(2) to find a solution from current state
+function findBestMove() {
+  const n = gameSize;
+  const total = n * n;
+
+  // Build toggle matrix: each column represents which cells are toggled by clicking that cell
+  // We solve Ax = b (mod 2) where b = current state
+  const augmented = [];
+  for (let i = 0; i < total; i++) {
+    const row = new Uint8Array(total + 1);
+    // Build column i: clicking cell i toggles which cells?
+    // Actually we build rows: row i says which clicks affect cell i
+    const ri = Math.floor(i / n), ci = i % n;
+    row[i] = 1; // self
+    if (ri > 0) row[(ri - 1) * n + ci] = 1;
+    if (ri < n - 1) row[(ri + 1) * n + ci] = 1;
+    if (ci > 0) row[ri * n + ci - 1] = 1;
+    if (ci < n - 1) row[ri * n + ci + 1] = 1;
+    row[total] = gameGrid[ri][ci] ? 1 : 0;
+    augmented.push(row);
+  }
+
+  // Gaussian elimination
+  const pivotCol = new Array(total).fill(-1);
+  let col = 0;
+  for (let row = 0; row < total && col < total; col++) {
+    let pivotRow = -1;
+    for (let r = row; r < total; r++) {
+      if (augmented[r][col]) { pivotRow = r; break; }
+    }
+    if (pivotRow === -1) continue;
+    [augmented[row], augmented[pivotRow]] = [augmented[pivotRow], augmented[row]];
+    pivotCol[row] = col;
+    for (let r = 0; r < total; r++) {
+      if (r !== row && augmented[r][col]) {
+        for (let c = col; c <= total; c++) {
+          augmented[r][c] ^= augmented[row][c];
+        }
+      }
+    }
+    row++;
+  }
+
+  // Extract solution
+  const sol = new Uint8Array(total);
+  for (let r = 0; r < total; r++) {
+    if (pivotCol[r] >= 0) {
+      sol[pivotCol[r]] = augmented[r][total];
+    }
+  }
+
+  // Find first cell in solution that needs clicking
+  for (let i = 0; i < total; i++) {
+    if (sol[i]) {
+      return [Math.floor(i / n), i % n];
+    }
+  }
+  return null;
+}
+
+// ==================== INIT ====================
+loadProgress();
+
+// Add hint replenishment every 5 levels
+(function replenishHints() {
+  const completedCount = Object.keys(progress.levels).length;
+  const bonusHints = Math.floor(completedCount / 5);
+  progress.hints = Math.max(progress.hints, 3 + bonusHints);
+  document.getElementById('hintCount').textContent = progress.hints;
+})();
+</script>
+</body>
+</html>

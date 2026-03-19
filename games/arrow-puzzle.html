@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Arrow Puzzle - 화살표 퍼즐</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--up:#22d3ee;--down:#f472b6;--left:#a78bfa;--right:#34d399;
+--bg1:#0f0f1a;--bg2:#1a1a2e;--bg3:#16213e;
+--surface:#1e1e3a;--surface2:#2a2a4a;
+--text:#e2e8f0;--text-dim:#94a3b8;
+--gold:#fbbf24;--star-empty:#334155;
+}
+html,body{width:100%;height:100%;overflow-x:hidden;background:var(--bg1);color:var(--text);font-family:'Outfit',sans-serif}
+body{display:flex;flex-direction:column;align-items:center;min-height:100vh;
+background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 50%,var(--bg3) 100%)}
+
+.ad-banner{width:100%;max-width:728px;height:90px;background:var(--surface);border:1px dashed #334155;
+display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:13px;
+border-radius:8px;margin:10px auto;flex-shrink:0}
+.ad-interstitial{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);
+align-items:center;justify-content:center;flex-direction:column}
+.ad-interstitial.show{display:flex}
+.ad-interstitial-box{width:400px;height:300px;max-width:90vw;background:var(--surface);
+border:1px dashed #334155;display:flex;align-items:center;justify-content:center;
+color:var(--text-dim);font-size:14px;border-radius:12px}
+.ad-interstitial .skip-btn{margin-top:16px;padding:10px 28px;background:var(--surface2);
+color:var(--text);border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:15px}
+
+.back-link{align-self:flex-start;padding:14px 20px;color:var(--text-dim);text-decoration:none;
+font-size:15px;font-weight:500;transition:color .2s;display:flex;align-items:center;gap:6px}
+.back-link:hover{color:var(--text)}
+.back-link svg{width:18px;height:18px}
+
+h1{font-size:clamp(28px,5vw,42px);font-weight:800;margin:0 0 4px;
+background:linear-gradient(135deg,var(--up),var(--right),var(--down),var(--left));
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{color:var(--text-dim);font-size:15px;margin-bottom:20px;font-weight:400}
+
+/* Screens */
+.screen{display:none;flex-direction:column;align-items:center;width:100%;max-width:600px;padding:0 16px}
+.screen.active{display:flex}
+
+/* Level Select */
+.level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;width:100%;max-width:400px;margin:16px 0}
+.level-btn{aspect-ratio:1;border:2px solid var(--surface2);background:var(--surface);border-radius:12px;
+color:var(--text);font-family:inherit;font-size:18px;font-weight:700;cursor:pointer;
+display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+transition:all .2s;position:relative;overflow:hidden}
+.level-btn:hover{border-color:var(--up);transform:translateY(-2px);box-shadow:0 4px 20px rgba(34,211,238,.15)}
+.level-btn.cleared{border-color:var(--right);background:rgba(52,211,153,.08)}
+.level-btn.locked{opacity:.35;cursor:not-allowed;pointer-events:none}
+.level-btn .stars-mini{font-size:10px;letter-spacing:1px;line-height:1}
+.level-pages{display:flex;gap:8px;margin:10px 0}
+.page-btn{width:36px;height:36px;border-radius:50%;border:2px solid var(--surface2);background:transparent;
+color:var(--text);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.page-btn.active{border-color:var(--up);background:rgba(34,211,238,.15)}
+
+/* Game Screen */
+.game-header{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:500px;margin-bottom:12px}
+.game-info{display:flex;gap:16px;align-items:center}
+.game-info span{font-size:14px;color:var(--text-dim);font-weight:500}
+.game-info .val{color:var(--text);font-weight:700}
+.level-label{font-size:22px;font-weight:800;color:var(--up)}
+.grid-container{position:relative;margin:10px 0}
+.grid-wrap{display:grid;gap:6px;padding:12px;background:rgba(0,0,0,.3);border-radius:16px;
+border:1px solid rgba(255,255,255,.05);position:relative}
+.cell{width:clamp(42px,12vw,64px);height:clamp(42px,12vw,64px);border-radius:10px;
+background:var(--surface);border:2px solid transparent;display:flex;align-items:center;justify-content:center;
+cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.cell:hover{border-color:rgba(255,255,255,.15);transform:scale(1.05)}
+.cell.empty{cursor:default;opacity:.3}
+.cell.empty:hover{transform:none;border-color:transparent}
+.cell .arrow{font-size:clamp(22px,6vw,34px);transition:all .2s;filter:drop-shadow(0 0 6px currentColor);
+position:relative;z-index:2}
+.cell .arrow.up{color:var(--up)}
+.cell .arrow.down{color:var(--down)}
+.cell .arrow.left{color:var(--left)}
+.cell .arrow.right{color:var(--right)}
+
+/* Animations */
+.cell.firing .arrow{animation:firePulse .3s ease-out}
+@keyframes firePulse{0%{transform:scale(1)}50%{transform:scale(1.4);filter:drop-shadow(0 0 16px currentColor) brightness(1.5)}100%{transform:scale(0);opacity:0}}
+.cell.hit .arrow{animation:hitShake .3s ease-out}
+@keyframes hitShake{0%{transform:translateX(0)}25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}100%{transform:translateX(0)}}
+.cell.removing{animation:cellRemove .35s ease-in forwards}
+@keyframes cellRemove{0%{transform:scale(1);opacity:1}100%{transform:scale(0) rotate(180deg);opacity:0}}
+
+/* Projectile */
+.projectile{position:absolute;width:12px;height:12px;border-radius:50%;z-index:100;pointer-events:none;
+filter:blur(0.5px)}
+.projectile::after{content:'';position:absolute;inset:-4px;border-radius:50%;
+background:inherit;opacity:.3;filter:blur(4px)}
+
+/* Trail */
+.trail-particle{position:absolute;width:4px;height:4px;border-radius:50%;pointer-events:none;
+animation:trailFade .5s ease-out forwards;z-index:99}
+@keyframes trailFade{0%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(0)}}
+
+/* Particles */
+.particle{position:absolute;pointer-events:none;z-index:100;border-radius:50%}
+
+/* Combo */
+.combo-display{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+font-size:64px;font-weight:900;pointer-events:none;z-index:200;
+animation:comboAnim .8s ease-out forwards;
+background:linear-gradient(135deg,var(--gold),#fb923c);
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+text-shadow:none;filter:drop-shadow(0 0 20px rgba(251,191,36,.5))}
+@keyframes comboAnim{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}100%{opacity:0;transform:translate(-50%,-60%) scale(1)}}
+
+/* Win */
+.win-overlay{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.7);
+align-items:center;justify-content:center;flex-direction:column;backdrop-filter:blur(4px)}
+.win-overlay.show{display:flex}
+.win-card{background:linear-gradient(135deg,var(--surface),var(--surface2));border-radius:20px;
+padding:36px 48px;text-align:center;border:1px solid rgba(255,255,255,.1);
+box-shadow:0 20px 60px rgba(0,0,0,.5);animation:winIn .5s ease-out}
+@keyframes winIn{from{transform:scale(.8) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.win-card h2{font-size:32px;font-weight:800;margin-bottom:8px;color:var(--gold)}
+.win-stars{font-size:42px;margin:12px 0;display:flex;gap:8px;justify-content:center}
+.win-stars .star{color:var(--star-empty);transition:color .3s}
+.win-stars .star.earned{color:var(--gold);animation:starPop .4s ease-out}
+@keyframes starPop{0%{transform:scale(0) rotate(-30deg)}60%{transform:scale(1.3) rotate(10deg)}100%{transform:scale(1) rotate(0)}}
+.win-info{color:var(--text-dim);font-size:14px;margin-bottom:20px}
+.win-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{padding:12px 28px;border:none;border-radius:10px;font-family:inherit;font-size:15px;
+font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,var(--up),var(--right));color:#0f0f1a}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(34,211,238,.3)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-secondary:hover{background:var(--surface);transform:translateY(-2px)}
+.btn-restart{background:rgba(244,114,182,.15);color:var(--down)}
+
+/* Floating particles bg */
+.bg-particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.bg-particles span{position:absolute;border-radius:50%;opacity:.15;animation:floatUp linear infinite}
+@keyframes floatUp{0%{transform:translateY(100vh) scale(0)}50%{opacity:.2}100%{transform:translateY(-10vh) scale(1);opacity:0}}
+
+.game-btns{display:flex;gap:10px;margin-top:12px}
+.hint-text{color:var(--text-dim);font-size:13px;margin-top:8px;min-height:20px;text-align:center}
+
+@media(max-width:480px){
+.ad-banner{height:60px;font-size:11px}
+.level-grid{grid-template-columns:repeat(5,1fr);gap:8px}
+.win-card{padding:28px 24px;margin:0 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- Background particles -->
+<div class="bg-particles" id="bgParticles"></div>
+
+<!-- Ad Banner Top -->
+<div class="ad-banner">광고 영역 (728x90)</div>
+
+<!-- Back Link -->
+<a href="../index.html" class="back-link">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+허브로 돌아가기
+</a>
+
+<!-- Title -->
+<h1>Arrow Puzzle</h1>
+<p class="subtitle">화살표를 클릭하여 모든 화살표를 제거하세요!</p>
+
+<!-- Level Select Screen -->
+<div class="screen active" id="levelSelectScreen">
+<div class="level-grid" id="levelGrid"></div>
+<div class="level-pages" id="levelPages"></div>
+</div>
+
+<!-- Game Screen -->
+<div class="screen" id="gameScreen">
+<div class="game-header">
+<span class="level-label" id="levelLabel">레벨 1</span>
+<div class="game-info">
+<span>클릭: <span class="val" id="clickCount">0</span></span>
+<span>남은: <span class="val" id="arrowsLeft">0</span></span>
+</div>
+</div>
+<div class="grid-container" id="gridContainer">
+<div class="grid-wrap" id="gridWrap"></div>
+</div>
+<div class="hint-text" id="hintText"></div>
+<div class="game-btns">
+<button class="btn btn-restart" onclick="restartLevel()">다시하기</button>
+<button class="btn btn-secondary" onclick="showScreen('levelSelectScreen')">레벨 선택</button>
+</div>
+</div>
+
+<!-- Win Overlay -->
+<div class="win-overlay" id="winOverlay">
+<div class="win-card">
+<h2 id="winTitle">클리어!</h2>
+<div class="win-stars" id="winStars"></div>
+<p class="win-info" id="winInfo"></p>
+<div class="win-btns">
+<button class="btn btn-primary" id="nextLevelBtn" onclick="nextLevel()">다음 레벨</button>
+<button class="btn btn-secondary" onclick="restartLevel();document.getElementById('winOverlay').classList.remove('show')">다시하기</button>
+<button class="btn btn-secondary" onclick="document.getElementById('winOverlay').classList.remove('show');showScreen('levelSelectScreen')">레벨 선택</button>
+</div>
+</div>
+</div>
+
+<!-- Ad Interstitial -->
+<div class="ad-interstitial" id="adInterstitial">
+<div class="ad-interstitial-box">광고 영역 (400x300)</div>
+<button class="skip-btn" onclick="document.getElementById('adInterstitial').classList.remove('show')">건너뛰기</button>
+</div>
+
+<script>
+// ============================================================
+// SEEDED RNG
+// ============================================================
+class SeededRNG {
+  constructor(seed) { this.seed = seed % 2147483647; if (this.seed <= 0) this.seed += 2147483646; }
+  next() { this.seed = (this.seed * 16807) % 2147483647; return (this.seed - 1) / 2147483646; }
+  nextInt(min, max) { return Math.floor(this.next() * (max - min + 1)) + min; }
+  shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = this.nextInt(0, i); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+}
+
+// ============================================================
+// AUDIO
+// ============================================================
+let audioCtx = null;
+function getAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+
+function playSound(type) {
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    const now = ctx.currentTime;
+    if (type === 'shoot') {
+      osc.type = 'sine'; osc.frequency.setValueAtTime(600, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.15);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc.start(now); osc.stop(now + 0.15);
+    } else if (type === 'hit') {
+      osc.type = 'square'; osc.frequency.setValueAtTime(800, now);
+      osc.frequency.exponentialRampToValueAtTime(400, now + 0.1);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      osc.start(now); osc.stop(now + 0.1);
+    } else if (type === 'win') {
+      [523, 659, 784, 1047].forEach((f, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.12, now + i * 0.12);
+        g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.3);
+        o.start(now + i * 0.12); o.stop(now + i * 0.12 + 0.3);
+      });
+    } else if (type === 'combo') {
+      osc.type = 'sine'; osc.frequency.setValueAtTime(1000, now);
+      osc.frequency.exponentialRampToValueAtTime(1400, now + 0.15);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      osc.start(now); osc.stop(now + 0.2);
+    }
+  } catch(e) {}
+}
+
+// ============================================================
+// CONSTANTS & STATE
+// ============================================================
+const DIRS = ['up', 'down', 'left', 'right'];
+const DIR_ARROWS = { up: '\u2191', down: '\u2193', left: '\u2190', right: '\u2192' };
+const DIR_COLORS = { up: '#22d3ee', down: '#f472b6', left: '#a78bfa', right: '#34d399' };
+const DIR_DX = { up: 0, down: 0, left: -1, right: 1 };
+const DIR_DY = { up: -1, down: 1, left: 0, right: 0 };
+const TOTAL_LEVELS = 120;
+const LEVELS_PER_PAGE = 25;
+
+let progress = JSON.parse(localStorage.getItem('arrowPuzzleProgress') || '{}');
+if (!progress.cleared) progress.cleared = {};
+if (!progress.stars) progress.stars = {};
+if (!progress.unlocked) progress.unlocked = 1;
+
+let currentLevel = 1;
+let currentPage = 0;
+let grid = [];
+let gridSize = 0;
+let clicks = 0;
+let minClicks = 0;
+let animating = false;
+let totalArrows = 0;
+
+// ============================================================
+// HAND-CRAFTED TUTORIAL LEVELS (1-15)
+// ============================================================
+function getHandcraftedLevel(n) {
+  const levels = [
+    // Level 1: 3x3, single arrow
+    { size: 3, arrows: [[1,1,'right']], min: 1, hint: '화살표를 클릭하세요!' },
+    // Level 2: 3x3, two arrows in line
+    { size: 3, arrows: [[0,1,'right'],[2,1,'left']], min: 1, hint: '하나를 클릭하면 다른 하나도 맞출 수 있어요' },
+    // Level 3: 3x3, chain
+    { size: 3, arrows: [[0,1,'right'],[1,1,'down'],[1,2,'left']], min: 1, hint: '연쇄 반응을 만들어보세요!' },
+    // Level 4: 3x3
+    { size: 3, arrows: [[0,0,'right'],[2,0,'down'],[2,2,'left'],[0,2,'up']], min: 1, hint: '순환 고리를 찾으세요' },
+    // Level 5: 3x3
+    { size: 3, arrows: [[1,0,'down'],[0,1,'right'],[2,1,'left'],[1,2,'up']], min: 1, hint: '중앙을 향하는 화살표들' },
+    // Level 6: 3x3, need 2 clicks
+    { size: 3, arrows: [[0,0,'down'],[0,2,'right'],[2,2,'up'],[2,0,'left'],[1,1,'right']], min: 2 },
+    // Level 7: 4x4
+    { size: 4, arrows: [[0,0,'right'],[3,0,'down'],[3,3,'left'],[0,3,'up']], min: 1 },
+    // Level 8: 4x4
+    { size: 4, arrows: [[1,0,'down'],[1,3,'right'],[3,3,'up'],[3,0,'left'],[0,2,'right']], min: 2 },
+    // Level 9: 4x4
+    { size: 4, arrows: [[0,1,'right'],[1,1,'down'],[1,2,'right'],[3,2,'up'],[3,1,'left']], min: 1 },
+    // Level 10: 4x4 complex
+    { size: 4, arrows: [[0,0,'right'],[2,0,'down'],[2,2,'left'],[0,2,'down'],[0,3,'right'],[3,3,'up']], min: 2 },
+    // Level 11: 4x4
+    { size: 4, arrows: [[0,0,'down'],[0,3,'right'],[3,3,'up'],[3,0,'left'],[1,1,'right'],[2,1,'down'],[2,2,'left']], min: 2 },
+    // Level 12: 5x5 intro
+    { size: 5, arrows: [[0,2,'right'],[4,2,'left'],[2,0,'down'],[2,4,'up']], min: 1, hint: '5x5 격자 등장!' },
+    // Level 13: 5x5
+    { size: 5, arrows: [[0,0,'right'],[4,0,'down'],[4,4,'left'],[0,4,'up'],[2,2,'right'],[3,2,'down']], min: 2 },
+    // Level 14: 5x5
+    { size: 5, arrows: [[1,0,'down'],[1,4,'right'],[4,4,'up'],[4,1,'left'],[0,1,'down'],[0,3,'right'],[3,3,'up'],[3,0,'left']], min: 2 },
+    // Level 15: 5x5 harder
+    { size: 5, arrows: [[0,0,'right'],[3,0,'down'],[3,2,'left'],[1,2,'down'],[1,4,'right'],[4,4,'up'],[4,1,'left'],[2,1,'right'],[2,3,'down']], min: 3 },
+  ];
+  return levels[n - 1] || null;
+}
+
+// ============================================================
+// PROCEDURAL LEVEL GENERATION
+// ============================================================
+function getGridSizeForLevel(level) {
+  if (level <= 6) return 3;
+  if (level <= 15) return 4;
+  if (level <= 30) return 5;
+  if (level <= 50) return 6;
+  if (level <= 80) return 7;
+  return 8;
+}
+
+function getArrowCountForLevel(level) {
+  const size = getGridSizeForLevel(level);
+  const base = Math.floor(size * size * 0.3);
+  const extra = Math.floor((level - 15) / 10);
+  return Math.min(base + extra, Math.floor(size * size * 0.65));
+}
+
+// Simulate firing an arrow, returns list of arrows removed (chain)
+function simulateFire(state, size, sx, sy) {
+  const removed = [];
+  const queue = [];
+  const key = (x, y) => `${x},${y}`;
+
+  const arrow = state.get(key(sx, sy));
+  if (!arrow) return removed;
+
+  // Remove the clicked arrow and create projectile
+  state.delete(key(sx, sy));
+  removed.push({ x: sx, y: sy, dir: arrow });
+  queue.push({ x: sx, y: sy, dir: arrow });
+
+  while (queue.length > 0) {
+    const proj = queue.shift();
+    let px = proj.x + DIR_DX[proj.dir];
+    let py = proj.y + DIR_DY[proj.dir];
+
+    while (px >= 0 && px < size && py >= 0 && py < size) {
+      const k = key(px, py);
+      if (state.has(k)) {
+        const hitDir = state.get(k);
+        state.delete(k);
+        removed.push({ x: px, y: py, dir: hitDir });
+        queue.push({ x: px, y: py, dir: hitDir });
+        break;
+      }
+      px += DIR_DX[proj.dir];
+      py += DIR_DY[proj.dir];
+    }
+  }
+
+  return removed;
+}
+
+// Check if a puzzle state is solvable within maxClicks
+function isSolvable(arrowList, size, maxClicks) {
+  function solve(state, clicksLeft) {
+    if (state.size === 0) return true;
+    if (clicksLeft <= 0) return false;
+
+    const entries = [...state.entries()];
+    for (const [k] of entries) {
+      const [x, y] = k.split(',').map(Number);
+      const copy = new Map(state);
+      simulateFire(copy, size, x, y);
+      if (solve(copy, clicksLeft - 1)) return true;
+    }
+    return false;
+  }
+
+  const state = new Map();
+  for (const a of arrowList) state.set(`${a.x},${a.y}`, a.dir);
+  return solve(state, maxClicks);
+}
+
+// Find minimum clicks to solve
+function findMinClicks(arrowList, size) {
+  const state = new Map();
+  for (const a of arrowList) state.set(`${a.x},${a.y}`, a.dir);
+
+  for (let c = 1; c <= Math.min(arrowList.length, 6); c++) {
+    if (isSolvable(arrowList, size, c)) return c;
+  }
+  return arrowList.length; // fallback
+}
+
+function generateLevel(level) {
+  const rng = new SeededRNG(level * 7919 + 1337);
+  const size = getGridSizeForLevel(level);
+  const arrowCount = getArrowCountForLevel(level);
+
+  // Strategy: build puzzle by reverse — start with a solution sequence
+  // Place arrows that form chains to ensure solvability
+  for (let attempt = 0; attempt < 50; attempt++) {
+    const arrows = [];
+    const occupied = new Set();
+
+    // Generate arrows
+    for (let i = 0; i < arrowCount; i++) {
+      let tries = 0;
+      while (tries < 100) {
+        const x = rng.nextInt(0, size - 1);
+        const y = rng.nextInt(0, size - 1);
+        const k = `${x},${y}`;
+        if (!occupied.has(k)) {
+          occupied.add(k);
+          const dir = DIRS[rng.nextInt(0, 3)];
+          arrows.push({ x, y, dir });
+          break;
+        }
+        tries++;
+      }
+    }
+
+    if (arrows.length < 3) continue;
+
+    // Check solvability with reasonable click limit
+    const maxAllowed = Math.min(Math.ceil(arrows.length / 2), 6);
+    if (isSolvable(arrows, size, maxAllowed)) {
+      const min = findMinClicks(arrows, size);
+      return { size, arrows: arrows.map(a => [a.x, a.y, a.dir]), min };
+    }
+  }
+
+  // Fallback: create a guaranteed solvable puzzle using chain construction
+  return generateChainPuzzle(level, rng);
+}
+
+function generateChainPuzzle(level, rng) {
+  const size = getGridSizeForLevel(level);
+  const numChains = rng.nextInt(1, Math.min(3, Math.floor(size / 2)));
+  const arrows = [];
+  const occupied = new Set();
+
+  for (let c = 0; c < numChains; c++) {
+    let x = rng.nextInt(0, size - 1);
+    let y = rng.nextInt(0, size - 1);
+    let chainLen = rng.nextInt(2, Math.min(5, size));
+
+    for (let i = 0; i < chainLen; i++) {
+      const k = `${x},${y}`;
+      if (occupied.has(k) || x < 0 || x >= size || y < 0 || y >= size) break;
+
+      // Pick direction that points toward valid cells
+      const possibleDirs = [];
+      if (y > 0) possibleDirs.push('up');
+      if (y < size - 1) possibleDirs.push('down');
+      if (x > 0) possibleDirs.push('left');
+      if (x < size - 1) possibleDirs.push('right');
+
+      const dir = possibleDirs[rng.nextInt(0, possibleDirs.length - 1)];
+      occupied.add(k);
+      arrows.push({ x, y, dir });
+
+      // Next arrow in the path the projectile would travel
+      x += DIR_DX[dir];
+      y += DIR_DY[dir];
+    }
+  }
+
+  if (arrows.length < 2) {
+    arrows.length = 0;
+    occupied.clear();
+    // Minimal guaranteed chain
+    arrows.push({ x: 0, y: Math.floor(size/2), dir: 'right' });
+    arrows.push({ x: size-1, y: Math.floor(size/2), dir: 'down' });
+    if (size > 3) {
+      arrows.push({ x: size-1, y: size-1, dir: 'left' });
+    }
+  }
+
+  const min = findMinClicks(arrows, size);
+  return { size, arrows: arrows.map(a => [a.x, a.y, a.dir]), min };
+}
+
+function getLevelData(level) {
+  if (level <= 15) {
+    const hc = getHandcraftedLevel(level);
+    if (hc) return hc;
+  }
+  return generateLevel(level);
+}
+
+// ============================================================
+// UI RENDERING
+// ============================================================
+function saveProgress() {
+  localStorage.setItem('arrowPuzzleProgress', JSON.stringify(progress));
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'levelSelectScreen') renderLevelGrid();
+}
+
+function renderLevelGrid() {
+  const grid = document.getElementById('levelGrid');
+  const pages = document.getElementById('levelPages');
+  const totalPages = Math.ceil(TOTAL_LEVELS / LEVELS_PER_PAGE);
+
+  // Pages
+  pages.innerHTML = '';
+  for (let p = 0; p < totalPages; p++) {
+    const btn = document.createElement('button');
+    btn.className = 'page-btn' + (p === currentPage ? ' active' : '');
+    btn.textContent = p + 1;
+    btn.onclick = () => { currentPage = p; renderLevelGrid(); };
+    pages.appendChild(btn);
+  }
+
+  // Level buttons
+  grid.innerHTML = '';
+  const start = currentPage * LEVELS_PER_PAGE + 1;
+  const end = Math.min(start + LEVELS_PER_PAGE - 1, TOTAL_LEVELS);
+
+  for (let i = start; i <= end; i++) {
+    const btn = document.createElement('button');
+    const cleared = progress.cleared[i];
+    const unlocked = i <= progress.unlocked;
+    btn.className = 'level-btn' + (cleared ? ' cleared' : '') + (!unlocked ? ' locked' : '');
+
+    const num = document.createElement('span');
+    num.textContent = i;
+    btn.appendChild(num);
+
+    if (cleared && progress.stars[i]) {
+      const stars = document.createElement('span');
+      stars.className = 'stars-mini';
+      stars.textContent = '\u2605'.repeat(progress.stars[i]) + '\u2606'.repeat(3 - progress.stars[i]);
+      btn.appendChild(stars);
+    }
+
+    if (unlocked) {
+      btn.onclick = () => startLevel(i);
+    }
+    grid.appendChild(btn);
+  }
+}
+
+function startLevel(level) {
+  currentLevel = level;
+  clicks = 0;
+  animating = false;
+
+  const data = getLevelData(level);
+  gridSize = data.size;
+  minClicks = data.min || 1;
+
+  // Build grid
+  grid = [];
+  for (let y = 0; y < gridSize; y++) {
+    grid[y] = [];
+    for (let x = 0; x < gridSize; x++) {
+      grid[y][x] = null;
+    }
+  }
+
+  for (const a of data.arrows) {
+    grid[a[1]][a[0]] = a[2];
+  }
+
+  totalArrows = data.arrows.length;
+
+  document.getElementById('levelLabel').textContent = `\ub808\ubca8 ${level}`;
+  document.getElementById('hintText').textContent = data.hint || '';
+
+  showScreen('gameScreen');
+  renderGrid();
+  updateInfo();
+}
+
+function renderGrid() {
+  const wrap = document.getElementById('gridWrap');
+  wrap.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+  wrap.innerHTML = '';
+
+  for (let y = 0; y < gridSize; y++) {
+    for (let x = 0; x < gridSize; x++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (grid[y][x] ? '' : ' empty');
+      cell.dataset.x = x;
+      cell.dataset.y = y;
+
+      if (grid[y][x]) {
+        const arrow = document.createElement('span');
+        arrow.className = `arrow ${grid[y][x]}`;
+        arrow.textContent = DIR_ARROWS[grid[y][x]];
+        cell.appendChild(arrow);
+        cell.onclick = () => fireArrow(x, y);
+      }
+
+      wrap.appendChild(cell);
+    }
+  }
+}
+
+function updateInfo() {
+  document.getElementById('clickCount').textContent = clicks;
+  let remaining = 0;
+  for (let y = 0; y < gridSize; y++)
+    for (let x = 0; x < gridSize; x++)
+      if (grid[y][x]) remaining++;
+  document.getElementById('arrowsLeft').textContent = remaining;
+}
+
+function getCell(x, y) {
+  const wrap = document.getElementById('gridWrap');
+  return wrap.children[y * gridSize + x];
+}
+
+function getCellCenter(x, y) {
+  const cell = getCell(x, y);
+  const rect = cell.getBoundingClientRect();
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
+
+// ============================================================
+// GAME LOGIC & ANIMATION
+// ============================================================
+async function fireArrow(sx, sy) {
+  if (animating) return;
+  if (!grid[sy][sx]) return;
+
+  animating = true;
+  clicks++;
+  updateInfo();
+
+  const chain = [];
+  await processFireChain(sx, sy, chain);
+
+  // Combo display
+  if (chain.length > 1) {
+    showCombo(chain.length);
+    playSound('combo');
+  }
+
+  updateInfo();
+  animating = false;
+
+  // Check win
+  let remaining = 0;
+  for (let y = 0; y < gridSize; y++)
+    for (let x = 0; x < gridSize; x++)
+      if (grid[y][x]) remaining++;
+
+  if (remaining === 0) {
+    setTimeout(() => winLevel(), 300);
+  }
+}
+
+async function processFireChain(sx, sy, chain) {
+  const dir = grid[sy][sx];
+  if (!dir) return;
+
+  // Remove arrow from grid
+  grid[sy][sx] = null;
+  const cell = getCell(sx, sy);
+  cell.classList.add('firing');
+  playSound('shoot');
+
+  chain.push({ x: sx, y: sy, dir });
+
+  await sleep(150);
+
+  // Remove cell visually
+  cell.classList.add('removing');
+  cell.classList.remove('firing');
+  cell.onclick = null;
+
+  // Create particle burst at source
+  spawnParticles(sx, sy, dir, 6);
+
+  // Find hit target
+  const target = findTarget(sx, sy, dir);
+
+  if (target) {
+    // Animate projectile
+    await animateProjectile(sx, sy, target.x, target.y, dir);
+
+    playSound('hit');
+
+    // Hit effect
+    const hitCell = getCell(target.x, target.y);
+    hitCell.classList.add('hit');
+    spawnParticles(target.x, target.y, grid[target.y][target.x], 10);
+
+    await sleep(100);
+    hitCell.classList.remove('hit');
+
+    // Chain: fire the hit arrow
+    await processFireChain(target.x, target.y, chain);
+  } else {
+    // Animate projectile flying off screen
+    await animateProjectileOffscreen(sx, sy, dir);
+  }
+
+  // Update cell appearance
+  setTimeout(() => {
+    cell.className = 'cell empty';
+    cell.innerHTML = '';
+  }, 350);
+}
+
+function findTarget(sx, sy, dir) {
+  let x = sx + DIR_DX[dir];
+  let y = sy + DIR_DY[dir];
+
+  while (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
+    if (grid[y][x]) return { x, y };
+    x += DIR_DX[dir];
+    y += DIR_DY[dir];
+  }
+  return null;
+}
+
+async function animateProjectile(sx, sy, tx, ty, dir) {
+  const start = getCellCenter(sx, sy);
+  const end = getCellCenter(tx, ty);
+  const color = DIR_COLORS[dir];
+
+  const proj = document.createElement('div');
+  proj.className = 'projectile';
+  proj.style.background = color;
+  proj.style.boxShadow = `0 0 12px ${color}, 0 0 24px ${color}`;
+  document.body.appendChild(proj);
+
+  const duration = 120 + Math.sqrt((end.x-start.x)**2 + (end.y-start.y)**2) * 0.5;
+  const startTime = performance.now();
+
+  return new Promise(resolve => {
+    function animate(now) {
+      const t = Math.min((now - startTime) / duration, 1);
+      const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+      const cx = start.x + (end.x - start.x) * ease;
+      const cy = start.y + (end.y - start.y) * ease;
+      proj.style.left = cx - 6 + 'px';
+      proj.style.top = cy - 6 + 'px';
+
+      // Trail
+      if (Math.random() < 0.6) {
+        const trail = document.createElement('div');
+        trail.className = 'trail-particle';
+        trail.style.left = cx - 2 + (Math.random()-0.5)*6 + 'px';
+        trail.style.top = cy - 2 + (Math.random()-0.5)*6 + 'px';
+        trail.style.background = color;
+        document.body.appendChild(trail);
+        setTimeout(() => trail.remove(), 500);
+      }
+
+      if (t < 1) requestAnimationFrame(animate);
+      else { proj.remove(); resolve(); }
+    }
+    requestAnimationFrame(animate);
+  });
+}
+
+async function animateProjectileOffscreen(sx, sy, dir) {
+  const start = getCellCenter(sx, sy);
+  const color = DIR_COLORS[dir];
+
+  const proj = document.createElement('div');
+  proj.className = 'projectile';
+  proj.style.background = color;
+  proj.style.boxShadow = `0 0 12px ${color}`;
+  document.body.appendChild(proj);
+
+  const dist = 300;
+  const endX = start.x + DIR_DX[dir] * dist;
+  const endY = start.y + DIR_DY[dir] * dist;
+  const duration = 200;
+  const startTime = performance.now();
+
+  return new Promise(resolve => {
+    function animate(now) {
+      const t = Math.min((now - startTime) / duration, 1);
+      const cx = start.x + (endX - start.x) * t;
+      const cy = start.y + (endY - start.y) * t;
+      proj.style.left = cx - 6 + 'px';
+      proj.style.top = cy - 6 + 'px';
+      proj.style.opacity = 1 - t;
+
+      if (t < 1) requestAnimationFrame(animate);
+      else { proj.remove(); resolve(); }
+    }
+    requestAnimationFrame(animate);
+  });
+}
+
+function spawnParticles(gx, gy, dir, count) {
+  const center = getCellCenter(gx, gy);
+  const color = DIR_COLORS[dir] || '#fff';
+
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 3 + Math.random() * 5;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.background = color;
+    p.style.boxShadow = `0 0 ${size}px ${color}`;
+    p.style.left = center.x - size/2 + 'px';
+    p.style.top = center.y - size/2 + 'px';
+    document.body.appendChild(p);
+
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 40 + Math.random() * 80;
+    const vx = Math.cos(angle) * speed;
+    const vy = Math.sin(angle) * speed;
+    const dur = 400 + Math.random() * 300;
+    const start = performance.now();
+
+    function anim(now) {
+      const t = Math.min((now - start) / dur, 1);
+      p.style.left = center.x - size/2 + vx * t + 'px';
+      p.style.top = center.y - size/2 + vy * t + 20 * t * t + 'px';
+      p.style.opacity = 1 - t;
+      if (t < 1) requestAnimationFrame(anim);
+      else p.remove();
+    }
+    requestAnimationFrame(anim);
+  }
+}
+
+function showCombo(count) {
+  const el = document.createElement('div');
+  el.className = 'combo-display';
+  el.textContent = `${count}x \ucf64\ubcf4!`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 800);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ============================================================
+// WIN / LEVEL COMPLETION
+// ============================================================
+function winLevel() {
+  playSound('win');
+
+  // Calculate stars
+  let stars = 1;
+  if (clicks <= minClicks + 1) stars = 3;
+  else if (clicks <= minClicks + 3) stars = 2;
+
+  // Update progress
+  progress.cleared[currentLevel] = true;
+  if (!progress.stars[currentLevel] || progress.stars[currentLevel] < stars) {
+    progress.stars[currentLevel] = stars;
+  }
+  if (currentLevel >= progress.unlocked) {
+    progress.unlocked = Math.min(currentLevel + 1, TOTAL_LEVELS);
+  }
+  saveProgress();
+
+  // Show win overlay
+  const overlay = document.getElementById('winOverlay');
+  document.getElementById('winTitle').textContent = stars === 3 ? '\ud37c\ud399\ud2b8!' : stars === 2 ? '\ud6cc\ub96d\ud574\uc694!' : '\ud074\ub9ac\uc5b4!';
+  document.getElementById('winInfo').textContent = `\ud074\ub9ad: ${clicks}\ud68c (\ucd5c\uc18c: ${minClicks}\ud68c)`;
+
+  const starsEl = document.getElementById('winStars');
+  starsEl.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const s = document.createElement('span');
+    s.className = 'star' + (i < stars ? ' earned' : '');
+    s.textContent = i < stars ? '\u2605' : '\u2606';
+    s.style.animationDelay = i * 0.15 + 's';
+    starsEl.appendChild(s);
+  }
+
+  document.getElementById('nextLevelBtn').style.display = currentLevel < TOTAL_LEVELS ? '' : 'none';
+  overlay.classList.add('show');
+
+  // Show interstitial ad every 5 levels
+  if (currentLevel % 5 === 0) {
+    setTimeout(() => {
+      document.getElementById('adInterstitial').classList.add('show');
+    }, 1500);
+  }
+}
+
+function nextLevel() {
+  document.getElementById('winOverlay').classList.remove('show');
+  if (currentLevel < TOTAL_LEVELS) {
+    startLevel(currentLevel + 1);
+  }
+}
+
+function restartLevel() {
+  startLevel(currentLevel);
+}
+
+// ============================================================
+// BACKGROUND PARTICLES
+// ============================================================
+function initBgParticles() {
+  const container = document.getElementById('bgParticles');
+  const colors = [DIR_COLORS.up, DIR_COLORS.down, DIR_COLORS.left, DIR_COLORS.right];
+
+  for (let i = 0; i < 20; i++) {
+    const span = document.createElement('span');
+    const size = 4 + Math.random() * 8;
+    span.style.width = size + 'px';
+    span.style.height = size + 'px';
+    span.style.left = Math.random() * 100 + '%';
+    span.style.background = colors[Math.floor(Math.random() * colors.length)];
+    span.style.animationDuration = 8 + Math.random() * 12 + 's';
+    span.style.animationDelay = Math.random() * 10 + 's';
+    container.appendChild(span);
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+initBgParticles();
+renderLevelGrid();
+</script>
+</body>
+</html>

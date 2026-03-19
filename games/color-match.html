@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>컬러 매치 퍼즐</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif;background:#0a0a1a;color:#e2e8f0}
+body{display:flex;flex-direction:column;align-items:center}
+
+.ad-placeholder{width:100%;max-width:480px;height:50px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);font-size:12px;letter-spacing:1px;flex-shrink:0}
+.ad-top{border-radius:0 0 8px 8px}
+.ad-bottom{border-radius:8px 8px 0 0;margin-top:auto}
+
+.header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;flex-shrink:0}
+.back-link{color:#94a3b8;text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;transition:color .2s}
+.back-link:hover{color:#e2e8f0}
+.title{font-size:18px;font-weight:800;background:linear-gradient(135deg,#ec4899,#a855f7,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.score-bar{width:100%;max-width:480px;display:flex;justify-content:space-around;padding:6px 16px;flex-shrink:0}
+.score-box{text-align:center}
+.score-label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.score-value{font-size:22px;font-weight:900;color:#f1f5f9;line-height:1.1}
+.score-value.combo{color:#fbbf24}
+.score-value.best{color:#a855f7}
+
+.game-area{flex:1;display:flex;align-items:center;justify-content:center;width:100%;max-width:480px;padding:8px;position:relative;min-height:0}
+
+.grid-container{position:relative;background:rgba(255,255,255,.03);border-radius:16px;border:1px solid rgba(255,255,255,.06);padding:6px;box-shadow:0 0 40px rgba(139,92,246,.08)}
+
+canvas#gameCanvas{display:block;border-radius:12px;touch-action:none}
+
+#sparkleCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+
+.combo-text{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:48px;font-weight:900;color:#fbbf24;text-shadow:0 0 30px rgba(251,191,36,.6),0 0 60px rgba(251,191,36,.3);pointer-events:none;opacity:0;z-index:100;white-space:nowrap}
+.combo-text.show{animation:comboIn .8s ease-out forwards}
+@keyframes comboIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}40%{transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-60%) scale(1.1)}}
+
+.shake{animation:shake .3s ease-out}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;visibility:hidden;transition:all .3s}
+.overlay.show{opacity:1;visibility:visible}
+.overlay-box{background:#1a1a2e;border-radius:20px;padding:32px;text-align:center;max-width:320px;width:90%;border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.overlay-box h2{font-size:28px;font-weight:900;margin-bottom:8px;background:linear-gradient(135deg,#ec4899,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.overlay-box .final-score{font-size:48px;font-weight:900;color:#fbbf24;margin:12px 0}
+.overlay-box .best-label{font-size:14px;color:#94a3b8;margin-bottom:16px}
+.overlay-box button{background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;border:none;padding:14px 40px;border-radius:12px;font-size:16px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px rgba(168,85,247,.4)}
+.overlay-box button:hover{transform:scale(1.05)}
+.overlay-box button:active{transform:scale(.97)}
+
+.hint-pulse{animation:hintPulse 1s ease-in-out infinite}
+@keyframes hintPulse{0%,100%{opacity:.4}50%{opacity:1}}
+</style>
+</head>
+<body>
+
+<canvas id="sparkleCanvas"></canvas>
+
+<div class="ad-placeholder ad-top">AD SPACE</div>
+
+<div class="header">
+  <a href="../index.html" class="back-link">← 허브로</a>
+  <div class="title">컬러 매치</div>
+</div>
+
+<div class="score-bar">
+  <div class="score-box"><div class="score-label">점수</div><div class="score-value" id="scoreDisplay">0</div></div>
+  <div class="score-box"><div class="score-label">콤보</div><div class="score-value combo" id="comboDisplay">x1</div></div>
+  <div class="score-box"><div class="score-label">최고</div><div class="score-value best" id="bestDisplay">0</div></div>
+</div>
+
+<div class="game-area">
+  <div class="grid-container" id="gridContainer">
+    <canvas id="gameCanvas"></canvas>
+  </div>
+</div>
+
+<div class="ad-placeholder ad-bottom">AD SPACE</div>
+
+<div class="combo-text" id="comboText"></div>
+
+<div class="overlay" id="gameOverOverlay">
+  <div class="overlay-box">
+    <h2>게임 오버</h2>
+    <div class="final-score" id="finalScore">0</div>
+    <div class="best-label" id="bestLabel">최고 기록: 0</div>
+    <button onclick="game.restart()">다시 하기</button>
+  </div>
+</div>
+
+<script>
+// ===== WEB AUDIO SOUND ENGINE =====
+const AudioEngine = {
+  ctx: null,
+  init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  },
+  resume() {
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  _play(fn) {
+    this.init();
+    this.resume();
+    try { fn(this.ctx); } catch(e) {}
+  },
+  swap() {
+    this._play(ctx => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine'; o.frequency.setValueAtTime(600, ctx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(900, ctx.currentTime + 0.08);
+      g.gain.setValueAtTime(0.12, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.12);
+    });
+  },
+  pop(chain = 0) {
+    this._play(ctx => {
+      const baseFreq = 400 + chain * 80;
+      for (let i = 0; i < 3; i++) {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(baseFreq + i * 200, ctx.currentTime + i * 0.03);
+        o.frequency.exponentialRampToValueAtTime(baseFreq + 600 + i * 100, ctx.currentTime + i * 0.03 + 0.1);
+        g.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.03);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.03 + 0.15);
+        o.start(ctx.currentTime + i * 0.03);
+        o.stop(ctx.currentTime + i * 0.03 + 0.15);
+      }
+    });
+  },
+  combo(level) {
+    this._play(ctx => {
+      const notes = [523, 659, 784, 1047];
+      notes.forEach((f, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(f * (1 + level * 0.1), ctx.currentTime + i * 0.07);
+        g.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.07);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.07 + 0.2);
+        o.start(ctx.currentTime + i * 0.07);
+        o.stop(ctx.currentTime + i * 0.07 + 0.2);
+      });
+    });
+  },
+  gameOver() {
+    this._play(ctx => {
+      const notes = [400, 350, 300, 200];
+      notes.forEach((f, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.15);
+        g.gain.setValueAtTime(0.08, ctx.currentTime + i * 0.15);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.3);
+        o.start(ctx.currentTime + i * 0.15);
+        o.stop(ctx.currentTime + i * 0.15 + 0.3);
+      });
+    });
+  }
+};
+
+// ===== SPARKLE BACKGROUND =====
+const sparkleCanvas = document.getElementById('sparkleCanvas');
+const sparkleCtx = sparkleCanvas.getContext('2d');
+let sparkles = [];
+
+function resizeSparkle() {
+  sparkleCanvas.width = window.innerWidth;
+  sparkleCanvas.height = window.innerHeight;
+}
+resizeSparkle();
+window.addEventListener('resize', resizeSparkle);
+
+for (let i = 0; i < 30; i++) {
+  sparkles.push({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    size: Math.random() * 2 + 0.5,
+    speed: Math.random() * 0.3 + 0.1,
+    phase: Math.random() * Math.PI * 2,
+    alpha: Math.random()
+  });
+}
+
+function drawSparkles(time) {
+  sparkleCtx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
+  sparkles.forEach(s => {
+    s.y -= s.speed;
+    s.phase += 0.02;
+    if (s.y < -5) { s.y = sparkleCanvas.height + 5; s.x = Math.random() * sparkleCanvas.width; }
+    const a = (Math.sin(s.phase) * 0.5 + 0.5) * 0.4;
+    sparkleCtx.beginPath();
+    sparkleCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+    sparkleCtx.fillStyle = `rgba(168,130,255,${a})`;
+    sparkleCtx.fill();
+  });
+}
+
+// ===== MAIN GAME =====
+const COLS = 8, ROWS = 8;
+const COLORS = [
+  { hex: '#ef4444', r: 239, g: 68, b: 68 },
+  { hex: '#3b82f6', r: 59, g: 130, b: 246 },
+  { hex: '#22c55e', r: 34, g: 197, b: 94 },
+  { hex: '#eab308', r: 234, g: 179, b: 8 },
+  { hex: '#a855f7', r: 168, g: 85, b: 247 },
+  { hex: '#ec4899', r: 236, g: 72, b: 153 }
+];
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const gridContainer = document.getElementById('gridContainer');
+
+let CELL, PADDING;
+
+function sizeCanvas() {
+  const area = document.querySelector('.game-area');
+  const maxW = area.clientWidth - 28;
+  const maxH = area.clientHeight - 28;
+  const sz = Math.min(maxW, maxH, 420);
+  CELL = Math.floor(sz / COLS);
+  PADDING = 3;
+  const total = CELL * COLS;
+  canvas.width = total;
+  canvas.height = total;
+  canvas.style.width = total + 'px';
+  canvas.style.height = total + 'px';
+}
+
+// Particle system for pop effects
+let particles = [];
+
+class Particle {
+  constructor(x, y, color) {
+    this.x = x; this.y = y;
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 4 + 2;
+    this.vx = Math.cos(angle) * speed;
+    this.vy = Math.sin(angle) * speed;
+    this.life = 1;
+    this.decay = Math.random() * 0.03 + 0.02;
+    this.size = Math.random() * 5 + 3;
+    this.color = color;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vy += 0.15;
+    this.life -= this.decay;
+    this.size *= 0.97;
+  }
+  draw(ctx) {
+    if (this.life <= 0) return;
+    ctx.globalAlpha = this.life;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = this.color.hex;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+class Orb {
+  constructor(col, row, colorIdx) {
+    this.col = col;
+    this.row = row;
+    this.colorIdx = colorIdx;
+    this.x = col * CELL + CELL / 2;
+    this.y = row * CELL + CELL / 2;
+    this.targetX = this.x;
+    this.targetY = this.y;
+    this.scale = 1;
+    this.targetScale = 1;
+    this.alpha = 1;
+    this.popping = false;
+    this.popTimer = 0;
+    this.hintGlow = 0;
+    this.velY = 0;
+    this.bouncing = false;
+    this.spawnScale = 0;
+    this.spawning = true;
+  }
+
+  setTarget(col, row) {
+    this.col = col;
+    this.row = row;
+    this.targetX = col * CELL + CELL / 2;
+    this.targetY = row * CELL + CELL / 2;
+  }
+
+  update(dt) {
+    if (this.spawning) {
+      this.spawnScale += dt * 6;
+      if (this.spawnScale >= 1) { this.spawnScale = 1; this.spawning = false; }
+    }
+
+    if (this.popping) {
+      this.popTimer += dt * 5;
+      this.scale = 1 + Math.sin(this.popTimer) * 0.3;
+      this.alpha = Math.max(0, 1 - this.popTimer / 2);
+      if (this.alpha <= 0) return true; // dead
+      return false;
+    }
+
+    // Smooth move toward target
+    const dx = this.targetX - this.x;
+    const dy = this.targetY - this.y;
+
+    if (this.bouncing) {
+      this.velY += 2800 * dt; // gravity
+      this.y += this.velY * dt;
+      if (this.y >= this.targetY) {
+        this.y = this.targetY;
+        this.velY = -this.velY * 0.3;
+        if (Math.abs(this.velY) < 30) {
+          this.velY = 0;
+          this.bouncing = false;
+        }
+      }
+      this.x += dx * 12 * dt;
+    } else {
+      this.x += dx * 14 * dt;
+      this.y += dy * 14 * dt;
+      if (Math.abs(dx) < 0.3 && Math.abs(dy) < 0.3) {
+        this.x = this.targetX;
+        this.y = this.targetY;
+      }
+    }
+
+    this.scale += (this.targetScale - this.scale) * 10 * dt;
+    return false;
+  }
+
+  draw(ctx) {
+    const s = this.scale * (this.spawning ? this.spawnScale : 1);
+    if (s <= 0.01 || this.alpha <= 0) return;
+    const r = (CELL / 2 - PADDING) * s;
+    const c = COLORS[this.colorIdx];
+
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+    ctx.translate(this.x, this.y);
+
+    // Shadow
+    ctx.beginPath();
+    ctx.arc(2, 3, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fill();
+
+    // Main circle
+    const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r);
+    grad.addColorStop(0, `rgba(${Math.min(255,c.r+80)},${Math.min(255,c.g+80)},${Math.min(255,c.b+80)},1)`);
+    grad.addColorStop(0.5, c.hex);
+    grad.addColorStop(1, `rgba(${Math.max(0,c.r-40)},${Math.max(0,c.g-40)},${Math.max(0,c.b-40)},1)`);
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Inner highlight
+    const hl = ctx.createRadialGradient(-r * 0.25, -r * 0.3, r * 0.05, -r * 0.2, -r * 0.25, r * 0.55);
+    hl.addColorStop(0, 'rgba(255,255,255,0.7)');
+    hl.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = hl;
+    ctx.fill();
+
+    // Hint glow
+    if (this.hintGlow > 0) {
+      ctx.beginPath();
+      ctx.arc(0, 0, r + 4, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255,255,255,${this.hintGlow * 0.6})`;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+}
+
+// ===== GAME STATE =====
+const game = {
+  grid: [],
+  orbs: [],
+  score: 0,
+  bestScore: parseInt(localStorage.getItem('colorMatchBest') || '0'),
+  chainCount: 0,
+  comboMultiplier: 1,
+  state: 'idle', // idle, swapping, popping, falling, checking
+  selected: null,
+  swapOrbs: null,
+  hintTimer: 0,
+  hintPair: null,
+  hintActive: false,
+  shaking: false,
+  animQueue: [],
+  lastTime: 0,
+
+  init() {
+    sizeCanvas();
+    this.grid = [];
+    this.orbs = [];
+    this.score = 0;
+    this.chainCount = 0;
+    this.comboMultiplier = 1;
+    this.state = 'idle';
+    this.selected = null;
+    this.hintTimer = 0;
+    this.hintPair = null;
+    this.hintActive = false;
+
+    document.getElementById('scoreDisplay').textContent = '0';
+    document.getElementById('comboDisplay').textContent = 'x1';
+    document.getElementById('bestDisplay').textContent = this.bestScore;
+    document.getElementById('gameOverOverlay').classList.remove('show');
+
+    // Build grid without initial matches
+    for (let r = 0; r < ROWS; r++) {
+      this.grid[r] = [];
+      for (let c = 0; c < COLS; c++) {
+        let ci;
+        do {
+          ci = Math.floor(Math.random() * 6);
+        } while (
+          (c >= 2 && this.grid[r][c-1] === ci && this.grid[r][c-2] === ci) ||
+          (r >= 2 && this.grid[r-1][c] === ci && this.grid[r-2][c] === ci)
+        );
+        this.grid[r][c] = ci;
+        const orb = new Orb(c, r, ci);
+        orb.y = -CELL * (ROWS - r + Math.random() * 3);
+        orb.bouncing = true;
+        orb.velY = 0;
+        this.orbs.push(orb);
+      }
+    }
+
+    particles = [];
+    this.lastTime = performance.now();
+    requestAnimationFrame(t => this.loop(t));
+  },
+
+  getOrb(col, row) {
+    return this.orbs.find(o => o.col === col && o.row === row && !o.popping);
+  },
+
+  restart() {
+    this.init();
+  },
+
+  findMatches() {
+    const matched = new Set();
+
+    // Horizontal
+    for (let r = 0; r < ROWS; r++) {
+      let run = 1;
+      for (let c = 1; c < COLS; c++) {
+        if (this.grid[r][c] === this.grid[r][c-1] && this.grid[r][c] >= 0) {
+          run++;
+        } else {
+          if (run >= 3) {
+            for (let k = 0; k < run; k++) matched.add(`${r},${c-1-k}`);
+          }
+          run = 1;
+        }
+      }
+      if (run >= 3) {
+        for (let k = 0; k < run; k++) matched.add(`${r},${COLS-1-k}`);
+      }
+    }
+
+    // Vertical
+    for (let c = 0; c < COLS; c++) {
+      let run = 1;
+      for (let r = 1; r < ROWS; r++) {
+        if (this.grid[r][c] === this.grid[r-1][c] && this.grid[r][c] >= 0) {
+          run++;
+        } else {
+          if (run >= 3) {
+            for (let k = 0; k < run; k++) matched.add(`${r-1-k},${c}`);
+          }
+          run = 1;
+        }
+      }
+      if (run >= 3) {
+        for (let k = 0; k < run; k++) matched.add(`${ROWS-1-k},${c}`);
+      }
+    }
+
+    return matched;
+  },
+
+  // Count individual match groups for scoring
+  scoreMatches(matched) {
+    if (matched.size === 0) return 0;
+
+    // Flood-fill to find connected groups of same color
+    const cells = [...matched].map(s => { const [r,c] = s.split(',').map(Number); return {r,c}; });
+    const visited = new Set();
+    let totalScore = 0;
+
+    for (const cell of cells) {
+      const key = `${cell.r},${cell.c}`;
+      if (visited.has(key)) continue;
+
+      // BFS for connected same-color cells within matched set
+      const color = this.grid[cell.r][cell.c];
+      const group = [];
+      const queue = [cell];
+      visited.add(key);
+
+      while (queue.length > 0) {
+        const cur = queue.shift();
+        group.push(cur);
+        const neighbors = [{r:cur.r-1,c:cur.c},{r:cur.r+1,c:cur.c},{r:cur.r,c:cur.c-1},{r:cur.r,c:cur.c+1}];
+        for (const n of neighbors) {
+          const nk = `${n.r},${n.c}`;
+          if (!visited.has(nk) && matched.has(nk) && n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS && this.grid[n.r][n.c] === color) {
+            visited.add(nk);
+            queue.push(n);
+          }
+        }
+      }
+
+      const len = group.length;
+      if (len === 3) totalScore += 30;
+      else if (len === 4) totalScore += 80;
+      else totalScore += 150 + (len - 5) * 50;
+    }
+
+    return totalScore;
+  },
+
+  popMatches(matched) {
+    if (matched.size === 0) return false;
+
+    this.chainCount++;
+    if (this.chainCount === 1) this.comboMultiplier = 1;
+    else if (this.chainCount === 2) this.comboMultiplier = 1.5;
+    else if (this.chainCount === 3) this.comboMultiplier = 2;
+    else this.comboMultiplier = 2 + (this.chainCount - 3) * 0.5;
+
+    const baseScore = this.scoreMatches(matched);
+    const finalScore = Math.round(baseScore * this.comboMultiplier);
+    this.score += finalScore;
+
+    if (this.score > this.bestScore) {
+      this.bestScore = this.score;
+      localStorage.setItem('colorMatchBest', this.bestScore);
+    }
+
+    document.getElementById('scoreDisplay').textContent = this.score;
+    document.getElementById('bestDisplay').textContent = this.bestScore;
+    document.getElementById('comboDisplay').textContent = this.comboMultiplier > 1 ? `x${this.comboMultiplier}` : 'x1';
+
+    if (this.chainCount >= 2) {
+      const ct = document.getElementById('comboText');
+      ct.textContent = `콤보 x${this.comboMultiplier}!`;
+      ct.classList.remove('show');
+      void ct.offsetWidth;
+      ct.classList.add('show');
+      AudioEngine.combo(this.chainCount);
+      gridContainer.classList.remove('shake');
+      void gridContainer.offsetWidth;
+      gridContainer.classList.add('shake');
+    }
+
+    AudioEngine.pop(this.chainCount);
+
+    // Pop orbs + particles
+    for (const key of matched) {
+      const [r, c] = key.split(',').map(Number);
+      const orb = this.getOrb(c, r);
+      if (orb) {
+        orb.popping = true;
+        // Spawn particles
+        for (let i = 0; i < 8; i++) {
+          particles.push(new Particle(orb.x, orb.y, COLORS[orb.colorIdx]));
+        }
+      }
+      this.grid[r][c] = -1;
+    }
+
+    this.state = 'popping';
+    setTimeout(() => this.applyGravity(), 300);
+    return true;
+  },
+
+  applyGravity() {
+    // Remove dead orbs
+    this.orbs = this.orbs.filter(o => !o.popping || o.alpha > 0);
+    this.orbs = this.orbs.filter(o => !o.popping);
+
+    this.state = 'falling';
+    let moved = false;
+
+    for (let c = 0; c < COLS; c++) {
+      let writeRow = ROWS - 1;
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (this.grid[r][c] >= 0) {
+          if (r !== writeRow) {
+            this.grid[writeRow][c] = this.grid[r][c];
+            this.grid[r][c] = -1;
+            const orb = this.orbs.find(o => o.col === c && o.row === r && !o.popping);
+            if (orb) {
+              orb.setTarget(c, writeRow);
+              orb.bouncing = true;
+              orb.velY = 0;
+            }
+            moved = true;
+          }
+          writeRow--;
+        }
+      }
+
+      // Spawn new orbs from top
+      for (let r = writeRow; r >= 0; r--) {
+        const ci = Math.floor(Math.random() * 6);
+        this.grid[r][c] = ci;
+        const orb = new Orb(c, r, ci);
+        orb.y = -(writeRow - r + 1) * CELL - CELL;
+        orb.bouncing = true;
+        orb.velY = 0;
+        this.orbs.push(orb);
+        moved = true;
+      }
+    }
+
+    // After gravity settles, check for new matches
+    setTimeout(() => this.checkAfterFall(), 350);
+  },
+
+  checkAfterFall() {
+    const matches = this.findMatches();
+    if (matches.size > 0) {
+      this.popMatches(matches);
+    } else {
+      this.chainCount = 0;
+      this.comboMultiplier = 1;
+      document.getElementById('comboDisplay').textContent = 'x1';
+      // Check if any moves exist
+      if (!this.hasValidMoves()) {
+        this.gameOver();
+      } else {
+        this.state = 'idle';
+        this.hintTimer = 0;
+        this.hintActive = false;
+        this.clearHint();
+      }
+    }
+  },
+
+  hasValidMoves() {
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        // Try swap right
+        if (c < COLS - 1) {
+          this.swapGrid(r, c, r, c + 1);
+          if (this.findMatches().size > 0) { this.swapGrid(r, c, r, c + 1); return true; }
+          this.swapGrid(r, c, r, c + 1);
+        }
+        // Try swap down
+        if (r < ROWS - 1) {
+          this.swapGrid(r, c, r + 1, c);
+          if (this.findMatches().size > 0) { this.swapGrid(r, c, r + 1, c); return true; }
+          this.swapGrid(r, c, r + 1, c);
+        }
+      }
+    }
+    return false;
+  },
+
+  findHintMove() {
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (c < COLS - 1) {
+          this.swapGrid(r, c, r, c + 1);
+          if (this.findMatches().size > 0) { this.swapGrid(r, c, r, c + 1); return [{r,c},{r,c:c+1}]; }
+          this.swapGrid(r, c, r, c + 1);
+        }
+        if (r < ROWS - 1) {
+          this.swapGrid(r, c, r + 1, c);
+          if (this.findMatches().size > 0) { this.swapGrid(r, c, r + 1, c); return [{r,c},{r:r+1,c}]; }
+          this.swapGrid(r, c, r + 1, c);
+        }
+      }
+    }
+    return null;
+  },
+
+  swapGrid(r1, c1, r2, c2) {
+    const tmp = this.grid[r1][c1];
+    this.grid[r1][c1] = this.grid[r2][c2];
+    this.grid[r2][c2] = tmp;
+  },
+
+  clearHint() {
+    this.orbs.forEach(o => o.hintGlow = 0);
+    this.hintPair = null;
+  },
+
+  trySwap(c1, r1, c2, r2) {
+    if (this.state !== 'idle') return;
+    if (c1 < 0 || c1 >= COLS || r1 < 0 || r1 >= ROWS) return;
+    if (c2 < 0 || c2 >= COLS || r2 < 0 || r2 >= ROWS) return;
+    if (Math.abs(c1-c2) + Math.abs(r1-r2) !== 1) return;
+
+    this.clearHint();
+    this.hintTimer = 0;
+    this.hintActive = false;
+    this.state = 'swapping';
+
+    AudioEngine.swap();
+
+    // Swap in grid
+    this.swapGrid(r1, c1, r2, c2);
+
+    // Animate orbs
+    const orb1 = this.getOrb(c1, r1) || this.orbs.find(o => o.col === c1 && o.row === r1);
+    const orb2 = this.getOrb(c2, r2) || this.orbs.find(o => o.col === c2 && o.row === r2);
+
+    // Find the actual orbs before the swap (they still have old col/row)
+    const a = this.orbs.find(o => o.col === c1 && o.row === r1 && !o.popping);
+    const b = this.orbs.find(o => o.col === c2 && o.row === r2 && !o.popping);
+
+    if (a) a.setTarget(c2, r2);
+    if (b) b.setTarget(c1, r1);
+    // Actually update orb col/row
+    if (a) { a.col = c2; a.row = r2; }
+    if (b) { b.col = c1; b.row = r1; }
+
+    setTimeout(() => {
+      const matches = this.findMatches();
+      if (matches.size > 0) {
+        this.chainCount = 0;
+        this.popMatches(matches);
+      } else {
+        // Swap back
+        this.swapGrid(r1, c1, r2, c2);
+        if (a) { a.setTarget(c1, r1); a.col = c1; a.row = r1; }
+        if (b) { b.setTarget(c2, r2); b.col = c2; b.row = r2; }
+        setTimeout(() => { this.state = 'idle'; this.hintTimer = 0; }, 200);
+      }
+    }, 200);
+  },
+
+  gameOver() {
+    this.state = 'gameover';
+    AudioEngine.gameOver();
+    document.getElementById('finalScore').textContent = this.score;
+    document.getElementById('bestLabel').textContent = `최고 기록: ${this.bestScore}`;
+    setTimeout(() => {
+      document.getElementById('gameOverOverlay').classList.add('show');
+    }, 500);
+  },
+
+  loop(time) {
+    const dt = Math.min((time - this.lastTime) / 1000, 0.05);
+    this.lastTime = time;
+
+    // Hint timer
+    if (this.state === 'idle') {
+      this.hintTimer += dt;
+      if (this.hintTimer > 5 && !this.hintActive) {
+        this.hintActive = true;
+        this.hintPair = this.findHintMove();
+      }
+      if (this.hintActive && this.hintPair) {
+        const glow = (Math.sin(time * 0.005) * 0.5 + 0.5);
+        for (const p of this.hintPair) {
+          const o = this.getOrb(p.c, p.r);
+          if (o) o.hintGlow = glow;
+        }
+      }
+    }
+
+    // Update orbs
+    this.orbs = this.orbs.filter(o => {
+      const dead = o.update(dt);
+      return !dead;
+    });
+
+    // Update particles
+    particles.forEach(p => p.update());
+    particles = particles.filter(p => p.life > 0);
+
+    // Draw
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Grid bg
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        ctx.fillStyle = (r + c) % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.01)';
+        ctx.fillRect(c * CELL, r * CELL, CELL, CELL);
+      }
+    }
+
+    // Draw orbs
+    this.orbs.forEach(o => o.draw(ctx));
+
+    // Draw selection
+    if (this.selected && this.state === 'idle') {
+      const sx = this.selected.c * CELL + CELL / 2;
+      const sy = this.selected.r * CELL + CELL / 2;
+      ctx.beginPath();
+      ctx.arc(sx, sy, CELL / 2 - 1, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+
+    // Particles
+    particles.forEach(p => p.draw(ctx));
+
+    // Sparkles
+    drawSparkles(time);
+
+    requestAnimationFrame(t => this.loop(t));
+  }
+};
+
+// ===== INPUT HANDLING =====
+let dragStart = null;
+let dragging = false;
+
+function getCellFromPos(px, py) {
+  const rect = canvas.getBoundingClientRect();
+  const x = px - rect.left;
+  const y = py - rect.top;
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const col = Math.floor(x * scaleX / CELL);
+  const row = Math.floor(y * scaleY / CELL);
+  if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return null;
+  return { c: col, r: row };
+}
+
+function onPointerDown(e) {
+  e.preventDefault();
+  AudioEngine.init();
+  AudioEngine.resume();
+  const p = e.touches ? e.touches[0] : e;
+  const cell = getCellFromPos(p.clientX, p.clientY);
+  if (!cell || game.state !== 'idle') return;
+
+  if (game.selected) {
+    const dx = Math.abs(cell.c - game.selected.c);
+    const dy = Math.abs(cell.r - game.selected.r);
+    if (dx + dy === 1) {
+      game.trySwap(game.selected.c, game.selected.r, cell.c, cell.r);
+      game.selected = null;
+      return;
+    }
+  }
+
+  dragStart = { x: p.clientX, y: p.clientY, c: cell.c, r: cell.r };
+  dragging = false;
+  game.selected = cell;
+}
+
+function onPointerMove(e) {
+  if (!dragStart || game.state !== 'idle') return;
+  e.preventDefault();
+  const p = e.touches ? e.touches[0] : e;
+  const dx = p.clientX - dragStart.x;
+  const dy = p.clientY - dragStart.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  if (dist > 15 && !dragging) {
+    dragging = true;
+    let sc, sr;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      sc = dragStart.c + (dx > 0 ? 1 : -1);
+      sr = dragStart.r;
+    } else {
+      sc = dragStart.c;
+      sr = dragStart.r + (dy > 0 ? 1 : -1);
+    }
+    game.trySwap(dragStart.c, dragStart.r, sc, sr);
+    game.selected = null;
+    dragStart = null;
+  }
+}
+
+function onPointerUp(e) {
+  dragStart = null;
+  dragging = false;
+}
+
+canvas.addEventListener('mousedown', onPointerDown);
+canvas.addEventListener('mousemove', onPointerMove);
+canvas.addEventListener('mouseup', onPointerUp);
+canvas.addEventListener('touchstart', onPointerDown, { passive: false });
+canvas.addEventListener('touchmove', onPointerMove, { passive: false });
+canvas.addEventListener('touchend', onPointerUp);
+
+window.addEventListener('resize', () => {
+  sizeCanvas();
+  resizeSparkle();
+  // Reposition orbs
+  game.orbs.forEach(o => {
+    o.targetX = o.col * CELL + CELL / 2;
+    o.targetY = o.row * CELL + CELL / 2;
+    o.x = o.targetX;
+    o.y = o.targetY;
+  });
+});
+
+// ===== START =====
+game.init();
+</script>
+</body>
+</html>

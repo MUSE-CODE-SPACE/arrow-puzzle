@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>물 정렬 퍼즐 - Puzzle Arcade</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:#0a0a1a;color:#fff;font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden;user-select:none}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 30%,rgba(34,211,238,.06) 0%,transparent 50%),radial-gradient(ellipse at 80% 70%,rgba(59,130,246,.06) 0%,transparent 50%),radial-gradient(ellipse at 50% 50%,rgba(168,85,247,.04) 0%,transparent 50%);z-index:-2;animation:bgShift 10s ease-in-out infinite alternate}
+@keyframes bgShift{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(15deg)}}
+
+/* Particles */
+.particle{position:fixed;width:3px;height:3px;border-radius:50%;pointer-events:none;z-index:-1;opacity:0;animation:particleFade 6s infinite}
+@keyframes particleFade{0%{opacity:0;transform:translateY(0)}20%{opacity:.4}80%{opacity:.2}100%{opacity:0;transform:translateY(-120px)}}
+
+/* Layout */
+.container{max-width:900px;margin:0 auto;padding:10px 16px;min-height:100vh;display:flex;flex-direction:column}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 0;flex-shrink:0}
+.back-btn{display:flex;align-items:center;gap:6px;color:#888;text-decoration:none;font-size:.9rem;font-weight:600;transition:color .2s;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.back-btn:hover{color:#22d3ee;border-color:rgba(34,211,238,.2)}
+.title-area{text-align:center}
+.title-area h1{font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,#22d3ee,#3b82f6,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.title-area .level-label{font-size:.8rem;color:#666;margin-top:2px}
+.header-right{display:flex;gap:8px}
+
+/* Ad Banner */
+.ad-banner{background:rgba(255,255,255,.02);border:1px dashed rgba(255,255,255,.08);border-radius:10px;padding:14px;text-align:center;color:#333;font-size:.75rem;margin:8px 0;min-height:60px;display:flex;align-items:center;justify-content:center;flex-direction:column;flex-shrink:0}
+.ad-label{font-size:.65rem;color:#333;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+
+/* Screen management */
+.screen{display:none;flex:1;flex-direction:column}
+.screen.active{display:flex}
+
+/* Level Select */
+.level-select-header{text-align:center;padding:20px 0 10px}
+.level-select-header h2{font-size:1.6rem;font-weight:800;background:linear-gradient(135deg,#22d3ee,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.level-select-header p{color:#666;font-size:.85rem;margin-top:4px}
+.level-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:10px;padding:16px 0;overflow-y:auto;flex:1}
+.level-btn{aspect-ratio:1;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;position:relative}
+.level-btn:hover{border-color:rgba(34,211,238,.3);transform:translateY(-2px);box-shadow:0 4px 20px rgba(34,211,238,.1)}
+.level-btn .num{font-size:1.2rem;font-weight:800;color:#aaa}
+.level-btn .stars{font-size:.65rem;margin-top:3px;color:#555;letter-spacing:1px}
+.level-btn .stars .filled{color:#fbbf24}
+.level-btn.completed{border-color:rgba(34,211,238,.15);background:rgba(34,211,238,.05)}
+.level-btn.completed .num{color:#22d3ee}
+.level-btn.locked{opacity:.35;pointer-events:none}
+.level-btn.current{border-color:rgba(168,85,247,.4);background:rgba(168,85,247,.08);box-shadow:0 0 20px rgba(168,85,247,.15)}
+.level-btn.current .num{color:#a855f7}
+
+/* Game area */
+.game-screen{align-items:center}
+.game-info-bar{display:flex;justify-content:center;gap:24px;padding:10px 0;flex-shrink:0}
+.info-item{text-align:center}
+.info-item .val{font-size:1.4rem;font-weight:800;color:#22d3ee}
+.info-item .lbl{font-size:.7rem;color:#666;margin-top:1px}
+.tube-area{flex:1;display:flex;align-items:center;justify-content:center;padding:10px 0;position:relative;overflow:hidden}
+.tubes-container{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:flex-end;padding:10px}
+.tube-wrapper{display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform .2s;position:relative}
+.tube-wrapper.selected{transform:translateY(-16px)}
+.tube-wrapper.selected .tube{box-shadow:0 0 25px rgba(168,85,247,.5),0 0 50px rgba(168,85,247,.2);border-color:rgba(168,85,247,.6)}
+.tube-wrapper.hint{animation:hintPulse 1s ease-in-out infinite}
+@keyframes hintPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+
+/* Tube */
+.tube{width:52px;height:180px;border:2px solid rgba(255,255,255,.15);border-radius:0 0 20px 20px;border-top:none;position:relative;overflow:hidden;background:rgba(255,255,255,.03);backdrop-filter:blur(4px);transition:box-shadow .2s,border-color .2s}
+.tube::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(90deg,rgba(255,255,255,.06) 0%,transparent 40%,transparent 60%,rgba(255,255,255,.03) 100%);pointer-events:none;z-index:2}
+.tube-rim{width:60px;height:8px;border-radius:4px 4px 0 0;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.15);border-bottom:none;margin-bottom:-1px}
+.liquid-segment{width:100%;position:absolute;left:0;transition:all .3s ease}
+.liquid-segment::after{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:rgba(255,255,255,.2);border-radius:0 0 2px 2px}
+
+/* Pour animation overlay */
+.pour-liquid{position:absolute;pointer-events:none;z-index:10;border-radius:3px}
+
+/* Controls */
+.controls{display:flex;gap:10px;justify-content:center;padding:12px 0;flex-shrink:0}
+.ctrl-btn{padding:10px 20px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#aaa;font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+.ctrl-btn:hover{border-color:rgba(34,211,238,.3);color:#22d3ee;background:rgba(34,211,238,.06)}
+.ctrl-btn:disabled{opacity:.3;pointer-events:none}
+.ctrl-btn.primary{border-color:rgba(168,85,247,.3);color:#a855f7;background:rgba(168,85,247,.08)}
+.ctrl-btn.primary:hover{border-color:rgba(168,85,247,.5);background:rgba(168,85,247,.15)}
+
+/* Win overlay */
+.win-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:100;animation:fadeIn .3s}
+.win-overlay.active{display:flex}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.win-card{background:rgba(20,20,40,.95);border:1px solid rgba(168,85,247,.2);border-radius:24px;padding:36px 40px;text-align:center;max-width:340px;width:90%;animation:popIn .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.win-card h2{font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,#22d3ee,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.win-card .win-stars{font-size:2.2rem;margin:12px 0;letter-spacing:4px}
+.win-card .win-stars .empty{opacity:.2}
+.win-card .win-moves{color:#888;font-size:.9rem;margin-bottom:20px}
+.win-card .win-btns{display:flex;gap:10px;justify-content:center}
+.win-btn{padding:12px 24px;border-radius:12px;border:none;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s}
+.win-btn.next{background:linear-gradient(135deg,#22d3ee,#3b82f6);color:#fff}
+.win-btn.next:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(34,211,238,.3)}
+.win-btn.menu{background:rgba(255,255,255,.06);color:#aaa;border:1px solid rgba(255,255,255,.1)}
+.win-btn.menu:hover{color:#fff;border-color:rgba(255,255,255,.2)}
+
+/* Responsive */
+@media(max-width:480px){
+  .tube{width:44px;height:152px}
+  .tube-rim{width:52px}
+  .tubes-container{gap:8px}
+  .title-area h1{font-size:1.1rem}
+  .win-card{padding:28px 24px}
+}
+@media(max-width:360px){
+  .tube{width:38px;height:136px}
+  .tube-rim{width:46px}
+  .tubes-container{gap:6px}
+}
+@media(min-width:768px){
+  .tube{width:58px;height:200px}
+  .tube-rim{width:66px}
+}
+
+/* Confetti */
+.confetti{position:fixed;pointer-events:none;z-index:101}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <a href="../index.html" class="back-btn">← 홈</a>
+    <div class="title-area">
+      <h1>🧪 물 정렬 퍼즐</h1>
+      <div class="level-label" id="headerLabel">레벨 선택</div>
+    </div>
+    <div class="header-right"></div>
+  </div>
+
+  <div class="ad-banner">
+    <div class="ad-label">Advertisement</div>
+    <div>광고 영역 (320x50)</div>
+  </div>
+
+  <!-- Level Select Screen -->
+  <div class="screen active" id="levelScreen">
+    <div class="level-select-header">
+      <h2>레벨 선택</h2>
+      <p>색깔 물을 옮겨서 같은 색끼리 정렬하세요!</p>
+    </div>
+    <div class="level-grid" id="levelGrid"></div>
+  </div>
+
+  <!-- Game Screen -->
+  <div class="screen" id="gameScreen">
+    <div class="game-info-bar">
+      <div class="info-item"><div class="val" id="moveCount">0</div><div class="lbl">이동</div></div>
+      <div class="info-item"><div class="val" id="levelNum">1</div><div class="lbl">레벨</div></div>
+    </div>
+    <div class="tube-area" id="tubeArea">
+      <div class="tubes-container" id="tubesContainer"></div>
+    </div>
+    <div class="controls">
+      <button class="ctrl-btn" id="undoBtn" onclick="undoMove()" disabled>↩ 되돌리기</button>
+      <button class="ctrl-btn" id="resetBtn" onclick="resetLevel()">🔄 다시하기</button>
+      <button class="ctrl-btn primary" id="levelsBtn" onclick="showScreen('levelScreen')">📋 레벨</button>
+    </div>
+  </div>
+
+  <div class="ad-banner" style="margin-top:auto">
+    <div class="ad-label">Advertisement</div>
+    <div>광고 영역 (320x100)</div>
+  </div>
+</div>
+
+<!-- Win Overlay -->
+<div class="win-overlay" id="winOverlay">
+  <div class="win-card">
+    <h2>클리어! 🎉</h2>
+    <div class="win-stars" id="winStars"></div>
+    <div class="win-moves" id="winMoves"></div>
+    <div class="win-btns">
+      <button class="win-btn menu" onclick="closeWin();showScreen('levelScreen')">레벨 목록</button>
+      <button class="win-btn next" id="nextLevelBtn" onclick="closeWin();nextLevel()">다음 레벨 →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== SEEDED RNG ==========
+class SeededRNG {
+  constructor(seed) { this.seed = seed % 2147483647; if (this.seed <= 0) this.seed += 2147483646; }
+  next() { this.seed = (this.seed * 16807) % 2147483647; return (this.seed - 1) / 2147483646; }
+  nextInt(min, max) { return Math.floor(this.next() * (max - min + 1)) + min; }
+  shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = this.nextInt(0, i); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+}
+
+// ========== COLORS ==========
+const COLORS = [
+  { name: '빨강', base: '#ef4444', light: '#f87171', dark: '#dc2626' },
+  { name: '파랑', base: '#3b82f6', light: '#60a5fa', dark: '#2563eb' },
+  { name: '초록', base: '#22c55e', light: '#4ade80', dark: '#16a34a' },
+  { name: '노랑', base: '#eab308', light: '#facc15', dark: '#ca8a04' },
+  { name: '보라', base: '#a855f7', light: '#c084fc', dark: '#9333ea' },
+  { name: '주황', base: '#f97316', light: '#fb923c', dark: '#ea580c' },
+  { name: '분홍', base: '#ec4899', light: '#f472b6', dark: '#db2777' },
+  { name: '하늘', base: '#06b6d4', light: '#22d3ee', dark: '#0891b2' },
+  { name: '라임', base: '#84cc16', light: '#a3e635', dark: '#65a30d' },
+  { name: '코랄', base: '#fb7185', light: '#fda4af', dark: '#f43f5e' },
+  { name: '남색', base: '#6366f1', light: '#818cf8', dark: '#4f46e5' },
+  { name: '민트', base: '#2dd4bf', light: '#5eead4', dark: '#14b8a6' },
+];
+
+const TUBE_CAPACITY = 4;
+const TOTAL_LEVELS = 120;
+
+// ========== LEVEL CONFIG ==========
+function getLevelConfig(level) {
+  if (level <= 5) return { colors: 3, empties: 1 };
+  if (level <= 15) return { colors: 4, empties: 2 };
+  if (level <= 30) return { colors: 5, empties: 2 };
+  if (level <= 45) return { colors: 6, empties: 2 };
+  if (level <= 60) return { colors: 7, empties: 2 };
+  if (level <= 75) return { colors: 8, empties: 2 };
+  if (level <= 90) return { colors: 9, empties: 2 };
+  return { colors: 10, empties: 2 };
+}
+
+function getStarThresholds(level) {
+  const cfg = getLevelConfig(level);
+  const base = cfg.colors * 3;
+  return { three: base, two: base + cfg.colors, one: base + cfg.colors * 3 };
+}
+
+// ========== LEVEL GENERATION ==========
+function generateLevel(level) {
+  const cfg = getLevelConfig(level);
+  const rng = new SeededRNG(level * 7919 + 1337);
+  const numColors = cfg.colors;
+  const numTubes = numColors + cfg.empties;
+
+  // Create all segments
+  let segments = [];
+  for (let c = 0; c < numColors; c++) {
+    for (let i = 0; i < TUBE_CAPACITY; i++) segments.push(c);
+  }
+
+  // Shuffle with solvability approach: shuffle and distribute
+  let tubes;
+  let attempts = 0;
+  do {
+    const shuffled = [...segments];
+    const tempRng = new SeededRNG(level * 7919 + 1337 + attempts * 31);
+    tempRng.shuffle(shuffled);
+
+    tubes = [];
+    let idx = 0;
+    for (let t = 0; t < numColors; t++) {
+      tubes.push(shuffled.slice(idx, idx + TUBE_CAPACITY));
+      idx += TUBE_CAPACITY;
+    }
+    for (let t = 0; t < cfg.empties; t++) {
+      tubes.push([]);
+    }
+    attempts++;
+  } while (isSolved(tubes) && attempts < 100);
+
+  return tubes;
+}
+
+function isSolved(tubes) {
+  for (const tube of tubes) {
+    if (tube.length === 0) continue;
+    if (tube.length !== TUBE_CAPACITY) return false;
+    if (!tube.every(c => c === tube[0])) return false;
+  }
+  return true;
+}
+
+// ========== GAME STATE ==========
+let currentLevel = 1;
+let tubes = [];
+let selectedTube = -1;
+let moveCount = 0;
+let history = [];
+let animating = false;
+let progress = {};
+
+function loadProgress() {
+  try { progress = JSON.parse(localStorage.getItem('waterSort_progress') || '{}'); } catch { progress = {}; }
+}
+
+function saveProgress() {
+  localStorage.setItem('waterSort_progress', JSON.stringify(progress));
+}
+
+// ========== AUDIO ==========
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playPourSound() {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(400, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.type = 'sine';
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+
+    // Bubble sounds
+    for (let i = 0; i < 4; i++) {
+      const b = ctx.createOscillator();
+      const bg = ctx.createGain();
+      b.connect(bg); bg.connect(ctx.destination);
+      b.frequency.value = 600 + Math.random() * 400;
+      bg.gain.setValueAtTime(0.03, ctx.currentTime + i * 0.06);
+      bg.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.06 + 0.08);
+      b.start(ctx.currentTime + i * 0.06);
+      b.stop(ctx.currentTime + i * 0.06 + 0.08);
+    }
+  } catch {}
+}
+
+function playCompleteSound() {
+  try {
+    const ctx = getAudioCtx();
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.12);
+      gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + i * 0.12 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.4);
+      osc.start(ctx.currentTime + i * 0.12);
+      osc.stop(ctx.currentTime + i * 0.12 + 0.4);
+    });
+  } catch {}
+}
+
+function playSelectSound() {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 520;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.06, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.1);
+  } catch {}
+}
+
+function playErrorSound() {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 200;
+    osc.type = 'square';
+    gain.gain.setValueAtTime(0.04, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.15);
+  } catch {}
+}
+
+// ========== RENDERING ==========
+function renderTubes() {
+  const container = document.getElementById('tubesContainer');
+  container.innerHTML = '';
+
+  tubes.forEach((tube, i) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'tube-wrapper' + (i === selectedTube ? ' selected' : '');
+    wrapper.onclick = () => onTubeTap(i);
+
+    const rim = document.createElement('div');
+    rim.className = 'tube-rim';
+    wrapper.appendChild(rim);
+
+    const tubeEl = document.createElement('div');
+    tubeEl.className = 'tube';
+    tubeEl.id = 'tube-' + i;
+
+    // Render liquid segments bottom-up
+    const segH = 100 / TUBE_CAPACITY;
+    tube.forEach((color, j) => {
+      const seg = document.createElement('div');
+      seg.className = 'liquid-segment';
+      const c = COLORS[color];
+      seg.style.height = segH + '%';
+      seg.style.bottom = (j * segH) + '%';
+      seg.style.background = `linear-gradient(180deg, ${c.light} 0%, ${c.base} 40%, ${c.dark} 100%)`;
+      tubeEl.appendChild(seg);
+    });
+
+    wrapper.appendChild(tubeEl);
+    container.appendChild(wrapper);
+  });
+}
+
+// ========== GAME LOGIC ==========
+function getTopColor(tube) {
+  return tube.length > 0 ? tube[tube.length - 1] : -1;
+}
+
+function getTopCount(tube) {
+  if (tube.length === 0) return 0;
+  const top = tube[tube.length - 1];
+  let count = 0;
+  for (let i = tube.length - 1; i >= 0; i--) {
+    if (tube[i] === top) count++;
+    else break;
+  }
+  return count;
+}
+
+function canPour(srcIdx, dstIdx) {
+  if (srcIdx === dstIdx) return false;
+  const src = tubes[srcIdx];
+  const dst = tubes[dstIdx];
+  if (src.length === 0) return false;
+  if (dst.length >= TUBE_CAPACITY) return false;
+  if (dst.length === 0) return true;
+  const srcTop = src[src.length - 1];
+  const dstTop = dst[dst.length - 1];
+  if (srcTop !== dstTop) return false;
+  // Check space
+  const pourCount = Math.min(getTopCount(src), TUBE_CAPACITY - dst.length);
+  return pourCount > 0;
+}
+
+function doPour(srcIdx, dstIdx) {
+  const src = tubes[srcIdx];
+  const dst = tubes[dstIdx];
+  const topColor = src[src.length - 1];
+  const maxPour = TUBE_CAPACITY - dst.length;
+  let count = 0;
+  for (let i = src.length - 1; i >= 0 && src[i] === topColor && count < maxPour; i--) {
+    count++;
+  }
+
+  // Save for undo
+  history.push({ src: srcIdx, dst: dstIdx, count, color: topColor });
+
+  // Move segments
+  for (let i = 0; i < count; i++) {
+    src.pop();
+    dst.push(topColor);
+  }
+
+  moveCount++;
+  document.getElementById('moveCount').textContent = moveCount;
+  document.getElementById('undoBtn').disabled = false;
+
+  return { count, color: topColor };
+}
+
+function onTubeTap(idx) {
+  if (animating) return;
+
+  if (selectedTube === -1) {
+    // Select source
+    if (tubes[idx].length === 0) return;
+    selectedTube = idx;
+    playSelectSound();
+    renderTubes();
+  } else if (selectedTube === idx) {
+    // Deselect
+    selectedTube = -1;
+    renderTubes();
+  } else {
+    // Attempt pour
+    if (canPour(selectedTube, idx)) {
+      animatePour(selectedTube, idx);
+    } else {
+      playErrorSound();
+      // Shake destination
+      const wrapper = document.querySelectorAll('.tube-wrapper')[idx];
+      wrapper.style.animation = 'none';
+      wrapper.offsetHeight;
+      wrapper.style.animation = 'shake .3s ease';
+      // Select new tube instead
+      if (tubes[idx].length > 0) {
+        selectedTube = idx;
+        playSelectSound();
+        renderTubes();
+      } else {
+        selectedTube = -1;
+        renderTubes();
+      }
+    }
+  }
+}
+
+function animatePour(srcIdx, dstIdx) {
+  animating = true;
+  const { count, color } = doPour(srcIdx, dstIdx);
+
+  playPourSound();
+  selectedTube = -1;
+  renderTubes();
+
+  // Simple fill animation effect on destination
+  const dstTube = document.getElementById('tube-' + dstIdx);
+  const segments = dstTube.querySelectorAll('.liquid-segment');
+  const newSegs = Array.from(segments).slice(-count);
+  newSegs.forEach((seg, i) => {
+    seg.style.opacity = '0';
+    seg.style.transform = 'scaleY(0)';
+    seg.style.transformOrigin = 'top';
+    setTimeout(() => {
+      seg.style.transition = 'all .25s cubic-bezier(.34,1.56,.64,1)';
+      seg.style.opacity = '1';
+      seg.style.transform = 'scaleY(1)';
+    }, i * 60 + 50);
+  });
+
+  // Splash effect
+  setTimeout(() => {
+    createSplash(dstIdx, color);
+  }, 100);
+
+  setTimeout(() => {
+    animating = false;
+    checkWin();
+  }, count * 60 + 300);
+}
+
+function createSplash(tubeIdx, colorIdx) {
+  const wrappers = document.querySelectorAll('.tube-wrapper');
+  if (!wrappers[tubeIdx]) return;
+  const rect = wrappers[tubeIdx].getBoundingClientRect();
+  const c = COLORS[colorIdx];
+
+  for (let i = 0; i < 6; i++) {
+    const dot = document.createElement('div');
+    dot.style.cssText = `position:fixed;width:4px;height:4px;border-radius:50%;background:${c.light};z-index:20;pointer-events:none;`;
+    dot.style.left = (rect.left + rect.width / 2 + (Math.random() - .5) * 20) + 'px';
+    dot.style.top = (rect.top + 30) + 'px';
+    document.body.appendChild(dot);
+
+    const dx = (Math.random() - .5) * 40;
+    const dy = -Math.random() * 30 - 10;
+    dot.animate([
+      { transform: 'translate(0,0) scale(1)', opacity: 1 },
+      { transform: `translate(${dx}px,${dy}px) scale(0)`, opacity: 0 }
+    ], { duration: 400, easing: 'ease-out' }).onfinish = () => dot.remove();
+  }
+}
+
+// Shake animation
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = '@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}';
+document.head.appendChild(shakeStyle);
+
+function undoMove() {
+  if (history.length === 0 || animating) return;
+  const move = history.pop();
+  const src = tubes[move.src];
+  const dst = tubes[move.dst];
+  for (let i = 0; i < move.count; i++) {
+    dst.pop();
+    src.push(move.color);
+  }
+  moveCount--;
+  document.getElementById('moveCount').textContent = moveCount;
+  document.getElementById('undoBtn').disabled = history.length === 0;
+  selectedTube = -1;
+  renderTubes();
+}
+
+function resetLevel() {
+  if (animating) return;
+  startLevel(currentLevel);
+}
+
+function checkWin() {
+  if (!isSolved(tubes)) return;
+  playCompleteSound();
+
+  // Calculate stars
+  const thresh = getStarThresholds(currentLevel);
+  let stars = 1;
+  if (moveCount <= thresh.two) stars = 2;
+  if (moveCount <= thresh.three) stars = 3;
+
+  // Save progress
+  const prev = progress[currentLevel];
+  if (!prev || prev.stars < stars) {
+    progress[currentLevel] = { stars, moves: moveCount };
+  }
+  // Unlock next
+  if (!progress[currentLevel + 1] && currentLevel < TOTAL_LEVELS) {
+    progress[currentLevel + 1] = progress[currentLevel + 1] || { stars: 0, moves: 0 };
+  }
+  saveProgress();
+
+  // Show win
+  setTimeout(() => showWin(stars), 400);
+}
+
+function showWin(stars) {
+  const overlay = document.getElementById('winOverlay');
+  overlay.classList.add('active');
+
+  let starsHtml = '';
+  for (let i = 0; i < 3; i++) {
+    starsHtml += i < stars ? '<span class="filled">⭐</span>' : '<span class="empty">⭐</span>';
+  }
+  document.getElementById('winStars').innerHTML = starsHtml;
+  document.getElementById('winMoves').textContent = `${moveCount}회 이동으로 클리어!`;
+  document.getElementById('nextLevelBtn').style.display = currentLevel < TOTAL_LEVELS ? '' : 'none';
+
+  spawnConfetti();
+}
+
+function closeWin() {
+  document.getElementById('winOverlay').classList.remove('active');
+}
+
+function nextLevel() {
+  if (currentLevel < TOTAL_LEVELS) {
+    startLevel(currentLevel + 1);
+  }
+}
+
+// ========== CONFETTI ==========
+function spawnConfetti() {
+  for (let i = 0; i < 40; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    const size = 6 + Math.random() * 6;
+    const color = COLORS[Math.floor(Math.random() * COLORS.length)].base;
+    el.style.cssText = `width:${size}px;height:${size}px;background:${color};border-radius:${Math.random()>.5?'50%':'2px'};left:${Math.random()*100}vw;top:-10px;`;
+    document.body.appendChild(el);
+
+    const dur = 1500 + Math.random() * 1500;
+    const dx = (Math.random() - .5) * 200;
+    el.animate([
+      { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+      { transform: `translate(${dx}px, ${window.innerHeight + 20}px) rotate(${Math.random()*720}deg)`, opacity: 0 }
+    ], { duration: dur, easing: 'cubic-bezier(.25,.46,.45,.94)' }).onfinish = () => el.remove();
+  }
+}
+
+// ========== SCREENS ==========
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+
+  if (id === 'levelScreen') {
+    document.getElementById('headerLabel').textContent = '레벨 선택';
+    renderLevelGrid();
+  }
+}
+
+function renderLevelGrid() {
+  const grid = document.getElementById('levelGrid');
+  grid.innerHTML = '';
+
+  for (let i = 1; i <= TOTAL_LEVELS; i++) {
+    const btn = document.createElement('div');
+    const p = progress[i];
+    const unlocked = i === 1 || progress[i - 1]?.stars > 0 || p?.stars > 0;
+
+    btn.className = 'level-btn';
+    if (!unlocked) btn.classList.add('locked');
+    else if (p?.stars > 0) btn.classList.add('completed');
+    if (unlocked && (!p || p.stars === 0)) btn.classList.add('current');
+
+    let starsHtml = '';
+    for (let s = 0; s < 3; s++) {
+      starsHtml += `<span class="${p && s < p.stars ? 'filled' : ''}">★</span>`;
+    }
+
+    btn.innerHTML = `<div class="num">${i}</div><div class="stars">${starsHtml}</div>`;
+    if (unlocked) btn.onclick = () => startLevel(i);
+    grid.appendChild(btn);
+  }
+}
+
+function startLevel(level) {
+  currentLevel = level;
+  tubes = generateLevel(level);
+  selectedTube = -1;
+  moveCount = 0;
+  history = [];
+
+  document.getElementById('moveCount').textContent = '0';
+  document.getElementById('levelNum').textContent = level;
+  document.getElementById('undoBtn').disabled = true;
+  document.getElementById('headerLabel').textContent = `레벨 ${level}`;
+
+  showScreen('gameScreen');
+  renderTubes();
+}
+
+// ========== PARTICLES ==========
+function createParticles() {
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.top = Math.random() * 100 + 'vh';
+    p.style.animationDelay = Math.random() * 6 + 's';
+    p.style.background = ['rgba(34,211,238,.4)', 'rgba(59,130,246,.4)', 'rgba(168,85,247,.4)'][Math.floor(Math.random() * 3)];
+    document.body.appendChild(p);
+  }
+}
+
+// ========== KEYBOARD ==========
+document.addEventListener('keydown', e => {
+  if (e.key === 'z' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); undoMove(); }
+  if (e.key === 'r') resetLevel();
+  if (e.key === 'Escape') {
+    if (document.getElementById('winOverlay').classList.contains('active')) closeWin();
+    else if (document.getElementById('gameScreen').classList.contains('active')) showScreen('levelScreen');
+  }
+});
+
+// ========== INIT ==========
+loadProgress();
+createParticles();
+renderLevelGrid();
+</script>
+</body>
+</html>

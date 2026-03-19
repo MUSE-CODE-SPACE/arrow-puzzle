@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>한붓그리기 - One Line Drawing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a1a;color:#fff;font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at 20% 30%,rgba(102,126,234,.06) 0%,transparent 50%),radial-gradient(ellipse at 80% 70%,rgba(168,85,247,.06) 0%,transparent 50%),radial-gradient(ellipse at 50% 50%,rgba(236,72,153,.04) 0%,transparent 50%);z-index:-1;pointer-events:none}
+
+/* Top bar */
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.05)}
+.back-btn{color:#888;text-decoration:none;font-size:.9rem;font-weight:600;transition:color .2s;display:flex;align-items:center;gap:6px}
+.back-btn:hover{color:#a855f7}
+.back-btn svg{width:18px;height:18px}
+.top-title{font-size:1rem;font-weight:700;background:linear-gradient(135deg,#667eea,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.top-actions{display:flex;gap:8px}
+.top-actions button{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:#aaa;border-radius:10px;padding:6px 14px;font-family:'Outfit',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s}
+.top-actions button:hover{border-color:rgba(168,85,247,.3);color:#fff;background:rgba(168,85,247,.12)}
+
+/* Screens */
+.screen{display:none;flex-direction:column;min-height:calc(100vh - 50px)}
+.screen.active{display:flex}
+
+/* Level select */
+.level-select{padding:16px}
+.level-header{text-align:center;padding:20px 0}
+.level-header h2{font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,#667eea,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.level-header p{color:#666;font-size:.9rem}
+.level-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:10px;padding:10px 0;max-width:600px;margin:0 auto}
+.level-btn{aspect-ratio:1;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:#888;font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .2s;position:relative}
+.level-btn:hover{border-color:rgba(168,85,247,.4);transform:translateY(-2px);box-shadow:0 4px 15px rgba(0,0,0,.3)}
+.level-btn.unlocked{color:#fff;background:rgba(102,126,234,.1);border-color:rgba(102,126,234,.2)}
+.level-btn.completed{background:rgba(168,85,247,.15);border-color:rgba(168,85,247,.3)}
+.level-btn.locked{opacity:.4;cursor:not-allowed;pointer-events:none}
+.level-btn .stars{font-size:.55rem;color:#fbbf24;letter-spacing:1px}
+.level-btn .stars .empty{opacity:.3}
+.page-nav{display:flex;justify-content:center;gap:12px;padding:16px 0}
+.page-nav button{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:#aaa;border-radius:10px;padding:8px 20px;font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s}
+.page-nav button:hover{border-color:rgba(168,85,247,.3);color:#fff}
+.page-nav button:disabled{opacity:.3;cursor:not-allowed}
+
+/* Game screen */
+.game-area{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px}
+.game-info-bar{display:flex;gap:20px;justify-content:center;align-items:center;padding:10px;width:100%;max-width:500px}
+.info-item{text-align:center}
+.info-item .label{font-size:.7rem;color:#666;text-transform:uppercase;letter-spacing:1px}
+.info-item .value{font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,#667eea,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;width:100%;max-width:500px;position:relative}
+canvas{border-radius:16px;touch-action:none}
+.game-controls{display:flex;gap:10px;padding:12px;justify-content:center;flex-wrap:wrap}
+.game-controls button{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#ccc;border-radius:12px;padding:10px 22px;font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+.game-controls button:hover{border-color:rgba(168,85,247,.4);color:#fff;background:rgba(168,85,247,.12)}
+.game-controls button:active{transform:scale(.96)}
+
+/* Win overlay */
+.win-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,26,.85);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:100;flex-direction:column;gap:16px}
+.win-overlay.show{display:flex}
+.win-box{background:rgba(255,255,255,.05);border:1px solid rgba(168,85,247,.2);border-radius:24px;padding:32px 40px;text-align:center;max-width:360px;width:90%}
+.win-box h2{font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,#667eea,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.win-stars{font-size:2.5rem;margin:12px 0}
+.win-stats{color:#888;font-size:.9rem;margin-bottom:20px}
+.win-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.win-btns button{padding:10px 24px;border-radius:12px;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;border:none;transition:all .2s}
+.win-btns button:hover{transform:translateY(-2px)}
+.btn-next{background:linear-gradient(135deg,#667eea,#a855f7);color:#fff;box-shadow:0 4px 20px rgba(168,85,247,.3)}
+.btn-retry{background:rgba(255,255,255,.08);color:#ccc;border:1px solid rgba(255,255,255,.1) !important}
+.btn-levels{background:rgba(255,255,255,.05);color:#aaa;border:1px solid rgba(255,255,255,.08) !important}
+
+/* Hint text */
+.hint-text{color:#555;font-size:.8rem;text-align:center;padding:4px;min-height:22px}
+
+/* Ad placeholders */
+.ad-banner{background:rgba(255,255,255,.02);border:1px dashed rgba(255,255,255,.06);border-radius:12px;padding:14px;text-align:center;color:#333;font-size:.75rem;margin:10px 16px;min-height:60px;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.ad-label{font-size:.65rem;color:#333;text-transform:uppercase;letter-spacing:1px}
+
+/* Particles canvas */
+#particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:99}
+
+@media(max-width:480px){
+  .level-header h2{font-size:1.4rem}
+  .level-grid{grid-template-columns:repeat(5,1fr);gap:8px}
+  .game-info-bar{gap:14px}
+  .info-item .value{font-size:1.1rem}
+  .win-box{padding:24px 20px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+
+<div class="top-bar">
+  <a href="../index.html" class="back-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+    홈으로
+  </a>
+  <div class="top-title">한붓그리기</div>
+  <div class="top-actions">
+    <button onclick="showScreen('levels')" id="btnLevelSelect">레벨</button>
+  </div>
+</div>
+
+<!-- Level Select Screen -->
+<div class="screen active" id="screen-levels">
+  <div class="level-select">
+    <div class="level-header">
+      <h2>한붓그리기</h2>
+      <p>모든 선을 한 번씩만 지나가세요</p>
+    </div>
+    <div class="ad-banner"><div class="ad-label">광고 영역</div>AD SPACE 320×50</div>
+    <div class="level-grid" id="levelGrid"></div>
+    <div class="page-nav">
+      <button onclick="changePage(-1)" id="prevPage">◀ 이전</button>
+      <span id="pageInfo" style="color:#666;font-size:.85rem;display:flex;align-items:center"></span>
+      <button onclick="changePage(1)" id="nextPage">다음 ▶</button>
+    </div>
+    <div class="ad-banner"><div class="ad-label">광고 영역</div>AD SPACE 320×100</div>
+  </div>
+</div>
+
+<!-- Game Screen -->
+<div class="screen" id="screen-game">
+  <div class="game-area">
+    <div class="game-info-bar">
+      <div class="info-item"><div class="label">레벨</div><div class="value" id="infoLevel">1</div></div>
+      <div class="info-item"><div class="label">이동</div><div class="value" id="infoMoves">0</div></div>
+      <div class="info-item"><div class="label">남은 선</div><div class="value" id="infoEdges">0</div></div>
+    </div>
+    <div class="hint-text" id="hintText">시작 노드를 선택하세요</div>
+    <div class="canvas-wrap">
+      <canvas id="gameCanvas"></canvas>
+    </div>
+    <div class="game-controls">
+      <button onclick="undoMove()">↩ 되돌리기</button>
+      <button onclick="resetPuzzle()">🔄 초기화</button>
+      <button onclick="showScreen('levels')">📋 레벨 선택</button>
+    </div>
+    <div class="ad-banner"><div class="ad-label">광고 영역</div>AD SPACE 320×50</div>
+  </div>
+</div>
+
+<!-- Win Overlay -->
+<div class="win-overlay" id="winOverlay">
+  <div class="win-box">
+    <h2>🎉 클리어!</h2>
+    <div class="win-stars" id="winStars"></div>
+    <div class="win-stats" id="winStats"></div>
+    <div class="win-btns">
+      <button class="btn-retry" onclick="retryLevel()">다시하기</button>
+      <button class="btn-levels" onclick="closeWin();showScreen('levels')">레벨 선택</button>
+      <button class="btn-next" onclick="nextLevel()">다음 레벨 ▶</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== SEEDED RNG =====
+class SeededRNG {
+  constructor(seed) { this.s = seed % 2147483647; if (this.s <= 0) this.s += 2147483646; }
+  next() { this.s = this.s * 16807 % 2147483647; return (this.s - 1) / 2147483646; }
+  nextInt(min, max) { return Math.floor(this.next() * (max - min + 1)) + min; }
+  shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = this.nextInt(0, i); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+}
+
+// ===== AUDIO =====
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function ensureAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+
+function playTone(freq, dur, type='sine', vol=0.12) {
+  try {
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + dur);
+  } catch(e) {}
+}
+
+function sfxClick() { playTone(520, 0.08, 'sine', 0.1); }
+function sfxMove() { playTone(660 + Math.random()*200, 0.12, 'triangle', 0.08); }
+function sfxUndo() { playTone(330, 0.15, 'sawtooth', 0.06); }
+function sfxError() { playTone(180, 0.2, 'square', 0.08); }
+function sfxWin() {
+  const notes = [523, 659, 784, 1047];
+  notes.forEach((f, i) => setTimeout(() => playTone(f, 0.3, 'sine', 0.1), i * 120));
+}
+
+// ===== STATE =====
+const TOTAL_LEVELS = 120;
+const LEVELS_PER_PAGE = 20;
+let currentPage = 0;
+let currentLevel = 0;
+let progress = loadProgress();
+
+let graph = null; // {nodes:[[x,y],...], edges:[[a,b],...]}
+let path = [];    // node indices in order
+let visitedEdges = new Set(); // "a-b" strings (a<b)
+let moveCount = 0;
+let totalEdges = 0;
+let animProgress = 1; // for edge drawing animation
+let animEdge = null;
+
+// ===== PROGRESS =====
+function loadProgress() {
+  try { return JSON.parse(localStorage.getItem('oneline_progress')) || {}; } catch(e) { return {}; }
+}
+function saveProgress() {
+  localStorage.setItem('oneline_progress', JSON.stringify(progress));
+}
+
+// ===== SCREEN MANAGEMENT =====
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  if (name === 'levels') renderLevelGrid();
+  if (name === 'game') resizeCanvas();
+}
+
+// ===== LEVEL GENERATION =====
+function generateLevel(level) {
+  const rng = new SeededRNG(level * 7919 + 1337);
+
+  // Determine complexity based on level
+  let nodeCount, extraEdges;
+  if (level <= 5) {
+    nodeCount = 3 + Math.floor(level / 2);
+    extraEdges = 0;
+  } else if (level <= 15) {
+    nodeCount = 4 + Math.floor((level - 5) / 3);
+    extraEdges = rng.nextInt(0, 1);
+  } else if (level <= 35) {
+    nodeCount = 5 + Math.floor((level - 15) / 5);
+    extraEdges = rng.nextInt(0, 2);
+  } else if (level <= 60) {
+    nodeCount = 7 + Math.floor((level - 35) / 7);
+    extraEdges = rng.nextInt(1, 3);
+  } else if (level <= 90) {
+    nodeCount = 9 + Math.floor((level - 60) / 10);
+    extraEdges = rng.nextInt(1, 4);
+  } else {
+    nodeCount = 11 + Math.floor((level - 90) / 15);
+    extraEdges = rng.nextInt(2, 5);
+  }
+  nodeCount = Math.min(nodeCount, 15);
+
+  // Generate node positions - spread on a circular/grid layout
+  const nodes = [];
+  const padding = 0.15;
+  const range = 1 - 2 * padding;
+
+  if (nodeCount <= 6) {
+    // Circular layout
+    for (let i = 0; i < nodeCount; i++) {
+      const angle = (i / nodeCount) * Math.PI * 2 - Math.PI / 2;
+      const r = 0.3 + rng.next() * 0.05;
+      nodes.push([0.5 + Math.cos(angle) * r, 0.5 + Math.sin(angle) * r]);
+    }
+  } else {
+    // Grid-ish with jitter
+    const cols = Math.ceil(Math.sqrt(nodeCount * 1.3));
+    const rows = Math.ceil(nodeCount / cols);
+    const positions = [];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        positions.push([
+          padding + (c + 0.5) / cols * range + (rng.next() - 0.5) * 0.06,
+          padding + (r + 0.5) / rows * range + (rng.next() - 0.5) * 0.06
+        ]);
+      }
+    }
+    rng.shuffle(positions);
+    for (let i = 0; i < nodeCount; i++) nodes.push(positions[i]);
+  }
+
+  // Build spanning tree first (ensures connectivity)
+  const edges = [];
+  const edgeSet = new Set();
+  const addEdge = (a, b) => {
+    const key = Math.min(a,b) + '-' + Math.max(a,b);
+    if (!edgeSet.has(key)) { edgeSet.add(key); edges.push([Math.min(a,b), Math.max(a,b)]); return true; }
+    return false;
+  };
+
+  // Shuffle node order for tree building
+  const order = Array.from({length: nodeCount}, (_, i) => i);
+  rng.shuffle(order);
+  const inTree = new Set([order[0]]);
+  const remaining = order.slice(1);
+
+  while (remaining.length > 0) {
+    const next = remaining.shift();
+    // Connect to nearest node in tree
+    let bestDist = Infinity, bestNode = 0;
+    for (const t of inTree) {
+      const dx = nodes[next][0] - nodes[t][0];
+      const dy = nodes[next][1] - nodes[t][1];
+      const d = dx*dx + dy*dy;
+      if (d < bestDist) { bestDist = d; bestNode = t; }
+    }
+    addEdge(next, bestNode);
+    inTree.add(next);
+  }
+
+  // Add extra edges for complexity (prefer shorter distances)
+  const possibleEdges = [];
+  for (let i = 0; i < nodeCount; i++) {
+    for (let j = i + 1; j < nodeCount; j++) {
+      const key = i + '-' + j;
+      if (!edgeSet.has(key)) {
+        const dx = nodes[i][0] - nodes[j][0];
+        const dy = nodes[i][1] - nodes[j][1];
+        possibleEdges.push({a: i, b: j, d: dx*dx + dy*dy});
+      }
+    }
+  }
+  possibleEdges.sort((a, b) => a.d - b.d);
+
+  let added = 0;
+  for (const e of possibleEdges) {
+    if (added >= extraEdges) break;
+    // Don't add very long edges
+    if (e.d > 0.25) continue;
+    addEdge(e.a, e.b);
+    added++;
+  }
+
+  // Fix Eulerian path condition: 0 or 2 nodes with odd degree
+  // Count degrees
+  const degree = new Array(nodeCount).fill(0);
+  for (const [a, b] of edges) { degree[a]++; degree[b]++; }
+  let oddNodes = [];
+  for (let i = 0; i < nodeCount; i++) {
+    if (degree[i] % 2 !== 0) oddNodes.push(i);
+  }
+
+  // Fix: if more than 2 odd-degree nodes, add/remove edges to fix
+  let attempts = 0;
+  while (oddNodes.length > 2 && attempts < 50) {
+    attempts++;
+    // Try to connect pairs of odd-degree nodes
+    if (oddNodes.length >= 2) {
+      const a = oddNodes[0], b = oddNodes[1];
+      const key = Math.min(a,b) + '-' + Math.max(a,b);
+      if (edgeSet.has(key)) {
+        // Edge exists, remove it
+        edgeSet.delete(key);
+        const idx = edges.findIndex(e => e[0] === Math.min(a,b) && e[1] === Math.max(a,b));
+        if (idx >= 0) edges.splice(idx, 1);
+        degree[a]--; degree[b]--;
+      } else {
+        // Add edge
+        edgeSet.add(key);
+        edges.push([Math.min(a,b), Math.max(a,b)]);
+        degree[a]++; degree[b]++;
+      }
+    }
+    oddNodes = [];
+    for (let i = 0; i < nodeCount; i++) {
+      if (degree[i] % 2 !== 0) oddNodes.push(i);
+    }
+  }
+
+  // If still not fixed, add edges between remaining odd pairs
+  while (oddNodes.length > 2) {
+    const a = oddNodes.pop(), b = oddNodes.pop();
+    addEdge(a, b);
+    degree[a]++; degree[b]++;
+    oddNodes = [];
+    for (let i = 0; i < nodeCount; i++) {
+      if (degree[i] % 2 !== 0) oddNodes.push(i);
+    }
+  }
+
+  // Ensure graph is still connected (BFS)
+  const visited = new Set([0]);
+  const queue = [0];
+  const adj = Array.from({length: nodeCount}, () => []);
+  for (const [a, b] of edges) { adj[a].push(b); adj[b].push(a); }
+  while (queue.length) {
+    const n = queue.shift();
+    for (const nb of adj[n]) {
+      if (!visited.has(nb)) { visited.add(nb); queue.push(nb); }
+    }
+  }
+
+  // If disconnected, connect components
+  if (visited.size < nodeCount) {
+    for (let i = 0; i < nodeCount; i++) {
+      if (!visited.has(i)) {
+        // Find nearest visited node
+        let best = 0, bestD = Infinity;
+        for (const v of visited) {
+          const dx = nodes[i][0] - nodes[v][0];
+          const dy = nodes[i][1] - nodes[v][1];
+          const d = dx*dx + dy*dy;
+          if (d < bestD) { bestD = d; best = v; }
+        }
+        addEdge(i, best);
+        degree[i]++; degree[best]++;
+        visited.add(i);
+      }
+    }
+    // Recheck Eulerian
+    oddNodes = [];
+    for (let i = 0; i < nodeCount; i++) {
+      if (degree[i] % 2 !== 0) oddNodes.push(i);
+    }
+    while (oddNodes.length > 2) {
+      const a = oddNodes.pop(), b = oddNodes.pop();
+      addEdge(a, b);
+      oddNodes = [];
+      const deg2 = new Array(nodeCount).fill(0);
+      for (const [x, y] of edges) { deg2[x]++; deg2[y]++; }
+      for (let i = 0; i < nodeCount; i++) {
+        if (deg2[i] % 2 !== 0) oddNodes.push(i);
+      }
+    }
+  }
+
+  // Filter out nodes with 0 degree (shouldn't happen but safety)
+  // Minimum edges check
+  if (edges.length < 3) {
+    // Force a triangle
+    for (let i = 0; i < Math.min(3, nodeCount); i++) {
+      for (let j = i+1; j < Math.min(3, nodeCount); j++) {
+        addEdge(i, j);
+      }
+    }
+  }
+
+  return { nodes, edges };
+}
+
+// ===== OPTIMAL MOVE COUNT (edge count = minimum moves) =====
+function getOptimalMoves(edgeCount) { return edgeCount; }
+
+// ===== LEVEL GRID =====
+function renderLevelGrid() {
+  const grid = document.getElementById('levelGrid');
+  grid.innerHTML = '';
+  const start = currentPage * LEVELS_PER_PAGE;
+  const end = Math.min(start + LEVELS_PER_PAGE, TOTAL_LEVELS);
+
+  for (let i = start; i < end; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'level-btn';
+    const lvl = i + 1;
+    const data = progress[lvl];
+    const unlocked = lvl === 1 || progress[lvl - 1];
+
+    if (data) {
+      btn.classList.add('completed');
+      const stars = data.stars || 0;
+      btn.innerHTML = `${lvl}<div class="stars">${'★'.repeat(stars)}${'<span class="empty">★</span>'.repeat(3-stars)}</div>`;
+    } else if (unlocked) {
+      btn.classList.add('unlocked');
+      btn.innerHTML = `${lvl}`;
+    } else {
+      btn.classList.add('locked');
+      btn.innerHTML = `🔒`;
+    }
+
+    if (unlocked || data) {
+      btn.onclick = () => { sfxClick(); startLevel(lvl); };
+    }
+    grid.appendChild(btn);
+  }
+
+  const totalPages = Math.ceil(TOTAL_LEVELS / LEVELS_PER_PAGE);
+  document.getElementById('pageInfo').textContent = `${currentPage + 1} / ${totalPages}`;
+  document.getElementById('prevPage').disabled = currentPage === 0;
+  document.getElementById('nextPage').disabled = currentPage >= totalPages - 1;
+}
+
+function changePage(dir) {
+  sfxClick();
+  currentPage += dir;
+  renderLevelGrid();
+}
+
+// ===== GAME CANVAS =====
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let canvasSize = 400;
+let nodeRadius = 18;
+
+function resizeCanvas() {
+  const wrap = document.querySelector('.canvas-wrap');
+  if (!wrap) return;
+  const w = Math.min(wrap.clientWidth - 16, 500);
+  const h = Math.min(window.innerHeight - 260, 500);
+  canvasSize = Math.min(w, h);
+  canvas.width = canvasSize * (window.devicePixelRatio || 1);
+  canvas.height = canvasSize * (window.devicePixelRatio || 1);
+  canvas.style.width = canvasSize + 'px';
+  canvas.style.height = canvasSize + 'px';
+  ctx.setTransform(window.devicePixelRatio || 1, 0, 0, window.devicePixelRatio || 1, 0, 0);
+  nodeRadius = Math.max(12, canvasSize * 0.04);
+  drawGame();
+}
+window.addEventListener('resize', () => {
+  if (document.getElementById('screen-game').classList.contains('active')) resizeCanvas();
+});
+
+// ===== START LEVEL =====
+function startLevel(lvl) {
+  currentLevel = lvl;
+  graph = generateLevel(lvl);
+  path = [];
+  visitedEdges = new Set();
+  moveCount = 0;
+  totalEdges = graph.edges.length;
+  animProgress = 1;
+  animEdge = null;
+
+  document.getElementById('infoLevel').textContent = lvl;
+  document.getElementById('infoMoves').textContent = '0';
+  document.getElementById('infoEdges').textContent = totalEdges;
+  document.getElementById('hintText').textContent = '시작 노드를 선택하세요';
+
+  showScreen('game');
+  requestAnimationFrame(() => resizeCanvas());
+}
+
+// ===== EDGE KEY =====
+function edgeKey(a, b) { return Math.min(a,b) + '-' + Math.max(a,b); }
+
+// ===== ADJACENCY CHECK =====
+function isAdjacent(a, b) {
+  const key = edgeKey(a, b);
+  return graph.edges.some(([x,y]) => edgeKey(x,y) === key);
+}
+
+// ===== NODE HIT TEST =====
+function getNodeAt(px, py) {
+  for (let i = 0; i < graph.nodes.length; i++) {
+    const nx = graph.nodes[i][0] * canvasSize;
+    const ny = graph.nodes[i][1] * canvasSize;
+    const dx = px - nx, dy = py - ny;
+    if (dx*dx + dy*dy < (nodeRadius + 8) * (nodeRadius + 8)) return i;
+  }
+  return -1;
+}
+
+// ===== INPUT =====
+canvas.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const px = (e.clientX - rect.left) / rect.width * canvasSize;
+  const py = (e.clientY - rect.top) / rect.height * canvasSize;
+  handleTap(px, py);
+});
+
+function handleTap(px, py) {
+  if (!graph) return;
+  const nodeIdx = getNodeAt(px, py);
+  if (nodeIdx < 0) return;
+
+  if (path.length === 0) {
+    // Starting node
+    path.push(nodeIdx);
+    moveCount = 0;
+    sfxMove();
+    document.getElementById('hintText').textContent = '연결된 노드를 선택하세요';
+    drawGame();
+    return;
+  }
+
+  const current = path[path.length - 1];
+  if (nodeIdx === current) return; // Same node
+
+  // Check adjacency
+  if (!isAdjacent(current, nodeIdx)) {
+    sfxError();
+    document.getElementById('hintText').textContent = '연결되지 않은 노드입니다!';
+    // Flash red briefly
+    flashNode = nodeIdx;
+    drawGame();
+    setTimeout(() => { flashNode = -1; drawGame(); }, 300);
+    return;
+  }
+
+  // Check if edge already visited
+  const key = edgeKey(current, nodeIdx);
+  if (visitedEdges.has(key)) {
+    sfxError();
+    document.getElementById('hintText').textContent = '이미 지나간 선입니다!';
+    return;
+  }
+
+  // Valid move - animate
+  visitedEdges.add(key);
+  path.push(nodeIdx);
+  moveCount++;
+  sfxMove();
+
+  // Animate edge
+  animEdge = [current, nodeIdx];
+  animProgress = 0;
+  animateEdge();
+
+  document.getElementById('infoMoves').textContent = moveCount;
+  document.getElementById('infoEdges').textContent = totalEdges - visitedEdges.size;
+  document.getElementById('hintText').textContent = '';
+
+  // Check win
+  if (visitedEdges.size === totalEdges) {
+    setTimeout(() => winLevel(), 400);
+  }
+}
+
+let flashNode = -1;
+
+function animateEdge() {
+  if (animProgress < 1) {
+    animProgress = Math.min(1, animProgress + 0.12);
+    drawGame();
+    requestAnimationFrame(animateEdge);
+  } else {
+    animEdge = null;
+    drawGame();
+  }
+}
+
+// ===== UNDO =====
+function undoMove() {
+  if (path.length <= 1) return;
+  sfxUndo();
+  const removed = path.pop();
+  const prev = path[path.length - 1];
+  visitedEdges.delete(edgeKey(prev, removed));
+  moveCount = Math.max(0, moveCount - 1);
+  document.getElementById('infoMoves').textContent = moveCount;
+  document.getElementById('infoEdges').textContent = totalEdges - visitedEdges.size;
+  document.getElementById('hintText').textContent = '';
+  drawGame();
+}
+
+// ===== RESET =====
+function resetPuzzle() {
+  sfxUndo();
+  path = [];
+  visitedEdges = new Set();
+  moveCount = 0;
+  document.getElementById('infoMoves').textContent = '0';
+  document.getElementById('infoEdges').textContent = totalEdges;
+  document.getElementById('hintText').textContent = '시작 노드를 선택하세요';
+  drawGame();
+}
+
+// ===== WIN =====
+function winLevel() {
+  sfxWin();
+  const optimal = totalEdges;
+  let stars = 1;
+  if (moveCount <= optimal) stars = 3;
+  else if (moveCount <= optimal + 2) stars = 2;
+
+  progress[currentLevel] = {
+    stars: Math.max(stars, (progress[currentLevel]?.stars || 0)),
+    moves: Math.min(moveCount, (progress[currentLevel]?.moves || 999))
+  };
+  // Unlock next
+  if (currentLevel < TOTAL_LEVELS && !progress[currentLevel + 1]) {
+    // next level is now unlocked (but no data yet means unlocked check uses prev)
+  }
+  saveProgress();
+
+  document.getElementById('winStars').innerHTML = Array.from({length:3}, (_, i) =>
+    `<span style="opacity:${i < stars ? 1 : 0.2}">${i < stars ? '⭐' : '☆'}</span>`
+  ).join('');
+  document.getElementById('winStats').innerHTML = `이동 횟수: ${moveCount} / 최적: ${optimal}`;
+  document.getElementById('winOverlay').classList.add('show');
+
+  // Celebration particles
+  spawnCelebration();
+}
+
+function closeWin() {
+  document.getElementById('winOverlay').classList.remove('show');
+}
+function retryLevel() { closeWin(); startLevel(currentLevel); }
+function nextLevel() {
+  closeWin();
+  if (currentLevel < TOTAL_LEVELS) startLevel(currentLevel + 1);
+  else showScreen('levels');
+}
+
+// ===== DRAWING =====
+const COLORS = ['#667eea','#a855f7','#ec4899','#22d3ee','#34d399','#fbbf24','#f97316','#ef4444'];
+
+function getEdgeColor(idx) {
+  return COLORS[idx % COLORS.length];
+}
+
+function drawGame() {
+  if (!graph) return;
+  ctx.clearRect(0, 0, canvasSize, canvasSize);
+
+  const S = canvasSize;
+
+  // Draw unvisited edges (dim)
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  for (const [a, b] of graph.edges) {
+    const key = edgeKey(a, b);
+    if (visitedEdges.has(key)) continue;
+    if (animEdge && edgeKey(animEdge[0], animEdge[1]) === key) continue;
+    const ax = graph.nodes[a][0] * S, ay = graph.nodes[a][1] * S;
+    const bx = graph.nodes[b][0] * S, by = graph.nodes[b][1] * S;
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(bx, by);
+    ctx.stroke();
+  }
+
+  // Draw visited edges (bright, glowing)
+  const visitedArr = Array.from(visitedEdges);
+  for (let vi = 0; vi < visitedArr.length; vi++) {
+    const key = visitedArr[vi];
+    if (animEdge && edgeKey(animEdge[0], animEdge[1]) === key) continue;
+    const [sa, sb] = key.split('-').map(Number);
+    const ax = graph.nodes[sa][0] * S, ay = graph.nodes[sa][1] * S;
+    const bx = graph.nodes[sb][0] * S, by = graph.nodes[sb][1] * S;
+
+    const color = getEdgeColor(vi);
+
+    // Glow
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 12;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(bx, by);
+    ctx.stroke();
+    ctx.restore();
+
+    // Core
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(bx, by);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // Draw animating edge
+  if (animEdge && animProgress < 1) {
+    const [ea, eb] = animEdge;
+    const ax = graph.nodes[ea][0] * S, ay = graph.nodes[ea][1] * S;
+    const bx = graph.nodes[eb][0] * S, by = graph.nodes[eb][1] * S;
+    const mx = ax + (bx - ax) * animProgress;
+    const my = ay + (by - ay) * animProgress;
+    const color = getEdgeColor(visitedArr.indexOf(edgeKey(ea, eb)));
+
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 16;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(mx, my);
+    ctx.stroke();
+    ctx.restore();
+  } else if (animEdge) {
+    // Fully drawn
+    const [ea, eb] = animEdge;
+    const ax = graph.nodes[ea][0] * S, ay = graph.nodes[ea][1] * S;
+    const bx = graph.nodes[eb][0] * S, by = graph.nodes[eb][1] * S;
+    const color = getEdgeColor(visitedArr.indexOf(edgeKey(ea, eb)));
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 12;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(bx, by);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Draw path line connecting nodes (subtle connecting trail)
+  if (path.length >= 2) {
+    ctx.beginPath();
+    ctx.moveTo(graph.nodes[path[0]][0]*S, graph.nodes[path[0]][1]*S);
+    for (let i = 1; i < path.length; i++) {
+      ctx.lineTo(graph.nodes[path[i]][0]*S, graph.nodes[path[i]][1]*S);
+    }
+    ctx.strokeStyle = 'rgba(168,85,247,0.15)';
+    ctx.lineWidth = 8;
+    ctx.stroke();
+  }
+
+  // Draw nodes
+  for (let i = 0; i < graph.nodes.length; i++) {
+    const nx = graph.nodes[i][0] * S;
+    const ny = graph.nodes[i][1] * S;
+    const isCurrent = path.length > 0 && path[path.length - 1] === i;
+    const isInPath = path.includes(i);
+    const isFlash = flashNode === i;
+
+    // Count available (unvisited) edges from this node
+    let availableEdges = 0;
+    if (path.length > 0) {
+      const current = path[path.length - 1];
+      for (const [a, b] of graph.edges) {
+        if ((a === i || b === i) && !visitedEdges.has(edgeKey(a, b))) availableEdges++;
+      }
+    }
+
+    const r = isCurrent ? nodeRadius * 1.3 : nodeRadius;
+
+    // Glow for current
+    if (isCurrent) {
+      const pulse = 0.7 + 0.3 * Math.sin(Date.now() / 200);
+      ctx.save();
+      ctx.shadowColor = '#a855f7';
+      ctx.shadowBlur = 20 * pulse;
+      ctx.fillStyle = 'rgba(168,85,247,0.15)';
+      ctx.beginPath();
+      ctx.arc(nx, ny, r + 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Node gradient
+    const grad = ctx.createRadialGradient(nx - r*0.3, ny - r*0.3, 0, nx, ny, r);
+    if (isFlash) {
+      grad.addColorStop(0, '#ff4444');
+      grad.addColorStop(1, '#cc0000');
+    } else if (isCurrent) {
+      grad.addColorStop(0, '#c084fc');
+      grad.addColorStop(1, '#7c3aed');
+    } else if (isInPath) {
+      grad.addColorStop(0, '#818cf8');
+      grad.addColorStop(1, '#4f46e5');
+    } else {
+      grad.addColorStop(0, '#6366f1');
+      grad.addColorStop(1, '#3730a3');
+    }
+
+    ctx.save();
+    ctx.shadowColor = isCurrent ? '#a855f7' : '#4f46e5';
+    ctx.shadowBlur = isCurrent ? 15 : 8;
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(nx, ny, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Highlight ring
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(nx, ny, r, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Show degree number for unvisited edges (subtle)
+    if (path.length === 0) {
+      // Show node index or degree
+      let deg = 0;
+      for (const [a, b] of graph.edges) { if (a === i || b === i) deg++; }
+      if (deg % 2 !== 0) {
+        // Highlight odd-degree nodes (valid starting points)
+        ctx.strokeStyle = 'rgba(251,191,36,0.4)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(nx, ny, r + 4, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Pulse animation for current node
+  if (path.length > 0) {
+    requestAnimationFrame(() => {
+      if (path.length > 0 && !animEdge) drawGame();
+    });
+  }
+}
+
+// Throttle draw for pulse
+let lastDraw = 0;
+const origDrawGame = drawGame;
+drawGame = function() {
+  const now = Date.now();
+  if (now - lastDraw < 33) return; // ~30fps
+  lastDraw = now;
+  origDrawGame();
+};
+// Force immediate draw on important events
+function drawGameNow() { lastDraw = 0; drawGame(); }
+
+// ===== PARTICLES =====
+const pCanvas = document.getElementById('particles');
+const pCtx = pCanvas.getContext('2d');
+let particles = [];
+
+function resizeParticles() {
+  pCanvas.width = window.innerWidth * (window.devicePixelRatio || 1);
+  pCanvas.height = window.innerHeight * (window.devicePixelRatio || 1);
+  pCanvas.style.width = window.innerWidth + 'px';
+  pCanvas.style.height = window.innerHeight + 'px';
+  pCtx.setTransform(window.devicePixelRatio || 1, 0, 0, window.devicePixelRatio || 1, 0, 0);
+}
+window.addEventListener('resize', resizeParticles);
+resizeParticles();
+
+function spawnCelebration() {
+  const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+  for (let i = 0; i < 80; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 6;
+    particles.push({
+      x: cx, y: cy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 2,
+      life: 1,
+      decay: 0.008 + Math.random() * 0.012,
+      size: 3 + Math.random() * 5,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)]
+    });
+  }
+}
+
+function updateParticles() {
+  pCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.1;
+    p.life -= p.decay;
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    pCtx.globalAlpha = p.life;
+    pCtx.fillStyle = p.color;
+    pCtx.beginPath();
+    pCtx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+    pCtx.fill();
+  }
+  pCtx.globalAlpha = 1;
+  if (particles.length > 0) requestAnimationFrame(updateParticles);
+}
+
+// Start particle loop when needed
+setInterval(() => { if (particles.length > 0) requestAnimationFrame(updateParticles); }, 100);
+
+// ===== INIT =====
+renderLevelGrid();
+</script>
+</body>
+</html>

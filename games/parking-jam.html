@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>주차빼기 퍼즐</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Outfit',sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh;overflow-x:hidden;display:flex;flex-direction:column;align-items:center}
+.ad-banner{width:100%;max-width:728px;height:60px;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px dashed #333;display:flex;align-items:center;justify-content:center;color:#555;font-size:12px;margin:8px auto;border-radius:8px}
+.ad-interstitial{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:1000}
+.ad-interstitial .ad-box{width:300px;height:250px;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px dashed #444;display:flex;align-items:center;justify-content:center;color:#555;font-size:14px;border-radius:12px;margin:20px}
+.ad-interstitial .skip-btn{padding:10px 30px;background:linear-gradient(135deg,#667eea,#764ba2);border:none;color:#fff;border-radius:25px;font-family:'Outfit';font-size:16px;cursor:pointer;margin-top:10px}
+.back-link{align-self:flex-start;padding:12px 20px;color:#888;text-decoration:none;font-size:14px;transition:color .3s}
+.back-link:hover{color:#fff}
+.back-link::before{content:'\2190 '}
+h1{font-size:28px;font-weight:800;background:linear-gradient(135deg,#ff6b6b,#ffa500,#ff6b6b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin:4px 0 8px}
+.screen{display:none;flex-direction:column;align-items:center;width:100%;max-width:500px;padding:0 16px}
+.screen.active{display:flex}
+
+/* Level Select */
+.level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;width:100%;max-width:400px;margin:16px 0;max-height:60vh;overflow-y:auto;padding:8px}
+.level-grid::-webkit-scrollbar{width:4px}
+.level-grid::-webkit-scrollbar-thumb{background:#333;border-radius:4px}
+.level-btn{aspect-ratio:1;border:2px solid #2a2a4a;background:linear-gradient(145deg,#1a1a2e,#12122a);border-radius:12px;color:#ccc;font-family:'Outfit';font-size:18px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:all .2s;position:relative}
+.level-btn:hover{border-color:#667eea;transform:scale(1.05)}
+.level-btn.locked{opacity:.4;cursor:default}
+.level-btn.locked:hover{border-color:#2a2a4a;transform:none}
+.level-btn .stars-small{font-size:10px;color:#ffd700;letter-spacing:1px}
+.level-btn.cleared{border-color:#4CAF50;background:linear-gradient(145deg,#1a2e1a,#122a12)}
+.page-controls{display:flex;align-items:center;gap:16px;margin:8px 0}
+.page-controls button{background:none;border:1px solid #444;color:#ccc;padding:6px 16px;border-radius:20px;font-family:'Outfit';cursor:pointer;font-size:14px}
+.page-controls button:hover{border-color:#667eea;color:#fff}
+.page-controls span{font-size:14px;color:#888}
+
+/* Game Screen */
+.game-header{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:400px;margin-bottom:8px}
+.game-info{display:flex;gap:16px;font-size:14px;color:#aaa}
+.game-info span strong{color:#fff}
+.btn-restart,.btn-back2{background:none;border:1px solid #444;color:#ccc;padding:6px 14px;border-radius:20px;font-family:'Outfit';cursor:pointer;font-size:13px;transition:all .2s}
+.btn-restart:hover,.btn-back2:hover{border-color:#667eea;color:#fff}
+
+.board-container{position:relative;margin:8px 0}
+.board{position:relative;background:linear-gradient(145deg,#1e1e3a,#15152a);border-radius:16px;border:2px solid #2a2a4a;overflow:visible;touch-action:none}
+.grid-lines{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.cell-bg{position:absolute;background:rgba(255,255,255,.015);border-radius:6px}
+.exit-marker{position:absolute;right:-28px;width:26px;background:linear-gradient(90deg,rgba(255,80,80,.3),rgba(255,80,80,.6));border-radius:0 12px 12px 0;display:flex;align-items:center;justify-content:center;font-size:18px;color:#ff6b6b;animation:exitPulse 2s ease-in-out infinite}
+@keyframes exitPulse{0%,100%{opacity:.6}50%{opacity:1}}
+.exit-arrow{font-size:20px;animation:exitArrow 1s ease-in-out infinite}
+@keyframes exitArrow{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
+
+.vehicle{position:absolute;border-radius:10px;cursor:grab;transition:none;z-index:10;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none}
+.vehicle.animated{transition:left .25s cubic-bezier(.25,.46,.45,.94),top .25s cubic-bezier(.25,.46,.45,.94)}
+.vehicle.dragging{z-index:100;filter:brightness(1.2);cursor:grabbing}
+.vehicle .shine{position:absolute;top:3px;left:6px;right:6px;height:35%;background:linear-gradient(180deg,rgba(255,255,255,.25),rgba(255,255,255,0));border-radius:8px 8px 20px 20px;pointer-events:none}
+.vehicle .body-detail{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:60%;height:4px;background:rgba(0,0,0,.2);border-radius:2px;pointer-events:none}
+.vehicle .headlights{position:absolute;display:flex;gap:4px;pointer-events:none}
+.vehicle.horizontal .headlights{right:5px;top:50%;transform:translateY(-50%);flex-direction:column}
+.vehicle.vertical .headlights{bottom:5px;left:50%;transform:translateX(-50%)}
+.vehicle .headlight{width:5px;height:5px;background:rgba(255,255,200,.6);border-radius:50%}
+.vehicle.red-car{z-index:15}
+.vehicle.red-car .headlights .headlight{background:rgba(255,255,200,.8)}
+.vehicle .window{position:absolute;background:rgba(0,0,0,.15);border-radius:4px;pointer-events:none}
+.vehicle.horizontal .window{top:20%;height:60%;width:30%;left:35%}
+.vehicle.vertical .window{left:20%;width:60%;height:30%;top:35%}
+
+/* Win Screen */
+.win-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:500}
+.win-overlay.show{display:flex}
+.win-card{background:linear-gradient(145deg,#1e1e3a,#15152a);border:2px solid #2a2a4a;border-radius:24px;padding:32px 40px;text-align:center;animation:popIn .4s cubic-bezier(.17,.67,.35,1.2)}
+@keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+.win-card h2{font-size:28px;font-weight:800;margin-bottom:8px;background:linear-gradient(135deg,#ffd700,#ffaa00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.win-stars{font-size:48px;margin:12px 0}
+.win-stars .star{color:#333;transition:all .3s}
+.win-stars .star.earned{color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,.5);animation:starPop .5s cubic-bezier(.17,.67,.35,1.2)}
+@keyframes starPop{0%{transform:scale(0)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+.win-moves{font-size:16px;color:#aaa;margin-bottom:16px}
+.win-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.win-btns button{padding:10px 24px;border:none;border-radius:25px;font-family:'Outfit';font-size:15px;font-weight:600;cursor:pointer;transition:transform .2s}
+.win-btns button:hover{transform:scale(1.05)}
+.btn-next{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.btn-retry{background:linear-gradient(135deg,#444,#333);color:#ccc}
+.btn-levels{background:linear-gradient(135deg,#2d8f4e,#1a6b35);color:#fff}
+
+.level-label{font-size:16px;color:#888;margin-bottom:4px}
+.level-label strong{color:#fff;font-size:20px}
+
+.exit-anim{position:absolute;z-index:200;pointer-events:none}
+@keyframes driveOut{0%{transform:translateX(0);opacity:1}100%{transform:translateX(200px);opacity:0}}
+
+/* Confetti */
+.confetti{position:fixed;pointer-events:none;z-index:600}
+.confetti-piece{position:absolute;width:8px;height:8px;border-radius:2px;animation:confettiFall 1.5s ease-out forwards}
+@keyframes confettiFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(400px) rotate(720deg);opacity:0}}
+
+/* Responsive */
+@media(max-width:420px){
+h1{font-size:22px}
+.level-grid{grid-template-columns:repeat(5,1fr);gap:8px}
+.win-card{padding:24px 28px}
+}
+</style>
+</head>
+<body>
+
+<a href="../index.html" class="back-link">게임 허브</a>
+<h1>주차빼기 퍼즐</h1>
+<div class="ad-banner">AD SPACE - 728x60</div>
+
+<!-- LEVEL SELECT SCREEN -->
+<div id="screen-levels" class="screen active">
+<div class="page-controls">
+<button onclick="changePage(-1)">&laquo; 이전</button>
+<span id="page-info">1 / 4</span>
+<button onclick="changePage(1)">다음 &raquo;</button>
+</div>
+<div id="level-grid" class="level-grid"></div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="screen-game" class="screen">
+<div class="level-label">레벨 <strong id="lbl-level">1</strong></div>
+<div class="game-header">
+<div class="game-info">
+<span>이동: <strong id="lbl-moves">0</strong></span>
+<span>최소: <strong id="lbl-min">?</strong></span>
+</div>
+<div style="display:flex;gap:8px">
+<button class="btn-back2" onclick="showScreen('screen-levels')">목록</button>
+<button class="btn-restart" onclick="restartLevel()">다시</button>
+</div>
+</div>
+<div class="board-container">
+<canvas id="board" class="board"></canvas>
+</div>
+</div>
+
+<!-- WIN OVERLAY -->
+<div id="win-overlay" class="win-overlay">
+<div class="win-card">
+<h2>클리어!</h2>
+<div class="win-stars" id="win-stars"></div>
+<div class="win-moves" id="win-moves"></div>
+<div class="win-btns">
+<button class="btn-retry" onclick="restartLevel();closeWin()">다시하기</button>
+<button class="btn-levels" onclick="showScreen('screen-levels');closeWin()">레벨 선택</button>
+<button class="btn-next" id="btn-next" onclick="nextLevel();closeWin()">다음 레벨 &rarr;</button>
+</div>
+</div>
+</div>
+
+<!-- AD INTERSTITIAL -->
+<div id="ad-interstitial" class="ad-interstitial">
+<div class="ad-box">AD SPACE - 300x250</div>
+<button class="skip-btn" onclick="closeAd()">계속하기</button>
+</div>
+
+<script>
+// ===== AUDIO =====
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function ensureAudio(){if(!audioCtx)audioCtx=new AudioCtx()}
+function playTone(freq,dur,type='sine',vol=.15){
+ensureAudio();const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(vol,audioCtx.currentTime);
+g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);
+o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur);
+}
+function sfxSlide(){playTone(300,.08,'triangle',.1)}
+function sfxWin(){
+setTimeout(()=>playTone(523,.15,'sine',.2),0);
+setTimeout(()=>playTone(659,.15,'sine',.2),120);
+setTimeout(()=>playTone(784,.25,'sine',.2),240);
+setTimeout(()=>playTone(1047,.4,'sine',.15),400);
+}
+function sfxStar(){playTone(880,.12,'sine',.1)}
+function sfxExit(){playTone(440,.3,'sawtooth',.08)}
+
+// ===== CONSTANTS =====
+const TOTAL_LEVELS = 120;
+const GRID = 6;
+const LEVELS_PER_PAGE = 25;
+const TOTAL_PAGES = Math.ceil(TOTAL_LEVELS / LEVELS_PER_PAGE);
+
+const VEHICLE_COLORS = [
+'#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6',
+'#1abc9c','#e67e22','#2980b9','#27ae60','#f1c40f',
+'#8e44ad','#16a085','#d35400','#c0392b','#7f8c8d',
+'#e84393','#00b894','#6c5ce7','#fdcb6e','#fab1a0',
+'#74b9ff','#a29bfe','#55efc4','#ffeaa7','#dfe6e9'
+];
+
+// ===== STATE =====
+let currentLevel = 0;
+let currentPage = 0;
+let moveCount = 0;
+let minMoves = 0;
+let vehicles = [];
+let boardState = null;
+let cellSize = 0;
+let canvasSize = 0;
+let dragging = null;
+let dragStartX = 0, dragStartY = 0;
+let dragVehicleStartX = 0, dragVehicleStartY = 0;
+let gameWon = false;
+let progress = loadProgress();
+let levelCache = {};
+let canvas, ctx;
+
+// ===== PROGRESS =====
+function loadProgress(){
+try{return JSON.parse(localStorage.getItem('parkingJamProgress'))||{}}catch(e){return{}}
+}
+function saveProgress(){localStorage.setItem('parkingJamProgress',JSON.stringify(progress))}
+function getUnlocked(){
+let max=0;
+for(let k in progress)max=Math.max(max,parseInt(k));
+return Math.min(max+1,TOTAL_LEVELS-1);
+}
+
+// ===== SEEDED RNG =====
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+// ===== PUZZLE GENERATION =====
+function generateLevel(levelIdx){
+if(levelCache[levelIdx])return JSON.parse(JSON.stringify(levelCache[levelIdx]));
+const seed = levelIdx * 31337 + 12345;
+const rng = mulberry32(seed);
+const difficulty = Math.min(levelIdx / TOTAL_LEVELS, 1);
+const numVehicles = Math.floor(3 + difficulty * 10);
+const truckChance = 0.1 + difficulty * 0.3;
+let bestPuzzle = null;
+let bestMoves = 0;
+for(let attempt = 0; attempt < 200; attempt++){
+const puzzle = tryGenerate(rng, numVehicles, truckChance, difficulty);
+if(puzzle && puzzle.minMoves >= Math.max(1, Math.floor(difficulty * 8))){
+if(puzzle.minMoves > bestMoves){
+bestMoves = puzzle.minMoves;
+bestPuzzle = puzzle;
+if(bestMoves >= Math.floor(2 + difficulty * 15))break;
+}
+}
+}
+if(!bestPuzzle){
+// fallback: simpler puzzle
+for(let attempt = 0; attempt < 100; attempt++){
+const puzzle = tryGenerate(rng, Math.max(3, numVehicles - 2), truckChance * 0.5, difficulty * 0.5);
+if(puzzle && puzzle.minMoves >= 1){
+if(puzzle.minMoves > bestMoves){bestMoves = puzzle.minMoves; bestPuzzle = puzzle;}
+if(bestMoves >= 3) break;
+}
+}
+}
+if(!bestPuzzle){
+bestPuzzle = {vehicles:[{row:2,col:0,len:2,orient:'H',color:VEHICLE_COLORS[0],isPlayer:true},{row:0,col:2,len:3,orient:'V',color:VEHICLE_COLORS[1],isPlayer:false}],minMoves:1};
+}
+levelCache[levelIdx] = bestPuzzle;
+return JSON.parse(JSON.stringify(bestPuzzle));
+}
+
+function tryGenerate(rng, numV, truckChance, difficulty){
+const grid = Array.from({length:6},()=>Array(6).fill(-1));
+const vList = [];
+// Place red car on row 2
+const redCol = Math.floor(rng() * 3);
+grid[2][redCol] = 0;
+grid[2][redCol+1] = 0;
+vList.push({row:2, col:redCol, len:2, orient:'H', color:VEHICLE_COLORS[0], isPlayer:true});
+// Place other vehicles
+let colorIdx = 1;
+for(let i = 0; i < numV && colorIdx < VEHICLE_COLORS.length; i++){
+const isTruck = rng() < truckChance;
+const len = isTruck ? 3 : 2;
+const orient = rng() < 0.5 ? 'H' : 'V';
+let placed = false;
+for(let t = 0; t < 30; t++){
+const r = Math.floor(rng() * 6);
+const c = Math.floor(rng() * 6);
+if(canPlace(grid, r, c, len, orient)){
+const idx = vList.length;
+if(orient === 'H') for(let j=0;j<len;j++) grid[r][c+j]=idx;
+else for(let j=0;j<len;j++) grid[r+j][c]=idx;
+vList.push({row:r, col:c, len, orient, color:VEHICLE_COLORS[colorIdx % VEHICLE_COLORS.length], isPlayer:false});
+colorIdx++;
+placed = true;
+break;
+}
+}
+}
+if(vList.length < 3) return null;
+const mm = solveBFS(vList);
+if(mm < 0) return null;
+return {vehicles: vList, minMoves: mm};
+}
+
+function canPlace(grid, r, c, len, orient){
+if(orient === 'H'){
+if(c + len > 6) return false;
+for(let j=0;j<len;j++) if(grid[r][c+j] !== -1) return false;
+} else {
+if(r + len > 6) return false;
+for(let j=0;j<len;j++) if(grid[r+j][c] !== -1) return false;
+}
+return true;
+}
+
+// ===== BFS SOLVER =====
+function encodeState(vs){
+let s='';for(const v of vs)s+=v.row+','+v.col+';';return s;
+}
+
+function solveBFS(vs){
+const init = vs.map(v=>({row:v.row,col:v.col,len:v.len,orient:v.orient,isPlayer:v.isPlayer}));
+const startKey = encodeState(init);
+const queue = [{state:init, moves:0}];
+const visited = new Set([startKey]);
+let maxIter = 30000;
+while(queue.length > 0 && maxIter-- > 0){
+const {state, moves} = queue.shift();
+// Check win
+const p = state[0];
+if(p.col + p.len >= 6) return moves; // red car at exit (actually col+len > 5 means rightmost)
+// Actually: red car needs col+len === 6 to exit. Let's check if path is clear and car reached right
+if(p.col + p.len === 6) return moves;
+for(let i=0;i<state.length;i++){
+const v = state[i];
+const dirs = v.orient === 'H' ? [[0,-1],[0,1]] : [[-1,0],[1,0]];
+for(const [dr,dc] of dirs){
+// try sliding 1..max steps
+for(let step=1;step<=5;step++){
+const nr = v.row + dr*step;
+const nc = v.col + dc*step;
+if(v.orient === 'H'){
+if(nc < 0 || nc + v.len > 6) break;
+} else {
+if(nr < 0 || nr + v.len > 6) break;
+}
+// Check collision
+const ns = state.map((vv,j)=>j===i?{...vv,row:nr,col:nc}:{...vv});
+if(collides(ns, i)) break;
+const key = encodeState(ns);
+if(!visited.has(key)){
+visited.add(key);
+queue.push({state:ns, moves:moves+1});
+}
+}
+}
+}
+}
+return -1;
+}
+
+function collides(state, movedIdx){
+const mv = state[movedIdx];
+for(let i=0;i<state.length;i++){
+if(i===movedIdx)continue;
+const ov = state[i];
+if(overlaps(mv, ov)) return true;
+}
+return false;
+}
+
+function overlaps(a, b){
+const aCells = getCells(a);
+const bCells = getCells(b);
+for(const [ar,ac] of aCells)
+for(const [br,bc] of bCells)
+if(ar===br && ac===bc) return true;
+return false;
+}
+
+function getCells(v){
+const cells=[];
+if(v.orient==='H') for(let j=0;j<v.len;j++) cells.push([v.row, v.col+j]);
+else for(let j=0;j<v.len;j++) cells.push([v.row+j, v.col]);
+return cells;
+}
+
+// ===== RENDERING (Canvas) =====
+function initCanvas(){
+canvas = document.getElementById('board');
+ctx = canvas.getContext('2d');
+const maxW = Math.min(window.innerWidth - 32, 400);
+cellSize = Math.floor(maxW / GRID);
+canvasSize = cellSize * GRID;
+const dpr = window.devicePixelRatio || 1;
+canvas.width = canvasSize * dpr;
+canvas.height = canvasSize * dpr;
+canvas.style.width = canvasSize + 'px';
+canvas.style.height = canvasSize + 'px';
+ctx.scale(dpr, dpr);
+// exit marker
+const container = canvas.parentElement;
+container.style.width = (canvasSize + 30) + 'px';
+container.style.position = 'relative';
+let exitEl = document.getElementById('exit-marker');
+if(!exitEl){
+exitEl = document.createElement('div');
+exitEl.id = 'exit-marker';
+exitEl.className = 'exit-marker';
+exitEl.innerHTML = '<span class="exit-arrow">\u25B6</span>';
+container.appendChild(exitEl);
+}
+const exitTop = 2 * cellSize;
+exitEl.style.top = exitTop + 'px';
+exitEl.style.height = cellSize + 'px';
+exitEl.style.right = '-28px';
+}
+
+function drawBoard(){
+ctx.clearRect(0,0,canvasSize,canvasSize);
+// Background
+const bg = ctx.createLinearGradient(0,0,canvasSize,canvasSize);
+bg.addColorStop(0,'#1e1e3a');bg.addColorStop(1,'#15152a');
+ctx.fillStyle = bg;
+roundRect(ctx,0,0,canvasSize,canvasSize,16);ctx.fill();
+// Grid cells
+for(let r=0;r<GRID;r++){
+for(let c=0;c<GRID;c++){
+ctx.fillStyle='rgba(255,255,255,0.018)';
+roundRect(ctx,c*cellSize+3,r*cellSize+3,cellSize-6,cellSize-6,6);ctx.fill();
+}
+}
+// Draw vehicles
+for(let i=0;i<vehicles.length;i++){
+drawVehicle(vehicles[i], i);
+}
+}
+
+function drawVehicle(v, idx){
+const x = v.col * cellSize + 3;
+const y = v.row * cellSize + 3;
+const w = v.orient === 'H' ? v.len * cellSize - 6 : cellSize - 6;
+const h = v.orient === 'V' ? v.len * cellSize - 6 : cellSize - 6;
+const color = v.color;
+// Shadow
+ctx.save();
+ctx.shadowColor = 'rgba(0,0,0,0.4)';
+ctx.shadowBlur = 8;
+ctx.shadowOffsetY = 3;
+// Body
+ctx.fillStyle = color;
+roundRect(ctx, x, y, w, h, 10);
+ctx.fill();
+ctx.restore();
+// Border (darker)
+ctx.strokeStyle = shadeColor(color, -30);
+ctx.lineWidth = 1.5;
+roundRect(ctx, x, y, w, h, 10);
+ctx.stroke();
+// Shine
+const shineGrad = ctx.createLinearGradient(x, y, x, y + h * 0.4);
+shineGrad.addColorStop(0, 'rgba(255,255,255,0.3)');
+shineGrad.addColorStop(1, 'rgba(255,255,255,0)');
+ctx.fillStyle = shineGrad;
+roundRect(ctx, x + 4, y + 2, w - 8, h * 0.4, 8);
+ctx.fill();
+// Window
+ctx.fillStyle = 'rgba(0,0,0,0.15)';
+if(v.orient === 'H'){
+const ww = w * 0.3, wh = h * 0.55;
+roundRect(ctx, x + w*0.35, y + h*0.22, ww, wh, 4);ctx.fill();
+} else {
+const ww = w * 0.55, wh = h * 0.3;
+roundRect(ctx, x + w*0.22, y + h*0.35, ww, wh, 4);ctx.fill();
+}
+// Headlights
+ctx.fillStyle = 'rgba(255,255,220,0.6)';
+if(v.isPlayer) ctx.fillStyle = 'rgba(255,255,220,0.85)';
+if(v.orient === 'H'){
+// right side
+ctx.beginPath();ctx.arc(x+w-8, y+h*0.35, 3, 0, Math.PI*2);ctx.fill();
+ctx.beginPath();ctx.arc(x+w-8, y+h*0.65, 3, 0, Math.PI*2);ctx.fill();
+// tail lights (left)
+ctx.fillStyle = 'rgba(255,50,50,0.5)';
+ctx.beginPath();ctx.arc(x+8, y+h*0.35, 2.5, 0, Math.PI*2);ctx.fill();
+ctx.beginPath();ctx.arc(x+8, y+h*0.65, 2.5, 0, Math.PI*2);ctx.fill();
+} else {
+// bottom
+ctx.beginPath();ctx.arc(x+w*0.35, y+h-8, 3, 0, Math.PI*2);ctx.fill();
+ctx.beginPath();ctx.arc(x+w*0.65, y+h-8, 3, 0, Math.PI*2);ctx.fill();
+ctx.fillStyle = 'rgba(255,50,50,0.5)';
+ctx.beginPath();ctx.arc(x+w*0.35, y+8, 2.5, 0, Math.PI*2);ctx.fill();
+ctx.beginPath();ctx.arc(x+w*0.65, y+8, 2.5, 0, Math.PI*2);ctx.fill();
+}
+// Bottom detail
+ctx.fillStyle = 'rgba(0,0,0,0.15)';
+const dw = w * 0.5;
+roundRect(ctx, x + (w-dw)/2, y + h - 8, dw, 3, 2);ctx.fill();
+}
+
+function roundRect(ctx, x, y, w, h, r){
+ctx.beginPath();
+ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+function shadeColor(color, percent){
+const num = parseInt(color.replace('#',''), 16);
+const r = Math.max(0,Math.min(255,(num>>16)+percent));
+const g = Math.max(0,Math.min(255,((num>>8)&0xff)+percent));
+const b = Math.max(0,Math.min(255,(num&0xff)+percent));
+return '#'+(r<<16|g<<8|b).toString(16).padStart(6,'0');
+}
+
+// ===== DRAGGING =====
+function getCanvasPos(e){
+const rect = canvas.getBoundingClientRect();
+const t = e.touches ? e.touches[0] : e;
+return {x: t.clientX - rect.left, y: t.clientY - rect.top};
+}
+
+function findVehicleAt(px, py){
+const c = Math.floor(px / cellSize);
+const r = Math.floor(py / cellSize);
+for(let i=0;i<vehicles.length;i++){
+const v = vehicles[i];
+const cells = getCells(v);
+for(const [cr,cc] of cells){
+if(cr===r && cc===c) return i;
+}
+}
+return -1;
+}
+
+function onPointerDown(e){
+if(gameWon) return;
+e.preventDefault();
+ensureAudio();
+const pos = getCanvasPos(e);
+const idx = findVehicleAt(pos.x, pos.y);
+if(idx < 0) return;
+dragging = idx;
+dragStartX = pos.x;
+dragStartY = pos.y;
+dragVehicleStartX = vehicles[idx].col;
+dragVehicleStartY = vehicles[idx].row;
+}
+
+function onPointerMove(e){
+if(dragging === null) return;
+e.preventDefault();
+const pos = getCanvasPos(e);
+const v = vehicles[dragging];
+const dx = pos.x - dragStartX;
+const dy = pos.y - dragStartY;
+if(v.orient === 'H'){
+let newCol = dragVehicleStartX + dx / cellSize;
+// Clamp
+const [minC, maxC] = getMoveBounds(dragging);
+newCol = Math.max(minC, Math.min(maxC, newCol));
+v.col = newCol;
+} else {
+let newRow = dragVehicleStartY + dy / cellSize;
+const [minR, maxR] = getMoveBounds(dragging);
+newRow = Math.max(minR, Math.min(maxR, newRow));
+v.row = newRow;
+}
+drawBoard();
+}
+
+function onPointerUp(e){
+if(dragging === null) return;
+const v = vehicles[dragging];
+const oldCol = dragVehicleStartX;
+const oldRow = dragVehicleStartY;
+// Snap to grid
+if(v.orient === 'H'){
+v.col = Math.round(v.col);
+} else {
+v.row = Math.round(v.row);
+}
+if(v.col !== oldCol || v.row !== oldRow){
+moveCount++;
+document.getElementById('lbl-moves').textContent = moveCount;
+sfxSlide();
+}
+dragging = null;
+drawBoard();
+// Check win
+if(v.isPlayer && v.col + v.len >= GRID){
+winLevel();
+}
+}
+
+function getMoveBounds(idx){
+const v = vehicles[idx];
+if(v.orient === 'H'){
+let minC = 0, maxC = GRID - v.len;
+// Check other vehicles
+for(let i=0;i<vehicles.length;i++){
+if(i===idx) continue;
+const ov = vehicles[i];
+const oCells = getCells({row:Math.round(ov.row),col:Math.round(ov.col),len:ov.len,orient:ov.orient});
+for(const [or,oc] of oCells){
+if(or !== Math.round(dragVehicleStartY)) continue; // not same row (use start row)
+// Actually check all rows this vehicle occupies — for H vehicle it's just 1 row
+if(or < Math.round(dragVehicleStartY) || or >= Math.round(dragVehicleStartY) + 1) continue;
+// oc is blocking
+if(oc < dragVehicleStartX){
+minC = Math.max(minC, oc + 1);
+} else if(oc >= dragVehicleStartX + v.len){
+maxC = Math.min(maxC, oc - v.len);
+}
+}
+}
+return [minC, maxC];
+} else {
+let minR = 0, maxR = GRID - v.len;
+for(let i=0;i<vehicles.length;i++){
+if(i===idx) continue;
+const ov = vehicles[i];
+const oCells = getCells({row:Math.round(ov.row),col:Math.round(ov.col),len:ov.len,orient:ov.orient});
+for(const [or,oc] of oCells){
+if(oc < Math.round(dragVehicleStartX) || oc >= Math.round(dragVehicleStartX) + 1) continue;
+if(or < dragVehicleStartY){
+minR = Math.max(minR, or + 1);
+} else if(or >= dragVehicleStartY + v.len){
+maxR = Math.min(maxR, or - v.len);
+}
+}
+}
+return [minR, maxR];
+}
+}
+
+// ===== WIN =====
+function winLevel(){
+if(gameWon) return;
+gameWon = true;
+sfxExit();
+// Drive-out animation
+const p = vehicles[0];
+const startX = p.col * cellSize;
+let animX = startX;
+function animateExit(){
+animX += 8;
+p.col = animX / cellSize;
+drawBoard();
+if(animX < canvasSize + cellSize * 2){
+requestAnimationFrame(animateExit);
+} else {
+showWin();
+}
+}
+animateExit();
+}
+
+function showWin(){
+sfxWin();
+const stars = getStars();
+progress[currentLevel] = {moves: Math.min(moveCount, (progress[currentLevel]||{}).moves||Infinity), stars: Math.max(stars, (progress[currentLevel]||{}).stars||0)};
+saveProgress();
+const starsEl = document.getElementById('win-stars');
+starsEl.innerHTML = '';
+for(let i=0;i<3;i++){
+const s = document.createElement('span');
+s.className = 'star' + (i < stars ? ' earned' : '');
+s.textContent = '\u2605';
+s.style.animationDelay = (i*0.2)+'s';
+starsEl.appendChild(s);
+setTimeout(()=>{if(i<stars)sfxStar()}, i*200+100);
+}
+document.getElementById('win-moves').textContent = `${moveCount}회 이동 (최소: ${minMoves}회)`;
+document.getElementById('btn-next').style.display = currentLevel < TOTAL_LEVELS-1 ? '' : 'none';
+document.getElementById('win-overlay').classList.add('show');
+spawnConfetti();
+// Show interstitial ad every 5 levels
+if((currentLevel+1)%5===0) setTimeout(()=>document.getElementById('ad-interstitial').style.display='flex', 1500);
+}
+
+function getStars(){
+if(minMoves <= 0) return 3;
+const ratio = moveCount / minMoves;
+if(ratio <= 1.0) return 3;
+if(ratio <= 1.5) return 2;
+return 1;
+}
+
+function closeWin(){document.getElementById('win-overlay').classList.remove('show')}
+function closeAd(){document.getElementById('ad-interstitial').style.display='none'}
+
+function spawnConfetti(){
+const container = document.createElement('div');
+container.className='confetti';
+document.body.appendChild(container);
+const colors=['#ff6b6b','#ffd700','#4CAF50','#3498db','#e84393','#00b894','#fdcb6e'];
+for(let i=0;i<40;i++){
+const p=document.createElement('div');
+p.className='confetti-piece';
+p.style.left=Math.random()*100+'vw';
+p.style.top=(Math.random()*30-10)+'vh';
+p.style.background=colors[Math.floor(Math.random()*colors.length)];
+p.style.animationDuration=(1+Math.random())+'s';
+p.style.animationDelay=(Math.random()*0.5)+'s';
+p.style.width=(5+Math.random()*6)+'px';
+p.style.height=(5+Math.random()*6)+'px';
+container.appendChild(p);
+}
+setTimeout(()=>container.remove(),3000);
+}
+
+// ===== LEVEL MANAGEMENT =====
+function loadLevel(idx){
+currentLevel = idx;
+gameWon = false;
+moveCount = 0;
+document.getElementById('lbl-moves').textContent = '0';
+document.getElementById('lbl-level').textContent = idx+1;
+const puzzle = generateLevel(idx);
+vehicles = puzzle.vehicles.map(v=>({...v}));
+minMoves = puzzle.minMoves;
+document.getElementById('lbl-min').textContent = minMoves;
+initCanvas();
+drawBoard();
+showScreen('screen-game');
+}
+
+function restartLevel(){
+loadLevel(currentLevel);
+}
+
+function nextLevel(){
+if(currentLevel < TOTAL_LEVELS-1) loadLevel(currentLevel+1);
+}
+
+// ===== SCREENS =====
+function showScreen(id){
+document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+if(id==='screen-levels') renderLevelGrid();
+}
+
+function renderLevelGrid(){
+const grid = document.getElementById('level-grid');
+grid.innerHTML='';
+const unlocked = getUnlocked();
+const start = currentPage * LEVELS_PER_PAGE;
+const end = Math.min(start + LEVELS_PER_PAGE, TOTAL_LEVELS);
+for(let i=start;i<end;i++){
+const btn = document.createElement('button');
+btn.className = 'level-btn';
+const p = progress[i];
+if(i > unlocked+1 && !p) btn.classList.add('locked');
+if(p) btn.classList.add('cleared');
+const num = document.createElement('span');
+num.textContent = i+1;
+btn.appendChild(num);
+if(p && p.stars){
+const stars = document.createElement('div');
+stars.className='stars-small';
+stars.textContent = '\u2605'.repeat(p.stars) + '\u2606'.repeat(3-p.stars);
+btn.appendChild(stars);
+}
+if(!btn.classList.contains('locked')){
+btn.onclick = ()=>loadLevel(i);
+}
+grid.appendChild(btn);
+}
+document.getElementById('page-info').textContent = `${currentPage+1} / ${TOTAL_PAGES}`;
+}
+
+function changePage(dir){
+currentPage = Math.max(0, Math.min(TOTAL_PAGES-1, currentPage+dir));
+renderLevelGrid();
+}
+
+// ===== INIT =====
+function init(){
+initCanvas();
+renderLevelGrid();
+// Canvas events
+canvas.addEventListener('mousedown', onPointerDown);
+canvas.addEventListener('mousemove', onPointerMove);
+canvas.addEventListener('mouseup', onPointerUp);
+canvas.addEventListener('mouseleave', onPointerUp);
+canvas.addEventListener('touchstart', onPointerDown, {passive:false});
+canvas.addEventListener('touchmove', onPointerMove, {passive:false});
+canvas.addEventListener('touchend', onPointerUp);
+canvas.addEventListener('touchcancel', onPointerUp);
+window.addEventListener('resize', ()=>{
+if(document.getElementById('screen-game').classList.contains('active')){
+initCanvas();drawBoard();
+}
+});
+}
+
+init();
+</script>
+</body>
+</html>
