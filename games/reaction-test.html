@@ -202,6 +202,7 @@ body{display:flex;flex-direction:column;align-items:center}
 
 <script src="i18n.js"></script>
 <script src="share.js"></script>
+<script src="user-system.js"></script>
 <script>
 // ===== CUSTOM TRANSLATIONS =====
 const RT_I18N = {
@@ -1017,6 +1018,8 @@ function showFinalResults() {
   const rating = getRating(overallAvg);
   const pct = getPercentile(overallAvg);
   const isNewBest = bestAllTime === 0 || overallAvg < bestAllTime;
+
+  if(typeof PuzzleUser!=='undefined') PuzzleUser.recordGame('reaction-test',{score:Math.round(1000-overallAvg),avgMs:Math.round(overallAvg)});
 
   if (isNewBest) {
     bestAllTime = overallAvg;

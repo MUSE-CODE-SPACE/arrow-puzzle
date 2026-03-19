@@ -138,6 +138,7 @@ canvas{width:100%;height:100%;display:block;border-radius:16px}
 
 <script src="i18n.js"></script>
 <script src="share.js"></script>
+<script src="user-system.js"></script>
 <script>
 (function(){
 'use strict';
@@ -672,6 +673,7 @@ function gameOver() {
   gameState = 'over';
   cancelAnimationFrame(animId);
   playSound('crash');
+  if(typeof PuzzleUser!=='undefined') PuzzleUser.recordGame('flappy',{score:score});
 
   let isNewBest = false;
   if (score > bestScore) {

@@ -169,6 +169,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
   </div>
 </div>
 
+<script src="user-system.js"></script>
 <script>
 // ========== SOUND ENGINE ==========
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -529,6 +530,7 @@ function animateMove(dir){
     // Check game over
     if(!canMove()){
       gameOver=true;
+      if(typeof PuzzleUser!=='undefined') PuzzleUser.recordGame('2048',{score:score});
       setTimeout(()=>{
         document.getElementById('gameOverScore').textContent='점수: '+score;
         $gameOverOverlay.classList.add('show');

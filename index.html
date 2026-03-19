@@ -97,6 +97,9 @@ footer{text-align:center;padding:40px 20px;color:#333;font-size:.8rem;border-top
 </head>
 <body>
 
+<!-- User System -->
+<script src="games/user-system.js"></script>
+
 <!-- Language Switcher -->
 <div class="lang-switcher">
   <button class="lang-btn active" onclick="setLang('ko')">🇰🇷 한국어</button>
@@ -110,6 +113,7 @@ footer{text-align:center;padding:40px 20px;color:#333;font-size:.8rem;border-top
   <div class="hero">
     <h1>🎮 Puzzle Arcade</h1>
     <p data-i18n="hero_desc">중독성 있는 캐주얼 퍼즐 게임 모음! 누구나 쉽게, 언제든 즐기세요.</p>
+    <div id="userArea" style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap"></div>
   </div>
 
   <!-- Top Ad Banner -->
@@ -1028,6 +1032,29 @@ document.querySelectorAll('.game-card').forEach((card, i) => {
   card.style.transition = `all 0.5s ease ${i * 0.08}s`;
   observer.observe(card);
 });
+
+// Init user system
+(function initUserSystem() {
+  if (typeof PuzzleUser !== 'undefined') {
+    const area = document.getElementById('userArea');
+    if (area) {
+      const loginBtn = PuzzleUser.createLoginButton();
+      if (loginBtn) area.appendChild(loginBtn);
+      // Rankings button
+      const rankBtn = document.createElement('button');
+      rankBtn.className = 'cat-btn';
+      rankBtn.textContent = '🏆 랭킹';
+      rankBtn.onclick = () => PuzzleUser.showRankings();
+      area.appendChild(rankBtn);
+      // Badges button
+      const badgeBtn = document.createElement('button');
+      badgeBtn.className = 'cat-btn';
+      badgeBtn.textContent = '🎖️ 뱃지';
+      badgeBtn.onclick = () => PuzzleUser.showBadges();
+      area.appendChild(badgeBtn);
+    }
+  }
+})();
 
 // Init: apply saved language
 (function init() {

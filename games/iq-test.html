@@ -777,6 +777,8 @@ function showResult() {
   const rating = getRating(iq);
   const avgTime = (totalTime / 20).toFixed(1);
 
+  if(typeof PuzzleUser!=='undefined') PuzzleUser.recordGame('iq-test',{score:iq,iqScore:iq});
+
   // Save best
   const bestKey = 'iqTestBestScore';
   const prevBest = parseInt(localStorage.getItem(bestKey) || '0');
@@ -866,5 +868,6 @@ document.addEventListener('touchstart', () => AudioEngine.init(), { once: true }
 document.addEventListener('click', () => AudioEngine.init(), { once: true });
 </script>
 <script src="share.js" onerror=""></script>
+<script src="user-system.js"></script>
 </body>
 </html>

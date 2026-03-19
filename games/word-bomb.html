@@ -224,6 +224,7 @@ body{display:flex;flex-direction:column;align-items:center}
 
 <script src="i18n.js"></script>
 <script src="share.js"></script>
+<script src="user-system.js"></script>
 <script>
 // ===== TRANSLATIONS =====
 const WB_I18N = {
@@ -1361,6 +1362,8 @@ const game = {
     setTimeout(() => AudioEngine.gameOver(), 300);
 
     const isNew = this.saveBest(this.score);
+
+    if(typeof PuzzleUser!=='undefined') PuzzleUser.recordGame('word-bomb',{score:this.score,wordBombRounds:this.round});
 
     document.getElementById('finalScore').innerHTML = `${this.score} <span>${tt('points')}</span>`;
     document.getElementById('finalRound').textContent = this.round;

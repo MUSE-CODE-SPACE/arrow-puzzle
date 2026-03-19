@@ -188,6 +188,7 @@ body{display:flex;flex-direction:column;align-items:center}
 
 <script src="i18n.js"></script>
 <script src="share.js"></script>
+<script src="user-system.js"></script>
 <script>
 'use strict';
 
@@ -705,6 +706,8 @@ function endGame() {
 
   const isNewBest = saveBest(score);
   const acc = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
+
+  if(typeof PuzzleUser!=='undefined') PuzzleUser.recordGame('flag-quiz',{score:score,flagQuizPerfect:correctCount===totalAnswered});
 
   document.getElementById('resultTitle').textContent = ft.resultTitle;
   document.getElementById('resultScore').textContent = score;

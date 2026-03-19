@@ -219,6 +219,7 @@ canvas#gameCanvas{width:100%;height:100%;display:block;border-radius:16px}
 
 <script src="i18n.js"></script>
 <script src="share.js"></script>
+<script src="user-system.js"></script>
 <script>
 'use strict';
 
@@ -675,6 +676,7 @@ function endGame(sprintWin){
   gameRunning = false;
   if(ultraInterval){ clearInterval(ultraInterval); ultraInterval = null; }
   playSound('gameover');
+  if(typeof PuzzleUser!=='undefined') PuzzleUser.recordGame('block-stack',{score:score});
   const modeKey = 'best_' + gameMode;
   const best = bestScores[modeKey] || 0;
   let isNewBest = false;
