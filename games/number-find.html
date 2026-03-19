@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Number Find - Schulte Table</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif;background:#0a0a1a;color:#e2e8f0}
+body{display:flex;flex-direction:column;align-items:center}
+
+.ad-placeholder{width:100%;max-width:480px;height:50px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);font-size:12px;letter-spacing:1px;flex-shrink:0}
+.ad-top{border-radius:0 0 8px 8px}
+.ad-bottom{border-radius:8px 8px 0 0;margin-top:auto}
+
+.header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;flex-shrink:0}
+.back-link{color:#94a3b8;text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;transition:color .2s}
+.back-link:hover{color:#e2e8f0}
+.title{font-size:18px;font-weight:800;background:linear-gradient(135deg,#ec4899,#a855f7,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.game-area{flex:1;display:flex;flex-direction:column;align-items:center;width:100%;max-width:480px;padding:8px 16px;min-height:0;overflow-y:auto}
+
+/* Mode selector */
+.mode-selector{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:8px;flex-shrink:0}
+.mode-btn{padding:6px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#94a3b8;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Outfit',sans-serif}
+.mode-btn:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)}
+.mode-btn.active{background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;border-color:transparent;box-shadow:0 0 20px rgba(168,85,247,.3)}
+
+/* Stats row */
+.stats-row{width:100%;display:flex;justify-content:space-around;margin-bottom:8px;flex-shrink:0}
+.stat-box{text-align:center}
+.stat-label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.stat-value{font-size:20px;font-weight:900;color:#f1f5f9;line-height:1.2}
+.stat-value.best-val{color:#a855f7}
+.stat-value.target-val{color:#fbbf24}
+
+/* Target display */
+.target-display{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;padding:6px 16px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);flex-shrink:0}
+.target-label{font-size:13px;color:#94a3b8;font-weight:600}
+.target-number{font-size:28px;font-weight:900;color:#fbbf24;text-shadow:0 0 12px rgba(251,191,36,.4);min-width:40px;text-align:center}
+.target-number.red-target{color:#ef4444;text-shadow:0 0 12px rgba(239,68,68,.4)}
+.target-number.blue-target{color:#3b82f6;text-shadow:0 0 12px rgba(59,130,246,.4)}
+
+/* Grid */
+.grid-container{display:flex;align-items:center;justify-content:center;flex:1;width:100%;min-height:0}
+.grid{display:grid;gap:4px;width:100%;max-width:380px;aspect-ratio:1/1;max-height:380px}
+.grid.g4{grid-template-columns:repeat(4,1fr)}
+.grid.g5{grid-template-columns:repeat(5,1fr)}
+.grid.g6{grid-template-columns:repeat(6,1fr)}
+
+.cell{border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;cursor:pointer;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);transition:all .15s;position:relative;overflow:hidden;aspect-ratio:1/1}
+.cell:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)}
+.cell:active{transform:scale(.93)}
+.cell.found{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.3);color:rgba(34,197,94,.4);pointer-events:none;transform:scale(.95)}
+.cell.found .cell-num{opacity:.3}
+.cell.wrong-flash{animation:wrongFlash .35s ease-out;background:rgba(239,68,68,.25);border-color:rgba(239,68,68,.5)}
+@keyframes wrongFlash{0%{background:rgba(239,68,68,.4);transform:scale(1.05)}50%{background:rgba(239,68,68,.3)}100%{background:rgba(255,255,255,.06);transform:scale(1)}}
+.cell.correct-flash{animation:correctFlash .3s ease-out}
+@keyframes correctFlash{0%{background:rgba(34,197,94,.5);transform:scale(1.08)}100%{background:rgba(34,197,94,.15);transform:scale(.95)}}
+
+.cell-num{font-size:24px;pointer-events:none;transition:opacity .3s}
+.cell-num.red-num{color:#ef4444}
+.cell-num.blue-num{color:#3b82f6}
+
+.grid.g4 .cell-num{font-size:28px}
+.grid.g5 .cell-num{font-size:24px}
+.grid.g6 .cell-num{font-size:18px}
+
+/* Start overlay */
+.start-overlay{position:absolute;inset:0;background:rgba(10,10,26,.92);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;transition:opacity .3s}
+.start-overlay.hidden{opacity:0;pointer-events:none}
+.start-icon{font-size:64px;margin-bottom:12px}
+.start-title{font-size:28px;font-weight:900;margin-bottom:8px;background:linear-gradient(135deg,#ec4899,#a855f7,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center}
+.start-desc{font-size:14px;color:#94a3b8;text-align:center;max-width:300px;line-height:1.5;margin-bottom:20px}
+.brain-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(236,72,153,.15));border:1px solid rgba(168,85,247,.25);color:#c084fc;font-size:12px;font-weight:700;margin-bottom:16px;letter-spacing:.5px}
+.start-btn{padding:14px 40px;border-radius:14px;border:none;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;box-shadow:0 4px 20px rgba(168,85,247,.3)}
+.start-btn:hover{filter:brightness(1.1);transform:translateY(-2px);box-shadow:0 8px 30px rgba(168,85,247,.4)}
+
+/* Results overlay */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;visibility:hidden;transition:all .3s}
+.overlay.show{opacity:1;visibility:visible}
+.overlay-box{background:#1a1a2e;border-radius:24px;padding:32px 28px;text-align:center;max-width:360px;width:92%;border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.overlay-box h2{font-size:24px;font-weight:900;margin-bottom:4px;background:linear-gradient(135deg,#ec4899,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.result-rating{font-size:16px;font-weight:700;color:#fbbf24;margin-bottom:16px}
+.result-time{font-size:56px;font-weight:900;background:linear-gradient(135deg,#22c55e,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.result-time-label{font-size:14px;color:#94a3b8;margin-bottom:6px}
+.result-details{display:flex;gap:8px;justify-content:center;margin:16px 0;flex-wrap:wrap}
+.result-detail{background:rgba(255,255,255,.05);border-radius:12px;padding:10px 16px;text-align:center;min-width:90px}
+.result-detail-label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase}
+.result-detail-value{font-size:18px;font-weight:800;color:#f1f5f9}
+.result-detail-value.best-new{color:#a855f7}
+
+.overlay-btns{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center}
+.btn-primary{padding:12px 24px;border-radius:12px;border:none;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;flex:1;min-width:120px}
+.btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-secondary{padding:12px 24px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#e2e8f0;font-size:14px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;flex:1;min-width:120px}
+.btn-secondary:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25)}
+
+/* Penalty indicator */
+.penalty-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:28px;font-weight:900;color:#ef4444;pointer-events:none;z-index:150;opacity:0;text-shadow:0 0 10px rgba(239,68,68,.5)}
+.penalty-popup.show{animation:penaltyPop .6s ease-out forwards}
+@keyframes penaltyPop{0%{opacity:1;transform:translate(-50%,-50%) scale(1.5)}40%{opacity:1;transform:translate(-50%,-60%) scale(1)}100%{opacity:0;transform:translate(-50%,-80%) scale(.8)}}
+
+/* Responsive */
+@media(max-height:680px){
+  .stats-row{margin-bottom:4px}
+  .target-display{margin-bottom:4px;padding:4px 12px}
+  .target-number{font-size:24px}
+  .mode-selector{margin-bottom:4px}
+  .grid{max-height:320px;max-width:320px}
+}
+@media(max-height:580px){
+  .grid{max-height:280px;max-width:280px}
+  .grid.g6 .cell-num{font-size:14px}
+}
+</style>
+</head>
+<body>
+
+<div class="ad-placeholder ad-top"><span data-i18n="ad_area">광고 영역</span></div>
+
+<div class="header">
+  <a class="back-link" href="../index.html" data-i18n="back">← 메인으로</a>
+  <div class="title" id="gameTitle">숫자 찾기</div>
+</div>
+
+<div class="game-area" id="gameArea">
+  <div class="mode-selector" id="modeSelector">
+    <button class="mode-btn active" data-mode="easy" id="modeEasy">Easy 4×4</button>
+    <button class="mode-btn" data-mode="classic" id="modeClassic">Classic 5×5</button>
+    <button class="mode-btn" data-mode="hard" id="modeHard">Hard 6×6</button>
+    <button class="mode-btn" data-mode="double" id="modeDouble">Double</button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-label" data-i18n="time" id="timeLabel">시간</div>
+      <div class="stat-value" id="timerDisplay">0.0s</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label" id="penaltyLabel">Penalty</div>
+      <div class="stat-value" id="penaltyDisplay" style="color:#ef4444">+0s</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label" data-i18n="best" id="bestLabel">최고점</div>
+      <div class="stat-value best-val" id="bestDisplay">--</div>
+    </div>
+  </div>
+
+  <div class="target-display">
+    <span class="target-label" id="targetLabel">FIND:</span>
+    <span class="target-number" id="targetNumber">1</span>
+  </div>
+
+  <div class="grid-container">
+    <div class="grid g4" id="grid"></div>
+  </div>
+
+  <!-- Start overlay -->
+  <div class="start-overlay" id="startOverlay">
+    <div class="start-icon">🔢</div>
+    <div class="start-title" id="startTitle">숫자 찾기</div>
+    <div class="brain-badge" id="brainBadge">🧠 BRAIN TRAINING</div>
+    <div class="start-desc" id="startDesc">
+      격자에서 숫자를 오름차순으로 최대한 빨리 찾으세요!
+    </div>
+    <button class="start-btn" id="startBtn" data-i18n="new_game">새 게임</button>
+  </div>
+</div>
+
+<!-- Result overlay -->
+<div class="overlay" id="resultOverlay">
+  <div class="overlay-box">
+    <h2 id="resultTitle">🎉 완료!</h2>
+    <div class="result-rating" id="resultRating"></div>
+    <div class="result-time" id="resultTime">0.0s</div>
+    <div class="result-time-label" id="resultTimeLabel">Total Time</div>
+    <div class="result-details">
+      <div class="result-detail">
+        <div class="result-detail-label" id="penaltyResultLabel">Penalty</div>
+        <div class="result-detail-value" id="resultPenalty">+0s</div>
+      </div>
+      <div class="result-detail">
+        <div class="result-detail-label" data-i18n="best" id="bestResultLabel">Best</div>
+        <div class="result-detail-value" id="resultBest">--</div>
+      </div>
+      <div class="result-detail">
+        <div class="result-detail-label" id="errorsLabel">Errors</div>
+        <div class="result-detail-value" id="resultErrors">0</div>
+      </div>
+    </div>
+    <div class="overlay-btns">
+      <button class="btn-primary" id="retryBtn">↩ 다시하기</button>
+      <button class="btn-secondary" id="shareBtn">공유하기</button>
+    </div>
+  </div>
+</div>
+
+<div class="ad-placeholder ad-bottom"><span data-i18n="ad_area">광고 영역</span></div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  // ── Custom i18n ──
+  const LOCAL_I18N = {
+    ko: {
+      gameTitle: '숫자 찾기',
+      startTitle: '숫자 찾기',
+      startDesc: '격자에서 숫자를 오름차순으로 최대한 빨리 찾으세요!\n슐테 테이블은 실제 인지 훈련에 사용됩니다.',
+      brainBadge: '🧠 두뇌 훈련',
+      find: '찾기:',
+      penalty: '패널티',
+      errors: '오류',
+      totalTime: '총 시간',
+      complete: '완료!',
+      newBest: '신기록!',
+      retry: '↩ 다시하기',
+      share: '공유하기',
+      excellent: '탁월함!',
+      good: '좋아요!',
+      average: '보통',
+      keepTraining: '계속 훈련하세요!',
+      modeEasy: '쉬움 4×4',
+      modeClassic: '클래식 5×5',
+      modeHard: '어려움 6×6',
+      modeDouble: '더블',
+      redTurn: '빨강',
+      blueTurn: '파랑',
+      gameName: '숫자 찾기',
+    },
+    en: {
+      gameTitle: 'Number Find',
+      startTitle: 'Number Find',
+      startDesc: 'Find numbers in ascending order as fast as you can!\nThe Schulte Table is used in real cognitive training.',
+      brainBadge: '🧠 BRAIN TRAINING',
+      find: 'FIND:',
+      penalty: 'Penalty',
+      errors: 'Errors',
+      totalTime: 'Total Time',
+      complete: 'Complete!',
+      newBest: 'New Best!',
+      retry: '↩ Retry',
+      share: 'Share',
+      excellent: 'Excellent!',
+      good: 'Good!',
+      average: 'Average',
+      keepTraining: 'Keep Training!',
+      modeEasy: 'Easy 4×4',
+      modeClassic: 'Classic 5×5',
+      modeHard: 'Hard 6×6',
+      modeDouble: 'Double',
+      redTurn: 'Red',
+      blueTurn: 'Blue',
+      gameName: 'Number Find',
+    },
+    ja: {
+      gameTitle: '数字探し',
+      startTitle: '数字探し',
+      startDesc: '数字を昇順にできるだけ速く見つけよう！\nシュルテテーブルは実際の認知トレーニングに使用されています。',
+      brainBadge: '🧠 脳トレ',
+      find: '探す:',
+      penalty: 'ペナルティ',
+      errors: 'エラー',
+      totalTime: '合計時間',
+      complete: '完了！',
+      newBest: '新記録！',
+      retry: '↩ もう一度',
+      share: 'シェア',
+      excellent: '素晴らしい！',
+      good: 'いいね！',
+      average: '普通',
+      keepTraining: 'トレーニングを続けよう！',
+      modeEasy: '簡単 4×4',
+      modeClassic: 'クラシック 5×5',
+      modeHard: '難しい 6×6',
+      modeDouble: 'ダブル',
+      redTurn: '赤',
+      blueTurn: '青',
+      gameName: '数字探し',
+    },
+    zh: {
+      gameTitle: '找数字',
+      startTitle: '找数字',
+      startDesc: '尽快按升序找到数字！\n舒尔特方格用于真实的认知训练。',
+      brainBadge: '🧠 大脑训练',
+      find: '找:',
+      penalty: '罚时',
+      errors: '错误',
+      totalTime: '总时间',
+      complete: '完成！',
+      newBest: '新纪录！',
+      retry: '↩ 重试',
+      share: '分享',
+      excellent: '优秀！',
+      good: '不错！',
+      average: '一般',
+      keepTraining: '继续训练！',
+      modeEasy: '简单 4×4',
+      modeClassic: '经典 5×5',
+      modeHard: '困难 6×6',
+      modeDouble: '双色',
+      redTurn: '红色',
+      blueTurn: '蓝色',
+      gameName: '找数字',
+    },
+    es: {
+      gameTitle: 'Busca Números',
+      startTitle: 'Busca Números',
+      startDesc: '¡Encuentra los números en orden ascendente lo más rápido posible!\nLa Tabla de Schulte se usa en entrenamiento cognitivo real.',
+      brainBadge: '🧠 ENTRENA TU CEREBRO',
+      find: 'BUSCA:',
+      penalty: 'Penalización',
+      errors: 'Errores',
+      totalTime: 'Tiempo Total',
+      complete: '¡Completado!',
+      newBest: '¡Nuevo récord!',
+      retry: '↩ Reintentar',
+      share: 'Compartir',
+      excellent: '¡Excelente!',
+      good: '¡Bien!',
+      average: 'Promedio',
+      keepTraining: '¡Sigue entrenando!',
+      modeEasy: 'Fácil 4×4',
+      modeClassic: 'Clásico 5×5',
+      modeHard: 'Difícil 6×6',
+      modeDouble: 'Doble',
+      redTurn: 'Rojo',
+      blueTurn: 'Azul',
+      gameName: 'Busca Números',
+    },
+  };
+
+  const lang = getGameLang();
+  const t = getTranslations();
+  const lt = LOCAL_I18N[lang] || LOCAL_I18N.ko;
+
+  // ── Apply translations ──
+  applyGameI18n();
+  document.getElementById('gameTitle').textContent = lt.gameTitle;
+  document.getElementById('startTitle').textContent = lt.startTitle;
+  document.getElementById('startDesc').textContent = lt.startDesc;
+  document.getElementById('brainBadge').textContent = lt.brainBadge;
+  document.getElementById('targetLabel').textContent = lt.find;
+  document.getElementById('penaltyLabel').textContent = lt.penalty;
+  document.getElementById('modeEasy').textContent = lt.modeEasy;
+  document.getElementById('modeClassic').textContent = lt.modeClassic;
+  document.getElementById('modeHard').textContent = lt.modeHard;
+  document.getElementById('modeDouble').textContent = lt.modeDouble;
+  document.getElementById('retryBtn').textContent = lt.retry;
+  document.getElementById('shareBtn').textContent = lt.share;
+  document.getElementById('penaltyResultLabel').textContent = lt.penalty;
+  document.getElementById('errorsLabel').textContent = lt.errors;
+  document.getElementById('resultTimeLabel').textContent = lt.totalTime;
+  document.getElementById('startBtn').textContent = t.new_game;
+
+  // ── Audio (Web Audio API) ──
+  let audioCtx = null;
+  function getAudioCtx(){
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+  function playSound(type){
+    try{
+      const ctx = getAudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const now = ctx.currentTime;
+      if(type === 'correct'){
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.linearRampToValueAtTime(800, now + 0.08);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      } else if(type === 'wrong'){
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.linearRampToValueAtTime(150, now + 0.15);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } else if(type === 'complete'){
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.connect(g);
+          g.connect(ctx.destination);
+          o.type = 'sine';
+          o.frequency.setValueAtTime(freq, now + i * 0.12);
+          g.gain.setValueAtTime(0.15, now + i * 0.12);
+          g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.3);
+          o.start(now + i * 0.12);
+          o.stop(now + i * 0.12 + 0.3);
+        });
+      }
+    } catch(e){}
+  }
+
+  // ── Game state ──
+  const MODES = {
+    easy:    { size: 4, count: 16, label: 'Easy 4×4' },
+    classic: { size: 5, count: 25, label: 'Classic 5×5' },
+    hard:    { size: 6, count: 36, label: 'Hard 6×6' },
+    double:  { size: 4, count: 26, label: 'Double' },
+  };
+
+  let currentMode = 'easy';
+  let grid = [];
+  let nextTarget = 1;
+  let doubleColor = 'red'; // for double mode: 'red' or 'blue'
+  let doubleRedNext = 1;
+  let doubleBlueNext = 1;
+  let timerInterval = null;
+  let startTime = 0;
+  let elapsed = 0;
+  let penaltyTime = 0;
+  let errorCount = 0;
+  let gameActive = false;
+  let gameStarted = false;
+
+  const gridEl = document.getElementById('grid');
+  const timerEl = document.getElementById('timerDisplay');
+  const penaltyEl = document.getElementById('penaltyDisplay');
+  const bestEl = document.getElementById('bestDisplay');
+  const targetEl = document.getElementById('targetNumber');
+  const startOverlay = document.getElementById('startOverlay');
+  const resultOverlay = document.getElementById('resultOverlay');
+
+  // ── Best time storage ──
+  function getBestKey(mode){ return 'numberFind_best_' + mode; }
+  function getBest(mode){
+    const v = localStorage.getItem(getBestKey(mode));
+    return v ? parseFloat(v) : null;
+  }
+  function setBest(mode, time){
+    localStorage.setItem(getBestKey(mode), time.toFixed(1));
+  }
+
+  // ── Mode selection ──
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(gameActive) return;
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMode = btn.dataset.mode;
+      updateBestDisplay();
+      resetGame();
+    });
+  });
+
+  function updateBestDisplay(){
+    const best = getBest(currentMode);
+    bestEl.textContent = best !== null ? best.toFixed(1) + 's' : '--';
+  }
+
+  // ── Shuffle array ──
+  function shuffle(arr){
+    for(let i = arr.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // ── Generate grid ──
+  function generateGrid(){
+    const mode = MODES[currentMode];
+    const size = mode.size;
+    gridEl.className = 'grid g' + size;
+    gridEl.innerHTML = '';
+    grid = [];
+
+    if(currentMode === 'double'){
+      // 13 red + 13 blue = 26 cells on 4x4... wait, 4x4 = 16 cells
+      // Actually, let's use 5x5 with some blanks? No - let's do:
+      // Double mode: red 1-13, blue 1-13, total 26 on a 6x5 or...
+      // Better: use grid that fits. 26 numbers -> closest: 5x6=30 or 4x7=28
+      // Simpler: red 1-12, blue 1-12 on 5x5 (25 cells, 24 numbers + 1 blank)
+      // Actually let's do: 5x5 grid, red 1-13 and blue 1-12 = 25 cells
+      // Or simpler still: red 1-13 and blue 1-13 on 26-cell display
+      // Let's go with 4x4 doubled: 4 rows x 4 cols, but that's only 16
+      // Final decision: keep it simple - use a bigger grid for double
+      // Double: 5x5 = 25, but we need 26 numbers. Let's do red 1-12, blue 1-13 = 25 or equal
+      // Best: red 1-13, blue 1-12 on a 5x5 grid = 25 numbers
+      // Actually for fairness, let's do red 1-13 and blue 1-13 on a 5x5+1 extra = not clean
+      // Simplest clean version: 5x5 grid, 25 cells, red 1-12 and blue 1-13 alternating (r1,b1,r2,b2,...r12,b12,b13)
+      // OR: just use equal counts: red 1-12, blue 1-12 = 24 on 5x5 with 1 blank? No.
+      // Let's do: 5x5 grid, 25 items: red 1-13, blue 1-12 = 25. User goes R1,B1,R2,B2,...R12,B12,R13
+      // That's 25 items total. Perfect for 5x5.
+      gridEl.className = 'grid g5';
+      const items = [];
+      for(let i = 1; i <= 13; i++) items.push({num: i, color: 'red'});
+      for(let i = 1; i <= 12; i++) items.push({num: i, color: 'blue'});
+      shuffle(items);
+      items.forEach((item, idx) => {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.num = item.num;
+        cell.dataset.color = item.color;
+        cell.dataset.idx = idx;
+        const numSpan = document.createElement('span');
+        numSpan.className = 'cell-num ' + item.color + '-num';
+        numSpan.textContent = item.num;
+        cell.appendChild(numSpan);
+        cell.addEventListener('click', () => onCellClick(cell));
+        gridEl.appendChild(cell);
+        grid.push(cell);
+      });
+      doubleRedNext = 1;
+      doubleBlueNext = 1;
+      doubleColor = 'red';
+      updateDoubleTarget();
+    } else {
+      const count = mode.count;
+      const nums = shuffle(Array.from({length: count}, (_, i) => i + 1));
+      nums.forEach((num, idx) => {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.num = num;
+        cell.dataset.idx = idx;
+        const numSpan = document.createElement('span');
+        numSpan.className = 'cell-num';
+        numSpan.textContent = num;
+        cell.appendChild(numSpan);
+        cell.addEventListener('click', () => onCellClick(cell));
+        gridEl.appendChild(cell);
+        grid.push(cell);
+      });
+      nextTarget = 1;
+      targetEl.textContent = '1';
+      targetEl.className = 'target-number';
+    }
+  }
+
+  function updateDoubleTarget(){
+    if(doubleColor === 'red'){
+      targetEl.textContent = doubleRedNext;
+      targetEl.className = 'target-number red-target';
+    } else {
+      targetEl.textContent = doubleBlueNext;
+      targetEl.className = 'target-number blue-target';
+    }
+  }
+
+  // ── Cell click handler ──
+  function onCellClick(cell){
+    if(!gameActive) return;
+    if(cell.classList.contains('found')) return;
+
+    if(!gameStarted){
+      gameStarted = true;
+      startTime = performance.now();
+      timerInterval = setInterval(updateTimer, 50);
+    }
+
+    if(currentMode === 'double'){
+      handleDoubleClick(cell);
+    } else {
+      handleNormalClick(cell);
+    }
+  }
+
+  function handleNormalClick(cell){
+    const num = parseInt(cell.dataset.num);
+    if(num === nextTarget){
+      // Correct!
+      playSound('correct');
+      cell.classList.add('found', 'correct-flash');
+      nextTarget++;
+      const mode = MODES[currentMode];
+      if(nextTarget > mode.count){
+        finishGame();
+      } else {
+        targetEl.textContent = nextTarget;
+      }
+    } else {
+      // Wrong
+      playSound('wrong');
+      cell.classList.add('wrong-flash');
+      setTimeout(() => cell.classList.remove('wrong-flash'), 350);
+      penaltyTime += 1;
+      errorCount++;
+      penaltyEl.textContent = '+' + penaltyTime + 's';
+      showPenaltyPopup();
+    }
+  }
+
+  function handleDoubleClick(cell){
+    const num = parseInt(cell.dataset.num);
+    const color = cell.dataset.color;
+    let isCorrect = false;
+    if(doubleColor === 'red' && color === 'red' && num === doubleRedNext){
+      isCorrect = true;
+      doubleRedNext++;
+      doubleColor = 'blue';
+    } else if(doubleColor === 'blue' && color === 'blue' && num === doubleBlueNext){
+      isCorrect = true;
+      doubleBlueNext++;
+      doubleColor = 'red';
+    }
+
+    if(isCorrect){
+      playSound('correct');
+      cell.classList.add('found', 'correct-flash');
+      // Check if game complete: red goes up to 13, blue up to 12
+      // Order: R1,B1,R2,B2,...R12,B12,R13
+      // After R13 is found: doubleRedNext=14, doubleColor='blue'
+      // But there is no B13, so game is done when doubleRedNext > 13
+      if(doubleRedNext > 13){
+        finishGame();
+      } else {
+        updateDoubleTarget();
+      }
+    } else {
+      playSound('wrong');
+      cell.classList.add('wrong-flash');
+      setTimeout(() => cell.classList.remove('wrong-flash'), 350);
+      penaltyTime += 1;
+      errorCount++;
+      penaltyEl.textContent = '+' + penaltyTime + 's';
+      showPenaltyPopup();
+    }
+  }
+
+  function showPenaltyPopup(){
+    const popup = document.createElement('div');
+    popup.className = 'penalty-popup show';
+    popup.textContent = '+1s';
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 600);
+  }
+
+  // ── Timer ──
+  function updateTimer(){
+    elapsed = (performance.now() - startTime) / 1000;
+    timerEl.textContent = elapsed.toFixed(1) + 's';
+  }
+
+  // ── Finish ──
+  function finishGame(){
+    gameActive = false;
+    clearInterval(timerInterval);
+    updateTimer();
+    playSound('complete');
+
+    const totalTime = parseFloat((elapsed + penaltyTime).toFixed(1));
+    const best = getBest(currentMode);
+    const isNewBest = best === null || totalTime < best;
+    if(isNewBest) setBest(currentMode, totalTime);
+
+    // Rating
+    const modeConf = MODES[currentMode];
+    let rating;
+    let ratingThresholds;
+    if(currentMode === 'easy') ratingThresholds = [15, 25, 40];
+    else if(currentMode === 'classic') ratingThresholds = [30, 50, 75];
+    else if(currentMode === 'hard') ratingThresholds = [60, 90, 130];
+    else ratingThresholds = [40, 65, 95]; // double
+
+    if(totalTime <= ratingThresholds[0]) rating = lt.excellent;
+    else if(totalTime <= ratingThresholds[1]) rating = lt.good;
+    else if(totalTime <= ratingThresholds[2]) rating = lt.average;
+    else rating = lt.keepTraining;
+
+    // Show results
+    document.getElementById('resultTitle').textContent = lt.complete;
+    document.getElementById('resultRating').textContent = (isNewBest ? '🏆 ' + lt.newBest + ' ' : '') + rating;
+    document.getElementById('resultTime').textContent = totalTime.toFixed(1) + 's';
+    document.getElementById('resultPenalty').textContent = '+' + penaltyTime + 's';
+    document.getElementById('resultErrors').textContent = errorCount;
+    const newBest = getBest(currentMode);
+    const bestResultEl = document.getElementById('resultBest');
+    bestResultEl.textContent = newBest !== null ? newBest.toFixed(1) + 's' : '--';
+    if(isNewBest) bestResultEl.classList.add('best-new');
+    else bestResultEl.classList.remove('best-new');
+
+    updateBestDisplay();
+
+    setTimeout(() => {
+      resultOverlay.classList.add('show');
+    }, 300);
+
+    // Share
+    if(typeof PuzzleShare !== 'undefined'){
+      document.getElementById('shareBtn').onclick = () => {
+        PuzzleShare.showShareModal({
+          gameName: lt.gameName,
+          title: lt.gameName,
+          score: totalTime,
+          message: rating + ' | ' + modeConf.label,
+          lang: lang,
+        });
+      };
+    }
+  }
+
+  // ── Reset / Start ──
+  function resetGame(){
+    clearInterval(timerInterval);
+    gameActive = false;
+    gameStarted = false;
+    elapsed = 0;
+    penaltyTime = 0;
+    errorCount = 0;
+    timerEl.textContent = '0.0s';
+    penaltyEl.textContent = '+0s';
+    resultOverlay.classList.remove('show');
+    generateGrid();
+    startOverlay.classList.remove('hidden');
+  }
+
+  function startGame(){
+    startOverlay.classList.add('hidden');
+    gameActive = true;
+    gameStarted = false; // Timer starts on first tap
+  }
+
+  document.getElementById('startBtn').addEventListener('click', startGame);
+  document.getElementById('retryBtn').addEventListener('click', () => {
+    resultOverlay.classList.remove('show');
+    resetGame();
+    // Auto-start after retry
+    setTimeout(startGame, 100);
+  });
+
+  // ── Init ──
+  updateBestDisplay();
+  generateGrid();
+})();
+</script>
+</body>
+</html>

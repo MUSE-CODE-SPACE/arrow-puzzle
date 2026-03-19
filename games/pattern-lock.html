@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Pattern Lock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif;background:#0a0a1a;color:#e2e8f0}
+body{display:flex;flex-direction:column;align-items:center}
+
+.ad-placeholder{width:100%;max-width:480px;height:50px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);font-size:12px;letter-spacing:1px;flex-shrink:0}
+.ad-top{border-radius:0 0 8px 8px}
+.ad-bottom{border-radius:8px 8px 0 0;margin-top:auto}
+
+.header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;flex-shrink:0}
+.back-link{color:#94a3b8;text-decoration:none;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;transition:color .2s}
+.back-link:hover{color:#e2e8f0}
+.title{font-size:18px;font-weight:800;background:linear-gradient(135deg,#06b6d4,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.info-bar{width:100%;max-width:480px;display:flex;justify-content:space-around;padding:6px 16px;flex-shrink:0}
+.info-box{text-align:center}
+.info-label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.info-value{font-size:22px;font-weight:900;color:#f1f5f9;line-height:1.1}
+.info-value.lives{color:#ef4444}
+.info-value.stars{color:#fbbf24}
+
+.game-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:480px;padding:8px;position:relative;min-height:0;gap:8px}
+
+.message-area{height:36px;display:flex;align-items:center;justify-content:center}
+#statusMsg{font-size:16px;font-weight:700;color:#94a3b8;text-align:center;transition:all .3s}
+#statusMsg.watching{color:#fbbf24;animation:pulse 1s ease-in-out infinite}
+#statusMsg.your-turn{color:#22c55e}
+#statusMsg.error{color:#ef4444}
+#statusMsg.success{color:#06b6d4}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+
+/* === PATTERN GRID === */
+.grid-container{position:relative;width:min(75vw,300px);height:min(75vw,300px)}
+.grid-svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+.grid-svg line{stroke-linecap:round}
+.dot-grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);z-index:3}
+.dot-cell{display:flex;align-items:center;justify-content:center}
+.dot{width:24px;height:24px;border-radius:50%;background:rgba(148,163,184,.25);border:2px solid rgba(148,163,184,.3);transition:all .3s;position:relative;pointer-events:auto;cursor:pointer}
+.dot::after{content:'';position:absolute;inset:-8px;border-radius:50%;background:transparent;transition:all .3s}
+.dot.active{background:#06b6d4;border-color:#06b6d4;box-shadow:0 0 20px rgba(6,182,212,.6),0 0 40px rgba(6,182,212,.3)}
+.dot.active::after{background:rgba(6,182,212,.15)}
+.dot.shown{background:#a855f7;border-color:#a855f7;box-shadow:0 0 20px rgba(168,85,247,.6),0 0 40px rgba(168,85,247,.3)}
+.dot.shown::after{background:rgba(168,85,247,.15)}
+.dot.correct{background:#22c55e;border-color:#22c55e;box-shadow:0 0 20px rgba(34,197,94,.6)}
+.dot.wrong{background:#ef4444;border-color:#ef4444;box-shadow:0 0 20px rgba(239,68,68,.6)}
+
+.btn-row{display:flex;gap:12px;margin-top:8px}
+.btn{background:linear-gradient(135deg,#06b6d4,#a855f7);color:#fff;border:none;padding:12px 32px;border-radius:12px;font-size:15px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px rgba(6,182,212,.4)}
+.btn:hover{transform:scale(1.05)}
+.btn:active{transform:scale(.97)}
+
+/* === LEVEL SELECT === */
+.screen{display:none;width:100%;flex-direction:column;align-items:center;flex:1;min-height:0}
+.screen.active{display:flex}
+.level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;width:100%;max-width:400px;padding:16px;overflow-y:auto;flex:1;align-content:start}
+.level-btn{aspect-ratio:1;border-radius:14px;border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;font-family:'Outfit',sans-serif}
+.level-btn:hover{transform:scale(1.05);border-color:rgba(6,182,212,.4)}
+.level-btn:active{transform:scale(.95)}
+.level-btn.locked{opacity:.35;pointer-events:none;cursor:default}
+.level-btn.completed{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.08)}
+.level-btn.current{border-color:rgba(6,182,212,.5);background:rgba(6,182,212,.1);box-shadow:0 0 15px rgba(6,182,212,.2)}
+.level-num{font-size:18px;font-weight:800;color:#e2e8f0}
+.level-stars{font-size:11px;color:#fbbf24;margin-top:2px;letter-spacing:1px}
+
+/* === OVERLAY === */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;visibility:hidden;transition:all .3s}
+.overlay.show{opacity:1;visibility:visible}
+.overlay-box{background:#1a1a2e;border-radius:20px;padding:32px;text-align:center;max-width:320px;width:90%;border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.overlay-box h2{font-size:28px;font-weight:900;margin-bottom:4px;background:linear-gradient(135deg,#06b6d4,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.overlay-box .rating{font-size:32px;color:#fbbf24;font-weight:700;margin:8px 0}
+.overlay-box .final-score{font-size:48px;font-weight:900;color:#06b6d4;margin:8px 0}
+.overlay-box .final-label{font-size:13px;color:#94a3b8;margin-bottom:4px}
+.overlay-box .sub-text{font-size:14px;color:#a855f7;margin-bottom:20px;font-weight:600}
+.overlay-box .btn-group{display:flex;flex-direction:column;gap:10px}
+.overlay-box button{background:linear-gradient(135deg,#06b6d4,#a855f7);color:#fff;border:none;padding:14px 40px;border-radius:12px;font-size:16px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px rgba(6,182,212,.4);width:100%}
+.overlay-box button:hover{transform:scale(1.05)}
+.overlay-box button:active{transform:scale(.97)}
+.overlay-box button.secondary{background:rgba(255,255,255,.08);box-shadow:none}
+
+.level-flash{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:64px;font-weight:900;color:#fff;text-shadow:0 0 40px rgba(6,182,212,.6);pointer-events:none;opacity:0;z-index:100}
+.level-flash.show{animation:flashIn .9s ease-out forwards}
+@keyframes flashIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}40%{transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-60%) scale(1.1)}}
+
+.shake{animation:shake .4s ease-out}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+
+@keyframes dotPop{0%{transform:scale(1)}50%{transform:scale(1.4)}100%{transform:scale(1)}}
+.dot.pop{animation:dotPop .3s ease-out}
+</style>
+</head>
+<body>
+
+<div class="ad-placeholder ad-top"><span data-i18n="ad_area">AD SPACE</span></div>
+
+<div class="header">
+  <a href="../index.html" class="back-link" id="backLink"></a>
+  <div class="title" id="gameTitle">Pattern Lock</div>
+</div>
+
+<div class="info-bar">
+  <div class="info-box"><div class="info-label" id="levelLabel">LEVEL</div><div class="info-value" id="levelDisplay">1</div></div>
+  <div class="info-box"><div class="info-label" id="livesLabel">LIVES</div><div class="info-value lives" id="livesDisplay">&#9829;&#9829;&#9829;</div></div>
+  <div class="info-box"><div class="info-label" id="starsLabel">STARS</div><div class="info-value stars" id="starsDisplay">0</div></div>
+</div>
+
+<!-- Level Select Screen -->
+<div class="screen active" id="levelSelectScreen">
+  <div class="message-area" style="margin:8px 0">
+    <div id="selectMsg" style="font-size:15px;font-weight:700;color:#94a3b8"></div>
+  </div>
+  <div class="level-grid" id="levelGrid"></div>
+</div>
+
+<!-- Game Screen -->
+<div class="screen" id="gameScreen">
+  <div class="message-area">
+    <div id="statusMsg"></div>
+  </div>
+
+  <div class="grid-container" id="gridContainer">
+    <svg class="grid-svg" id="gridSvg"></svg>
+    <div class="dot-grid" id="dotGrid"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn secondary" id="backToLevelsBtn" style="background:rgba(255,255,255,.08);box-shadow:none;padding:10px 20px;font-size:13px"></button>
+  </div>
+</div>
+
+<div class="ad-placeholder ad-bottom"><span data-i18n="ad_area">AD SPACE</span></div>
+
+<div class="level-flash" id="levelFlash"></div>
+
+<!-- Level Complete Overlay -->
+<div class="overlay" id="levelCompleteOverlay">
+  <div class="overlay-box">
+    <h2 id="lcTitle"></h2>
+    <div class="rating" id="lcStars"></div>
+    <div class="final-label" id="lcLabel"></div>
+    <div class="final-score" id="lcLevel">1</div>
+    <div class="sub-text" id="lcSub"></div>
+    <div class="btn-group">
+      <button onclick="game.nextLevel()" id="lcNext"></button>
+      <button class="secondary" onclick="game.goToLevelSelect()" id="lcLevels"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Game Over Overlay -->
+<div class="overlay" id="gameOverOverlay">
+  <div class="overlay-box">
+    <h2 id="goTitle"></h2>
+    <div class="rating" id="goRating"></div>
+    <div class="final-label" id="goLabel"></div>
+    <div class="final-score" id="goScore">0</div>
+    <div class="sub-text" id="goSub"></div>
+    <div class="btn-group">
+      <button onclick="game.restartFromLevel(1)" id="goRetry"></button>
+      <button class="secondary" onclick="game.goToLevelSelect()" id="goLevels"></button>
+      <button class="secondary" onclick="game.share()" id="goShare">Share</button>
+    </div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script>
+// ===== CUSTOM I18N =====
+const CUSTOM_I18N = {
+  ko: {
+    game_title: '패턴 잠금',
+    select_level: '레벨을 선택하세요',
+    watch: '패턴을 기억하세요!',
+    your_turn: '패턴을 그리세요!',
+    correct: '정답!',
+    wrong: '틀렸습니다!',
+    level_complete: '레벨 클리어!',
+    game_over: '게임 오버',
+    next_level: '다음 레벨',
+    levels: '레벨 선택',
+    total_stars: '총 별',
+    lives_left: '남은 목숨',
+    no_lives: '목숨을 모두 잃었습니다',
+    share: '공유하기',
+    all_clear: '모든 레벨 클리어!',
+    back_levels: '레벨 목록',
+    try_again: '다시 시작',
+    pattern_length: '패턴 길이',
+  },
+  en: {
+    game_title: 'Pattern Lock',
+    select_level: 'Select a level',
+    watch: 'Memorize the pattern!',
+    your_turn: 'Draw the pattern!',
+    correct: 'Correct!',
+    wrong: 'Wrong!',
+    level_complete: 'Level Complete!',
+    game_over: 'Game Over',
+    next_level: 'Next Level',
+    levels: 'Levels',
+    total_stars: 'Total Stars',
+    lives_left: 'Lives Left',
+    no_lives: 'No lives remaining',
+    share: 'Share',
+    all_clear: 'All Levels Cleared!',
+    back_levels: 'Back to Levels',
+    try_again: 'Try Again',
+    pattern_length: 'Pattern Length',
+  },
+  ja: {
+    game_title: 'パターンロック',
+    select_level: 'レベルを選択',
+    watch: 'パターンを覚えてください！',
+    your_turn: 'パターンを描いてください！',
+    correct: '正解！',
+    wrong: '不正解！',
+    level_complete: 'レベルクリア！',
+    game_over: 'ゲームオーバー',
+    next_level: '次のレベル',
+    levels: 'レベル選択',
+    total_stars: '合計スター',
+    lives_left: '残りライフ',
+    no_lives: 'ライフがなくなりました',
+    share: '共有',
+    all_clear: '全レベルクリア！',
+    back_levels: 'レベル一覧',
+    try_again: 'もう一度',
+    pattern_length: 'パターンの長さ',
+  },
+  zh: {
+    game_title: '图案锁',
+    select_level: '选择关卡',
+    watch: '记住图案！',
+    your_turn: '画出图案！',
+    correct: '正确！',
+    wrong: '错误！',
+    level_complete: '关卡完成！',
+    game_over: '游戏结束',
+    next_level: '下一关',
+    levels: '关卡选择',
+    total_stars: '总星数',
+    lives_left: '剩余生命',
+    no_lives: '生命已用完',
+    share: '分享',
+    all_clear: '全部通关！',
+    back_levels: '返回关卡',
+    try_again: '重新开始',
+    pattern_length: '图案长度',
+  },
+  es: {
+    game_title: 'Patrón de Bloqueo',
+    select_level: 'Selecciona un nivel',
+    watch: '¡Memoriza el patrón!',
+    your_turn: '¡Dibuja el patrón!',
+    correct: '¡Correcto!',
+    wrong: '¡Incorrecto!',
+    level_complete: '¡Nivel Completado!',
+    game_over: 'Fin del Juego',
+    next_level: 'Siguiente Nivel',
+    levels: 'Niveles',
+    total_stars: 'Estrellas Totales',
+    lives_left: 'Vidas Restantes',
+    no_lives: 'Sin vidas restantes',
+    share: 'Compartir',
+    all_clear: '¡Todos los niveles completados!',
+    back_levels: 'Volver a Niveles',
+    try_again: 'Intentar de Nuevo',
+    pattern_length: 'Longitud del Patrón',
+  }
+};
+
+function ct(key) {
+  const lang = getGameLang();
+  const dict = CUSTOM_I18N[lang] || CUSTOM_I18N.ko;
+  return dict[key] || CUSTOM_I18N.en[key] || key;
+}
+
+// ===== WEB AUDIO SOUND ENGINE =====
+const AudioEngine = {
+  ctx: null,
+  init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  },
+  playTone(freq, duration = 0.3, type = 'sine', vol = 0.2) {
+    if (!this.ctx) this.init();
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + duration);
+  },
+  dotConnect(index) {
+    // Rising tone based on dot index
+    const baseFreq = 330 + index * 55;
+    this.playTone(baseFreq, 0.15, 'sine', 0.2);
+  },
+  playCorrect() {
+    this.playTone(523.25, 0.12, 'sine', 0.2);
+    setTimeout(() => this.playTone(659.25, 0.12, 'sine', 0.2), 100);
+    setTimeout(() => this.playTone(783.99, 0.2, 'sine', 0.2), 200);
+  },
+  playWrong() {
+    if (!this.ctx) this.init();
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.value = 130;
+    gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.4);
+  },
+  playShowDot(index) {
+    const freq = 260 + index * 60;
+    this.playTone(freq, 0.2, 'triangle', 0.15);
+  }
+};
+
+// ===== LEVEL PATTERNS (pre-generated) =====
+const LEVEL_CONFIG = [
+  { dots: 3, showTime: 2000 },  // 1
+  { dots: 3, showTime: 1800 },  // 2
+  { dots: 4, showTime: 2000 },  // 3
+  { dots: 4, showTime: 1800 },  // 4
+  { dots: 4, showTime: 1500 },  // 5
+  { dots: 5, showTime: 2000 },  // 6
+  { dots: 5, showTime: 1700 },  // 7
+  { dots: 6, showTime: 2200 },  // 8
+  { dots: 6, showTime: 1800 },  // 9
+  { dots: 6, showTime: 1500 },  // 10
+  { dots: 6, showTime: 1800 },  // 11
+  { dots: 7, showTime: 2200 },  // 12
+  { dots: 7, showTime: 1800 },  // 13
+  { dots: 7, showTime: 1500 },  // 14
+  { dots: 7, showTime: 1300 },  // 15
+  { dots: 7, showTime: 1500 },  // 16
+  { dots: 8, showTime: 2000 },  // 17
+  { dots: 8, showTime: 1600 },  // 18
+  { dots: 9, showTime: 2200 },  // 19
+  { dots: 9, showTime: 1800 },  // 20
+];
+
+// ===== GAME LOGIC =====
+const game = {
+  currentLevel: 1,
+  lives: 3,
+  totalStars: 0,
+  pattern: [],
+  playerPattern: [],
+  isShowingPattern: false,
+  isPlayerTurn: false,
+  isDragging: false,
+  attempts: 0,
+  dotElements: [],
+  dotPositions: [],
+  svgLines: [],
+  playerLines: [],
+  currentLine: null,
+  progress: {},   // { level: stars }
+  timeouts: [],
+  TOTAL_LEVELS: 20,
+
+  init() {
+    this.loadProgress();
+    this.buildDotGrid();
+    this.setupDragEvents();
+    this.renderLevelSelect();
+    this.applyTranslations();
+
+    document.getElementById('backToLevelsBtn').addEventListener('click', () => this.goToLevelSelect());
+  },
+
+  loadProgress() {
+    try {
+      const saved = localStorage.getItem('patternLockProgress');
+      if (saved) this.progress = JSON.parse(saved);
+    } catch(e) {}
+    this.calcTotalStars();
+  },
+
+  saveProgress() {
+    localStorage.setItem('patternLockProgress', JSON.stringify(this.progress));
+  },
+
+  calcTotalStars() {
+    this.totalStars = Object.values(this.progress).reduce((a, b) => a + b, 0);
+  },
+
+  buildDotGrid() {
+    const grid = document.getElementById('dotGrid');
+    grid.innerHTML = '';
+    this.dotElements = [];
+    for (let i = 0; i < 9; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'dot-cell';
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      dot.dataset.index = i;
+      cell.appendChild(dot);
+      grid.appendChild(cell);
+      this.dotElements.push(dot);
+    }
+  },
+
+  getDotPositions() {
+    const container = document.getElementById('gridContainer');
+    const rect = container.getBoundingClientRect();
+    this.dotPositions = this.dotElements.map(dot => {
+      const dr = dot.getBoundingClientRect();
+      return {
+        x: dr.left + dr.width / 2 - rect.left,
+        y: dr.top + dr.height / 2 - rect.top
+      };
+    });
+  },
+
+  setupDragEvents() {
+    const container = document.getElementById('gridContainer');
+
+    const getPos = (e) => {
+      const rect = container.getBoundingClientRect();
+      const touch = e.touches ? e.touches[0] : e;
+      return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+    };
+
+    const hitTest = (pos) => {
+      const threshold = 30;
+      for (let i = 0; i < this.dotPositions.length; i++) {
+        const dp = this.dotPositions[i];
+        const dist = Math.hypot(pos.x - dp.x, pos.y - dp.y);
+        if (dist < threshold) return i;
+      }
+      return -1;
+    };
+
+    const onStart = (e) => {
+      if (!this.isPlayerTurn) return;
+      e.preventDefault();
+      AudioEngine.init();
+      this.getDotPositions();
+      this.isDragging = true;
+      this.playerPattern = [];
+      this.clearPlayerLines();
+      this.dotElements.forEach(d => d.classList.remove('active', 'correct', 'wrong'));
+
+      const pos = getPos(e);
+      const idx = hitTest(pos);
+      if (idx >= 0) this.addPlayerDot(idx);
+
+      // Create live line
+      this.currentLine = this.createSvgLine(0, 0, 0, 0, 'rgba(6,182,212,.5)', 3);
+      this.updateCurrentLine(pos);
+    };
+
+    const onMove = (e) => {
+      if (!this.isDragging || !this.isPlayerTurn) return;
+      e.preventDefault();
+      const pos = getPos(e);
+      const idx = hitTest(pos);
+      if (idx >= 0 && !this.playerPattern.includes(idx)) {
+        this.addPlayerDot(idx);
+      }
+      this.updateCurrentLine(pos);
+    };
+
+    const onEnd = (e) => {
+      if (!this.isDragging) return;
+      this.isDragging = false;
+      if (this.currentLine) {
+        this.currentLine.remove();
+        this.currentLine = null;
+      }
+      if (this.playerPattern.length > 0 && this.isPlayerTurn) {
+        this.checkPattern();
+      }
+    };
+
+    container.addEventListener('mousedown', onStart);
+    container.addEventListener('mousemove', onMove);
+    container.addEventListener('mouseup', onEnd);
+    container.addEventListener('mouseleave', onEnd);
+    container.addEventListener('touchstart', onStart, { passive: false });
+    container.addEventListener('touchmove', onMove, { passive: false });
+    container.addEventListener('touchend', onEnd);
+    container.addEventListener('touchcancel', onEnd);
+  },
+
+  addPlayerDot(index) {
+    if (this.playerPattern.includes(index)) return;
+    const prevIdx = this.playerPattern.length > 0 ? this.playerPattern[this.playerPattern.length - 1] : -1;
+    this.playerPattern.push(index);
+
+    this.dotElements[index].classList.add('active', 'pop');
+    setTimeout(() => this.dotElements[index].classList.remove('pop'), 300);
+    AudioEngine.dotConnect(index);
+
+    if (prevIdx >= 0) {
+      const p1 = this.dotPositions[prevIdx];
+      const p2 = this.dotPositions[index];
+      const line = this.createSvgLine(p1.x, p1.y, p2.x, p2.y, '#06b6d4', 3);
+      this.playerLines.push(line);
+    }
+  },
+
+  updateCurrentLine(pos) {
+    if (!this.currentLine) return;
+    if (this.playerPattern.length === 0) {
+      this.currentLine.setAttribute('x1', pos.x);
+      this.currentLine.setAttribute('y1', pos.y);
+    } else {
+      const lastIdx = this.playerPattern[this.playerPattern.length - 1];
+      const lp = this.dotPositions[lastIdx];
+      this.currentLine.setAttribute('x1', lp.x);
+      this.currentLine.setAttribute('y1', lp.y);
+    }
+    this.currentLine.setAttribute('x2', pos.x);
+    this.currentLine.setAttribute('y2', pos.y);
+  },
+
+  createSvgLine(x1, y1, x2, y2, color, width) {
+    const svg = document.getElementById('gridSvg');
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x1);
+    line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y2', y2);
+    line.setAttribute('stroke', color);
+    line.setAttribute('stroke-width', width);
+    svg.appendChild(line);
+    return line;
+  },
+
+  clearPlayerLines() {
+    this.playerLines.forEach(l => l.remove());
+    this.playerLines = [];
+    if (this.currentLine) { this.currentLine.remove(); this.currentLine = null; }
+  },
+
+  clearShowLines() {
+    this.svgLines.forEach(l => l.remove());
+    this.svgLines = [];
+  },
+
+  generatePattern(numDots) {
+    const pattern = [];
+    const available = [0,1,2,3,4,5,6,7,8];
+    // Pick random start
+    let current = available[Math.floor(Math.random() * 9)];
+    pattern.push(current);
+
+    // Adjacency for 3x3 grid (allows diagonals)
+    const adj = {
+      0:[1,3,4], 1:[0,2,3,4,5], 2:[1,4,5],
+      3:[0,1,4,6,7], 4:[0,1,2,3,5,6,7,8], 5:[1,2,4,7,8],
+      6:[3,4,7], 7:[3,4,5,6,8], 8:[4,5,7]
+    };
+
+    while (pattern.length < numDots) {
+      const neighbors = adj[current].filter(n => !pattern.includes(n));
+      if (neighbors.length === 0) {
+        // Pick any unused dot
+        const unused = available.filter(n => !pattern.includes(n));
+        if (unused.length === 0) break;
+        current = unused[Math.floor(Math.random() * unused.length)];
+      } else {
+        current = neighbors[Math.floor(Math.random() * neighbors.length)];
+      }
+      pattern.push(current);
+    }
+    return pattern;
+  },
+
+  // ===== SCREENS =====
+  showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  },
+
+  renderLevelSelect() {
+    const grid = document.getElementById('levelGrid');
+    grid.innerHTML = '';
+    const maxUnlocked = this.getMaxUnlocked();
+
+    for (let i = 1; i <= this.TOTAL_LEVELS; i++) {
+      const btn = document.createElement('div');
+      const stars = this.progress[i] || 0;
+      const isLocked = i > maxUnlocked;
+      const isCompleted = stars > 0;
+
+      btn.className = 'level-btn' + (isLocked ? ' locked' : '') + (isCompleted ? ' completed' : '') + (!isLocked && !isCompleted ? ' current' : '');
+      btn.innerHTML = `<div class="level-num">${i}</div><div class="level-stars">${isCompleted ? '\u2605'.repeat(stars) + '\u2606'.repeat(3 - stars) : '\u2606\u2606\u2606'}</div>`;
+
+      if (!isLocked) {
+        btn.addEventListener('click', () => {
+          AudioEngine.init();
+          this.startLevel(i);
+        });
+      }
+      grid.appendChild(btn);
+    }
+
+    this.calcTotalStars();
+    document.getElementById('starsDisplay').textContent = this.totalStars;
+    document.getElementById('selectMsg').textContent = ct('select_level');
+    this.showScreen('levelSelectScreen');
+  },
+
+  getMaxUnlocked() {
+    let max = 1;
+    for (let i = 1; i <= this.TOTAL_LEVELS; i++) {
+      if (this.progress[i] && this.progress[i] > 0) max = Math.max(max, i + 1);
+    }
+    return Math.min(max, this.TOTAL_LEVELS);
+  },
+
+  goToLevelSelect() {
+    this.clearTimeouts();
+    document.getElementById('levelCompleteOverlay').classList.remove('show');
+    document.getElementById('gameOverOverlay').classList.remove('show');
+    this.renderLevelSelect();
+  },
+
+  // ===== GAME FLOW =====
+  startLevel(level) {
+    this.currentLevel = level;
+    this.lives = 3;
+    this.attempts = 0;
+    this.isPlayerTurn = false;
+    this.isShowingPattern = false;
+
+    this.updateDisplay();
+    this.showScreen('gameScreen');
+
+    // Generate pattern for this level
+    const config = LEVEL_CONFIG[level - 1];
+    this.pattern = this.generatePattern(config.dots);
+
+    // Flash level number
+    const flash = document.getElementById('levelFlash');
+    flash.textContent = level;
+    flash.classList.remove('show');
+    void flash.offsetWidth;
+    flash.classList.add('show');
+
+    // Reset dots
+    this.dotElements.forEach(d => d.classList.remove('active', 'shown', 'correct', 'wrong'));
+    this.clearPlayerLines();
+    this.clearShowLines();
+
+    // Show pattern after delay
+    setTimeout(() => this.showPattern(), 800);
+  },
+
+  showPattern() {
+    this.isShowingPattern = true;
+    this.isPlayerTurn = false;
+    const msg = document.getElementById('statusMsg');
+    msg.textContent = ct('watch');
+    msg.className = 'watching';
+
+    this.getDotPositions();
+
+    // Animate pattern dot by dot
+    const stepDelay = 350;
+    this.pattern.forEach((dotIdx, i) => {
+      const t = setTimeout(() => {
+        this.dotElements[dotIdx].classList.add('shown', 'pop');
+        AudioEngine.playShowDot(dotIdx);
+        setTimeout(() => this.dotElements[dotIdx].classList.remove('pop'), 300);
+
+        if (i > 0) {
+          const prevIdx = this.pattern[i - 1];
+          const p1 = this.dotPositions[prevIdx];
+          const p2 = this.dotPositions[dotIdx];
+          const line = this.createSvgLine(p1.x, p1.y, p2.x, p2.y, '#a855f7', 3);
+          line.style.opacity = '0.7';
+          this.svgLines.push(line);
+        }
+      }, i * stepDelay);
+      this.timeouts.push(t);
+    });
+
+    // Hold the pattern for showTime
+    const config = LEVEL_CONFIG[this.currentLevel - 1];
+    const totalAnimTime = this.pattern.length * stepDelay;
+    const holdTime = config.showTime;
+
+    const t2 = setTimeout(() => {
+      // Hide pattern
+      this.dotElements.forEach(d => d.classList.remove('shown'));
+      this.clearShowLines();
+      this.isShowingPattern = false;
+      this.isPlayerTurn = true;
+      msg.textContent = ct('your_turn');
+      msg.className = 'your-turn';
+    }, totalAnimTime + holdTime);
+    this.timeouts.push(t2);
+  },
+
+  checkPattern() {
+    this.isPlayerTurn = false;
+    this.attempts++;
+
+    // Compare patterns
+    const isCorrect = this.playerPattern.length === this.pattern.length &&
+      this.playerPattern.every((v, i) => v === this.pattern[i]);
+
+    if (isCorrect) {
+      // Success!
+      AudioEngine.playCorrect();
+      this.dotElements.forEach(d => {
+        if (d.classList.contains('active')) {
+          d.classList.remove('active');
+          d.classList.add('correct');
+        }
+      });
+      this.playerLines.forEach(l => l.setAttribute('stroke', '#22c55e'));
+
+      const msg = document.getElementById('statusMsg');
+      msg.textContent = ct('correct');
+      msg.className = 'success';
+
+      setTimeout(() => this.levelComplete(), 800);
+    } else {
+      // Wrong
+      this.lives--;
+      AudioEngine.playWrong();
+
+      this.dotElements.forEach(d => {
+        if (d.classList.contains('active')) {
+          d.classList.remove('active');
+          d.classList.add('wrong');
+        }
+      });
+      this.playerLines.forEach(l => l.setAttribute('stroke', '#ef4444'));
+
+      const container = document.getElementById('gridContainer');
+      container.classList.add('shake');
+      setTimeout(() => container.classList.remove('shake'), 400);
+
+      const msg = document.getElementById('statusMsg');
+      msg.textContent = ct('wrong');
+      msg.className = 'error';
+
+      this.updateDisplay();
+
+      if (this.lives <= 0) {
+        setTimeout(() => this.gameOver(), 800);
+      } else {
+        // Re-show pattern after delay
+        setTimeout(() => {
+          this.dotElements.forEach(d => d.classList.remove('wrong', 'active', 'correct'));
+          this.clearPlayerLines();
+          this.showPattern();
+        }, 1200);
+      }
+    }
+  },
+
+  levelComplete() {
+    // Calculate stars: 1st attempt = 3 stars, 2nd = 2, 3+ = 1
+    let stars;
+    if (this.attempts <= 1) stars = 3;
+    else if (this.attempts <= 2) stars = 2;
+    else stars = 1;
+
+    // Save if better
+    const prev = this.progress[this.currentLevel] || 0;
+    if (stars > prev) {
+      this.progress[this.currentLevel] = stars;
+      this.saveProgress();
+    }
+    this.calcTotalStars();
+    document.getElementById('starsDisplay').textContent = this.totalStars;
+
+    // Show overlay
+    const t = getTranslations();
+    document.getElementById('lcTitle').textContent = ct('level_complete');
+    document.getElementById('lcStars').textContent = '\u2605'.repeat(stars) + '\u2606'.repeat(3 - stars);
+    document.getElementById('lcLabel').textContent = t.level.toUpperCase();
+    document.getElementById('lcLevel').textContent = this.currentLevel;
+    document.getElementById('lcSub').textContent = `${ct('lives_left')}: ${this.lives}`;
+
+    if (this.currentLevel >= this.TOTAL_LEVELS) {
+      document.getElementById('lcNext').textContent = ct('all_clear');
+      document.getElementById('lcNext').onclick = () => this.goToLevelSelect();
+    } else {
+      document.getElementById('lcNext').textContent = ct('next_level');
+      document.getElementById('lcNext').onclick = () => this.nextLevel();
+    }
+    document.getElementById('lcLevels').textContent = ct('back_levels');
+    document.getElementById('levelCompleteOverlay').classList.add('show');
+  },
+
+  nextLevel() {
+    document.getElementById('levelCompleteOverlay').classList.remove('show');
+    if (this.currentLevel < this.TOTAL_LEVELS) {
+      this.startLevel(this.currentLevel + 1);
+    } else {
+      this.goToLevelSelect();
+    }
+  },
+
+  gameOver() {
+    const t = getTranslations();
+    const maxLevel = this.currentLevel;
+
+    document.getElementById('goTitle').textContent = ct('game_over');
+    document.getElementById('goRating').textContent = ct('no_lives');
+    document.getElementById('goLabel').textContent = t.level.toUpperCase();
+    document.getElementById('goScore').textContent = maxLevel;
+    document.getElementById('goSub').textContent = `${ct('total_stars')}: ${this.totalStars}`;
+    document.getElementById('goRetry').textContent = ct('try_again');
+    document.getElementById('goLevels').textContent = ct('back_levels');
+    document.getElementById('goShare').textContent = ct('share');
+    document.getElementById('gameOverOverlay').classList.add('show');
+
+    if (typeof PuzzleShare !== 'undefined' && PuzzleShare.showShareModal) {
+      PuzzleShare.showShareModal({
+        game: 'Pattern Lock',
+        score: maxLevel,
+        label: ct('total_stars') + ': ' + this.totalStars
+      });
+    }
+  },
+
+  restartFromLevel(level) {
+    document.getElementById('gameOverOverlay').classList.remove('show');
+    this.startLevel(level);
+  },
+
+  share() {
+    if (typeof PuzzleShare !== 'undefined' && PuzzleShare.showShareModal) {
+      PuzzleShare.showShareModal({
+        game: 'Pattern Lock',
+        score: this.currentLevel,
+        label: ct('total_stars') + ': ' + this.totalStars
+      });
+    }
+  },
+
+  updateDisplay() {
+    document.getElementById('levelDisplay').textContent = this.currentLevel;
+    let hearts = '';
+    for (let i = 0; i < 3; i++) hearts += i < this.lives ? '\u2764' : '\u2661';
+    document.getElementById('livesDisplay').innerHTML = hearts;
+    document.getElementById('starsDisplay').textContent = this.totalStars;
+  },
+
+  applyTranslations() {
+    const t = getTranslations();
+    document.getElementById('gameTitle').textContent = ct('game_title');
+    document.getElementById('backLink').textContent = t.back;
+    document.getElementById('levelLabel').textContent = t.level.toUpperCase();
+    document.getElementById('livesLabel').textContent = (t.lives || 'LIVES').toUpperCase();
+    document.getElementById('starsLabel').textContent = (t.stars || 'STARS').toUpperCase();
+    document.getElementById('backToLevelsBtn').textContent = ct('back_levels');
+    document.getElementById('goShare').textContent = ct('share');
+    document.querySelectorAll('[data-i18n="ad_area"]').forEach(el => el.textContent = t.ad_area);
+  },
+
+  clearTimeouts() {
+    this.timeouts.forEach(t => clearTimeout(t));
+    this.timeouts = [];
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => game.init());
+</script>
+</body>
+</html>

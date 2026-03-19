@@ -123,8 +123,8 @@ footer{text-align:center;padding:40px 20px;color:#333;font-size:.8rem;border-top
 
   <!-- Stats -->
   <div class="stats-bar">
-    <div class="stat-item"><div class="stat-val">34</div><div class="stat-label" data-i18n="stat_games">게임</div></div>
-    <div class="stat-item"><div class="stat-val">3500+</div><div class="stat-label" data-i18n="stat_levels">레벨</div></div>
+    <div class="stat-item"><div class="stat-val">37</div><div class="stat-label" data-i18n="stat_games">게임</div></div>
+    <div class="stat-item"><div class="stat-val">4000+</div><div class="stat-label" data-i18n="stat_levels">레벨</div></div>
     <div class="stat-item"><div class="stat-val">∞</div><div class="stat-label" data-i18n="stat_fun">재미</div></div>
   </div>
 
@@ -647,6 +647,47 @@ footer{text-align:center;padding:40px 20px;color:#333;font-size:.8rem;border-top
       </div>
     </a>
 
+    <!-- Minesweeper -->
+    <a href="games/minesweeper.html" class="game-card theme-green" data-cat="logic">
+      <div class="game-thumb">💣</div>
+      <span class="game-badge badge-hot">🔥 HOT</span>
+      <div class="game-info">
+        <h3 data-i18n="mine_title">지뢰찾기</h3>
+        <p data-i18n="mine_desc">지뢰를 피해 모든 칸을 열어보세요! 클래식 두뇌 게임.</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_3modes">3가지 모드</span>
+          <span class="game-tag tag-hot" data-i18n="tag_popular">🔥 인기</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Number Find -->
+    <a href="games/number-find.html" class="game-card theme-yellow" data-cat="speed quiz">
+      <div class="game-thumb">🔢</div>
+      <div class="game-info">
+        <h3 data-i18n="nfind_title">숫자찾기</h3>
+        <p data-i18n="nfind_desc">숫자를 순서대로 빠르게 찾으세요! 두뇌 트레이닝.</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_4modes">4가지 모드</span>
+          <span class="game-tag tag-hot" data-i18n="tag_brain_twist">🧠 두뇌풀가동</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Pattern Lock -->
+    <a href="games/pattern-lock.html" class="game-card theme-purple" data-cat="logic">
+      <div class="game-thumb">🔐</div>
+      <span class="game-badge badge-new">✨ NEW</span>
+      <div class="game-info">
+        <h3 data-i18n="plock_title">패턴 잠금</h3>
+        <p data-i18n="plock_desc">패턴을 기억하고 따라 그리세요! 기억력 챌린지.</p>
+        <div class="game-meta">
+          <span class="game-tag tag-levels" data-i18n="tag_20levels">20 레벨</span>
+          <span class="game-tag tag-new" data-i18n="tag_new">✨ 신규</span>
+        </div>
+      </div>
+    </a>
+
     <!-- Bottom Ad -->
     <div class="ad-inline">
       <div class="ad-label">Advertisement</div>
@@ -710,6 +751,10 @@ const I18N = {
     c4_title: '커넥트 포', c4_desc: '4개를 연속으로 놓으면 승리! AI와 대결하세요.',
     wguess_title: '워드 게스', wguess_desc: '5글자 영어 단어를 6번 안에 맞혀보세요! 매일 새 문제!',
     trivia_title: '상식 퀴즈', trivia_desc: '과학, 지리, 역사 등 다양한 분야의 상식을 테스트!',
+    mine_title: '지뢰찾기', mine_desc: '지뢰를 피해 모든 칸을 열어보세요! 클래식 두뇌 게임.',
+    nfind_title: '숫자찾기', nfind_desc: '숫자를 순서대로 빠르게 찾으세요! 두뇌 트레이닝.',
+    plock_title: '패턴 잠금', plock_desc: '패턴을 기억하고 따라 그리세요! 기억력 챌린지.',
+    tag_4modes: '4가지 모드',
     footer: 'Puzzle Arcade © 2026 | 매일 새로운 퍼즐을 즐기세요 🎮',
   },
   en: {
@@ -759,6 +804,10 @@ const I18N = {
     c4_title: 'Connect Four', c4_desc: 'Get 4 in a row to win! Play against AI.',
     wguess_title: 'Word Guess', wguess_desc: 'Guess the 5-letter word in 6 tries! New daily challenge!',
     trivia_title: 'Trivia Quiz', trivia_desc: 'Test your knowledge in science, geography, history & more!',
+    mine_title: 'Minesweeper', mine_desc: 'Reveal all cells while avoiding mines! Classic brain game.',
+    nfind_title: 'Number Find', nfind_desc: 'Find numbers in order as fast as you can! Brain training.',
+    plock_title: 'Pattern Lock', plock_desc: 'Remember and draw the pattern! Memory challenge.',
+    tag_4modes: '4 Modes',
     footer: 'Puzzle Arcade © 2026 | Enjoy new puzzles every day 🎮',
   },
   ja: {
@@ -808,6 +857,10 @@ const I18N = {
     c4_title: 'コネクトフォー', c4_desc: '4つ並べたら勝ち！AIと対戦しよう。',
     wguess_title: 'ワードゲス', wguess_desc: '5文字の英単語を6回で当てよう！毎日新問題！',
     trivia_title: 'トリビアクイズ', trivia_desc: '科学、地理、歴史など様々な分野の常識をテスト！',
+    mine_title: 'マインスイーパー', mine_desc: '地雷を避けてすべてのマスを開けよう！',
+    nfind_title: '数字探し', nfind_desc: '数字を順番に素早く見つけよう！脳トレ。',
+    plock_title: 'パターンロック', plock_desc: 'パターンを覚えてなぞろう！記憶力チャレンジ。',
+    tag_4modes: '4モード',
     footer: 'Puzzle Arcade © 2026 | 毎日新しいパズルを楽しもう 🎮',
   },
   zh: {
@@ -857,6 +910,10 @@ const I18N = {
     c4_title: '四子棋', c4_desc: '连成4个就赢！和AI对战！',
     wguess_title: '猜单词', wguess_desc: '6次内猜出5字母英文单词！每日新题！',
     trivia_title: '常识问答', trivia_desc: '测试你的科学、地理、历史等各领域知识！',
+    mine_title: '扫雷', mine_desc: '避开地雷打开所有格子！经典脑力游戏。',
+    nfind_title: '找数字', nfind_desc: '按顺序尽快找到数字！大脑训练。',
+    plock_title: '图案锁', plock_desc: '记住图案并画出来！记忆力挑战。',
+    tag_4modes: '4种模式',
     footer: 'Puzzle Arcade © 2026 | 每天享受新的益智游戏 🎮',
   },
   es: {
@@ -906,6 +963,10 @@ const I18N = {
     c4_title: 'Conecta Cuatro', c4_desc: '¡Coloca 4 en línea para ganar! Juega contra la IA.',
     wguess_title: 'Word Guess', wguess_desc: '¡Adivina la palabra de 5 letras en 6 intentos! ¡Reto diario!',
     trivia_title: 'Trivia Quiz', trivia_desc: '¡Pon a prueba tu conocimiento en ciencia, geografía, historia!',
+    mine_title: 'Buscaminas', mine_desc: '¡Revela todas las casillas sin tocar minas! Juego cerebral.',
+    nfind_title: 'Busca Números', nfind_desc: '¡Encuentra los números en orden lo más rápido posible!',
+    plock_title: 'Patrón Lock', plock_desc: '¡Recuerda y dibuja el patrón! Desafío de memoria.',
+    tag_4modes: '4 Modos',
     footer: 'Puzzle Arcade © 2026 | ¡Disfruta nuevos puzzles cada día! 🎮',
   },
 };
