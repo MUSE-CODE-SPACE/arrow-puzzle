@@ -4,6 +4,39 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Puzzle Arcade - 캐주얼 퍼즐 게임</title>
+
+<!-- SEO Meta -->
+<meta name="description" content="37개 이상의 중독성 퍼즐 게임을 무료로 즐기세요! IQ 테스트, 반응속도, 타이핑, 스네이크, 2048 등 다양한 브레인 게임.">
+<meta name="keywords" content="퍼즐게임,브레인게임,IQ테스트,반응속도테스트,2048,스네이크,타이핑테스트,무료게임,온라인게임,puzzle games,brain games,free games">
+<meta name="author" content="Puzzle Arcade">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#0a0a1a">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Puzzle Arcade - 37+ 무료 중독성 퍼즐 게임">
+<meta property="og:description" content="IQ 테스트, 반응속도, 타이핑, 2048, 스네이크 등 37개 이상의 브레인 게임을 무료로!">
+<meta property="og:url" content="https://arrow-puzzle-production.up.railway.app/">
+<meta property="og:site_name" content="Puzzle Arcade">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="ja_JP">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Puzzle Arcade - 37+ Free Addictive Puzzle Games">
+<meta name="twitter:description" content="IQ Test, Reaction Speed, Typing, 2048, Snake and 37+ brain games for free!">
+
+<!-- Google AdSense placeholder - Replace with your AdSense code -->
+<!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+
+<!-- Google Analytics placeholder - Replace with your GA4 code -->
+<!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script> -->
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -99,6 +132,9 @@ footer{text-align:center;padding:40px 20px;color:#333;font-size:.8rem;border-top
 
 <!-- User System -->
 <script src="games/user-system.js"></script>
+<script src="games/ads.js"></script>
+<script src="games/recommend.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 
 <!-- Language Switcher -->
 <div class="lang-switcher">
@@ -1056,6 +1092,24 @@ document.querySelectorAll('.game-card').forEach((card, i) => {
   }
 })();
 
+// Init ads
+(function initAds() {
+  if (typeof PuzzleAds !== 'undefined') {
+    PuzzleAds.init({});
+  }
+})();
+
+// Init streak display
+(function initStreak() {
+  if (typeof PuzzleRecommend !== 'undefined' && PuzzleRecommend.createStreakElement) {
+    const area = document.getElementById('userArea');
+    if (area) {
+      const streak = PuzzleRecommend.createStreakElement();
+      if (streak) area.appendChild(streak);
+    }
+  }
+})();
+
 // Init: apply saved language
 (function init() {
   // Set active lang button
@@ -1067,6 +1121,9 @@ document.querySelectorAll('.game-card').forEach((card, i) => {
   });
   applyLang();
 })();
+</script>
+<script>
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 </script>
 </body>
 </html>
