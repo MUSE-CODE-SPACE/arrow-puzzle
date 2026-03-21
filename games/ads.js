@@ -77,12 +77,12 @@
   // ─── State ──────────────────────────────────────────────
   var _config = {
     adsenseClient: 'ca-pub-9533955857777562',
-    bannerSlot: '',
-    rectangleSlot: '',
-    nativeSlot: '',
-    maxVisibleAds: 3,
+    bannerSlot: 'auto',
+    rectangleSlot: 'auto',
+    nativeSlot: 'auto',
+    maxVisibleAds: 5,
     interstitialCooldownMs: 3 * 60 * 1000, // 3 minutes
-    devMode: true, // true = show placeholder ads
+    devMode: false, // false = use real AdSense
   };
 
   var _state = {
