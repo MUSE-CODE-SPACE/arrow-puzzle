@@ -350,7 +350,7 @@ let t, gs; // translations, game strings
 let progress = {}; // {levelN: {stars, unlocked}}
 let currentLevel = 1;
 let hearts = MAX_HEARTS;
-let arrows = [];     // [{cells:[{x,y}], dir:'right', color:'#fff', removed:false, animating:false, animOffset:{x,y}, animStart}]
+let arrows = [];     // [{cells:[{x,y}], dir:'right', color:'#fff', removed:false, animating:false, animProgress:0, animStart:0}]
 let gridCols, gridRows;
 let boardX, boardY, cellSize;
 let canvas, ctx;
@@ -577,7 +577,7 @@ function generateLevel(levelNum) {
         color: color,
         removed: false,
         animating: false,
-        animOffset: {x:0, y:0},
+        animProgress: 0,
         animStart: 0
       });
       placed = true;
@@ -761,7 +761,7 @@ function generateLevelWithSeed(levelNum, seed) {
         color: color,
         removed: false,
         animating: false,
-        animOffset: {x:0, y:0},
+        animProgress: 0,
         animStart: 0
       });
       placed = true;
@@ -790,7 +790,7 @@ function startLevel(levelNum) {
   arrows.forEach(a => {
     a.removed = false;
     a.animating = false;
-    a.animOffset = {x:0, y:0};
+    a.animProgress = 0;
   });
 
   showScreen('gameScreen');
@@ -894,34 +894,32 @@ function onPointerDown(e) {
   }
 }
 
-// ── Slide out animation ──
+// ── Snake-style slide out animation ──
+// The arrow "slithers" out along its path like a snake:
+// Head (arrowhead end) exits first, body follows along the path, tail last
 function slideOutArrow(idx) {
   const arrow = arrows[idx];
   arrow.animating = true;
   arrow.animStart = performance.now();
-  arrow.animOffset = {x: 0, y: 0};
+  arrow.animProgress = 0; // 0 = full arrow visible, 1 = fully gone
 
-  const dir = arrow.dir;
-  const d = DIRS[dir];
-  // Calculate distance to slide off screen
-  const maxDist = Math.max(gridCols, gridRows) * cellSize + cellSize * 2;
-
-  const duration = 400;
+  // Duration scales with path length for consistent speed feel
+  const duration = Math.max(300, arrow.cells.length * 80);
 
   function animateSlide(now) {
     const elapsed = now - arrow.animStart;
     const prog = Math.min(elapsed / duration, 1);
-    // ease-out
-    const ease = 1 - Math.pow(1 - prog, 3);
+    // ease-in-out for snake-like feel
+    const ease = prog < 0.5 ? 2 * prog * prog : 1 - Math.pow(-2 * prog + 2, 2) / 2;
 
-    arrow.animOffset.x = d.dx * maxDist * ease;
-    arrow.animOffset.y = d.dy * maxDist * ease;
+    arrow.animProgress = ease;
 
     if (prog < 1) {
       requestAnimationFrame(animateSlide);
     } else {
       arrow.removed = true;
       arrow.animating = false;
+      arrow.animProgress = 1;
       removedCount++;
 
       // Check win
@@ -1087,17 +1085,15 @@ function drawBoard() {
   }
 }
 
-function getCellCenter(cell, arrow) {
-  const ox = arrow.animating ? arrow.animOffset.x : 0;
-  const oy = arrow.animating ? arrow.animOffset.y : 0;
+function getCellCenter(cell) {
   return {
-    x: boardX + cell.x * cellSize + cellSize / 2 + ox,
-    y: boardY + cell.y * cellSize + cellSize / 2 + oy
+    x: boardX + cell.x * cellSize + cellSize / 2,
+    y: boardY + cell.y * cellSize + cellSize / 2
   };
 }
 
-function getCellEdge(cell, dir, arrow) {
-  const c = getCellCenter(cell, arrow);
+function getCellEdge(cell, dir) {
+  const c = getCellCenter(cell);
   const half = cellSize / 2;
   switch(dir) {
     case 'left':  return { x: c.x - half, y: c.y };
@@ -1124,15 +1120,38 @@ function drawArrowPath(arrow, idx) {
   const lineW = cellSize * 0.45;
   const color = arrow.color;
 
+  // Snake animation: determine which cells are still visible
+  // cells[0] = tail, cells[last] = head (arrowhead end)
+  // animProgress 0→1: head disappears first, then body, then tail
+  let visibleStart = 0; // first visible cell index
+  let visibleEnd = cells.length - 1; // last visible cell index
+  let headPartial = 1; // 1 = fully visible, 0 = gone
+  let tailPartial = 1;
+
+  if (arrow.animating) {
+    // Progress 0→1: cells disappear from head (last) to tail (first)
+    const totalCells = cells.length;
+    const cellsGone = arrow.animProgress * (totalCells + 1); // +1 for smooth exit
+    visibleEnd = Math.floor(totalCells - 1 - cellsGone + 1);
+    if (visibleEnd >= 0 && visibleEnd < totalCells) {
+      headPartial = 1 - (cellsGone - (totalCells - 1 - visibleEnd));
+      headPartial = Math.max(0, Math.min(1, headPartial));
+    }
+    if (visibleEnd < 0) { visibleEnd = -1; } // all gone
+    visibleEnd = Math.min(visibleEnd, totalCells - 1);
+  }
+
+  if (visibleEnd < visibleStart) return; // fully gone
+
   // Hint pulsing
   let alpha = 1;
   if (idx === hintArrowIdx) {
-    const t = performance.now();
-    alpha = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(t / 200));
+    const now = performance.now();
+    alpha = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(now / 200));
   }
 
   // Shake
-  let shakeOx = 0, shakeOy = 0;
+  let shakeOx = 0;
   if (idx === shakeArrowIdx) {
     const elapsed = performance.now() - shakeStart;
     if (elapsed < 400) {
@@ -1143,12 +1162,12 @@ function drawArrowPath(arrow, idx) {
   }
 
   ctx.save();
-  if (shakeOx !== 0) ctx.translate(shakeOx, shakeOy);
+  if (shakeOx !== 0) ctx.translate(shakeOx, 0);
   ctx.globalAlpha = alpha;
 
   // Shadow/glow
   ctx.shadowColor = color;
-  ctx.shadowBlur = 8;
+  ctx.shadowBlur = 6;
 
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
@@ -1156,87 +1175,102 @@ function drawArrowPath(arrow, idx) {
   ctx.fillStyle = color;
   ctx.lineWidth = lineW;
 
-  // Draw the connected path as line segments through cell centers
-  // Each cell connects to its neighbors via edges
-
-  if (cells.length === 1) {
-    // Single cell - just a dot
-    const c = getCellCenter(cells[0], arrow);
-    ctx.beginPath();
-    ctx.arc(c.x, c.y, lineW / 3, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw arrowhead
-    drawArrowhead(getCellEdge(cells[0], arrow.dir, arrow), arrow.dir, lineW);
-    ctx.restore();
-    return;
-  }
-
-  // Draw segments cell by cell
-  for (let i = 0; i < cells.length; i++) {
+  // Draw visible segments
+  for (let i = visibleStart; i <= visibleEnd; i++) {
     const cell = cells[i];
-    const center = getCellCenter(cell, arrow);
-    const prevCell = i > 0 ? cells[i-1] : null;
-    const nextCell = i < cells.length - 1 ? cells[i+1] : null;
+    const center = getCellCenter(cell);
 
-    // Determine which directions this cell connects to
-    let fromDir = null, toDir = null;
+    const hasPrev = i > visibleStart;
+    const hasNext = i < visibleEnd;
+    const prevCell = hasPrev ? cells[i-1] : null;
+    const nextCell = hasNext ? cells[i+1] : null;
 
-    if (prevCell) {
-      fromDir = getDirBetween(cell, prevCell);
-    }
-    if (nextCell) {
-      toDir = getDirBetween(cell, nextCell);
-    }
+    let fromDir = prevCell ? getDirBetween(cell, prevCell) : null;
+    let toDir = nextCell ? getDirBetween(cell, nextCell) : null;
+
+    // Original connections (even if neighbor is now invisible, still know direction)
+    const origPrev = i > 0 ? cells[i-1] : null;
+    const origNext = i < cells.length - 1 ? cells[i+1] : null;
+    const origFromDir = origPrev ? getDirBetween(cell, origPrev) : null;
+    const origToDir = origNext ? getDirBetween(cell, origNext) : null;
+
+    const isHead = (i === visibleEnd); // current visible head
+    const isTail = (i === visibleStart && i === 0); // original tail
 
     ctx.beginPath();
 
-    if (i === 0) {
-      // Tail cell - rounded cap at tail end, connect to next
-      // The tail is a line from center toward "nowhere" (just the center) to the edge toward next cell
-      // Draw from center to edge toward next
-      const edgeToNext = getCellEdge(cell, toDir, arrow);
+    if (isTail && isHead) {
+      // Single visible cell
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, lineW / 3, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (isTail) {
+      // Tail cell: rounded end + connect to next
+      const edgeToNext = getCellEdge(cell, toDir);
       ctx.moveTo(center.x, center.y);
       ctx.lineTo(edgeToNext.x, edgeToNext.y);
       ctx.stroke();
+    } else if (isHead) {
+      // Current head: draw arrowhead
+      const edgeFromPrev = getCellEdge(cell, fromDir);
+      const exitDir = arrow.dir;
+      const exitEdge = getCellEdge(cell, exitDir);
 
-      // Draw a rounded tail dot at center (already handled by lineCap round)
-    } else if (i === cells.length - 1) {
-      // Head cell - arrowhead at exit end
-      const edgeFromPrev = getCellEdge(cell, fromDir, arrow);
-
-      // Line from edge (coming from prev) to partway toward exit
       ctx.moveTo(edgeFromPrev.x, edgeFromPrev.y);
 
-      // Draw line to slightly before the exit edge (leave room for arrowhead)
-      const exitEdge = getCellEdge(cell, arrow.dir, arrow);
-      const arrowTipOffset = lineW * 0.35;
-      const dx = exitEdge.x - center.x;
-      const dy = exitEdge.y - center.y;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      const stopX = center.x + dx * (1 - arrowTipOffset / dist);
-      const stopY = center.y + dy * (1 - arrowTipOffset / dist);
-
-      if (fromDir && fromDir !== OPPOSITE[arrow.dir]) {
-        // Turn: from prev edge to center, then center to arrow line end
+      if (fromDir && fromDir !== OPPOSITE[exitDir]) {
+        // Turn at head
         ctx.lineTo(center.x, center.y);
-        ctx.lineTo(stopX, stopY);
-      } else {
-        ctx.lineTo(stopX, stopY);
       }
+
+      // Stop before arrowhead
+      const adx = exitEdge.x - center.x;
+      const ady = exitEdge.y - center.y;
+      const adist = Math.sqrt(adx*adx + ady*ady) || 1;
+      const stopX = center.x + adx * 0.5;
+      const stopY = center.y + ady * 0.5;
+      ctx.lineTo(stopX, stopY);
       ctx.stroke();
 
-      // Draw arrowhead
-      drawArrowhead(exitEdge, arrow.dir, lineW);
+      // Draw arrowhead triangle
+      ctx.shadowBlur = 0;
+      const tipX = exitEdge.x;
+      const tipY = exitEdge.y;
+      const as = lineW * 0.75;
+      ctx.beginPath();
+      switch(exitDir) {
+        case 'right':
+          ctx.moveTo(tipX - as, tipY - as * 0.6);
+          ctx.lineTo(tipX, tipY);
+          ctx.lineTo(tipX - as, tipY + as * 0.6);
+          break;
+        case 'left':
+          ctx.moveTo(tipX + as, tipY - as * 0.6);
+          ctx.lineTo(tipX, tipY);
+          ctx.lineTo(tipX + as, tipY + as * 0.6);
+          break;
+        case 'down':
+          ctx.moveTo(tipX - as * 0.6, tipY - as);
+          ctx.lineTo(tipX, tipY);
+          ctx.lineTo(tipX + as * 0.6, tipY - as);
+          break;
+        case 'up':
+          ctx.moveTo(tipX - as * 0.6, tipY + as);
+          ctx.lineTo(tipX, tipY);
+          ctx.lineTo(tipX + as * 0.6, tipY + as);
+          break;
+      }
+      ctx.closePath();
+      ctx.fill();
     } else {
-      // Middle cell - connects from prev to next
-      const edgeFromPrev = getCellEdge(cell, fromDir, arrow);
-      const edgeToNext = getCellEdge(cell, toDir, arrow);
+      // Middle cell
+      const edgeFromPrev = getCellEdge(cell, fromDir);
+      const edgeToNext = getCellEdge(cell, toDir);
 
       ctx.moveTo(edgeFromPrev.x, edgeFromPrev.y);
 
       if (fromDir !== OPPOSITE[toDir]) {
-        // This is a turn cell - go through center
+        // Turn
         ctx.lineTo(center.x, center.y);
       }
 
@@ -1245,55 +1279,24 @@ function drawArrowPath(arrow, idx) {
     }
   }
 
-  // Draw direction chevrons along the path
-  drawChevrons(arrow);
+  // Draw direction chevrons on visible cells
+  drawChevronsVisible(arrow, visibleStart, visibleEnd);
 
   ctx.restore();
 }
 
-function drawArrowhead(pos, direction, lw) {
-  const s = lw * 0.8;
-  ctx.beginPath();
-  switch(direction) {
-    case 'right':
-      ctx.moveTo(pos.x - s * 0.6, pos.y - s / 2);
-      ctx.lineTo(pos.x + s * 0.2, pos.y);
-      ctx.lineTo(pos.x - s * 0.6, pos.y + s / 2);
-      break;
-    case 'left':
-      ctx.moveTo(pos.x + s * 0.6, pos.y - s / 2);
-      ctx.lineTo(pos.x - s * 0.2, pos.y);
-      ctx.lineTo(pos.x + s * 0.6, pos.y + s / 2);
-      break;
-    case 'down':
-      ctx.moveTo(pos.x - s / 2, pos.y - s * 0.6);
-      ctx.lineTo(pos.x, pos.y + s * 0.2);
-      ctx.lineTo(pos.x + s / 2, pos.y - s * 0.6);
-      break;
-    case 'up':
-      ctx.moveTo(pos.x - s / 2, pos.y + s * 0.6);
-      ctx.lineTo(pos.x, pos.y - s * 0.2);
-      ctx.lineTo(pos.x + s / 2, pos.y + s * 0.6);
-      break;
-  }
-  ctx.closePath();
-  ctx.fill();
-}
-
-function drawChevrons(arrow) {
+function drawChevronsVisible(arrow, visStart, visEnd) {
   const cells = arrow.cells;
-  if (cells.length < 4) return;
+  if (visEnd - visStart < 3) return;
 
   const chevSize = cellSize * 0.15;
 
-  // Draw chevrons every 2-3 cells, starting from cell 1
-  for (let i = 2; i < cells.length - 1; i += 2) {
+  for (let i = visStart + 2; i <= visEnd - 1; i += 2) {
     const cell = cells[i];
-    const nextCell = cells[i + 1] || cells[i];
-    const dir = i < cells.length - 1 ? getDirBetween(cell, nextCell) : arrow.dir;
-    if (!dir) continue;
+    const nextCell = i < cells.length - 1 ? cells[i + 1] : cells[i];
+    const dir = getDirBetween(cell, nextCell) || arrow.dir;
 
-    const center = getCellCenter(cell, arrow);
+    const center = getCellCenter(cell);
 
     ctx.save();
     ctx.strokeStyle = arrow.color;
