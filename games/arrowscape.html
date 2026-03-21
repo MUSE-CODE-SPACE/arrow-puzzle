@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>ArrowScape - 화살표 탈출 퍼즐</title>
+<title>ArrowScape - Arrow Escape Puzzle</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -18,12 +18,8 @@
   --accent-gradient: linear-gradient(135deg, #667eea, #764ba2);
   --accent1: #667eea;
   --accent2: #764ba2;
-  --accent-rgb: 102, 126, 234;
-  --arrow-red: #ff6b8a;
-  --arrow-blue: #4ecdc4;
-  --arrow-yellow: #ffd93d;
-  --arrow-green: #6bcf7f;
-  --arrow-purple: #b47ede;
+  --board-bg: #141428;
+  --board-border: #2a2a4a;
 }
 
 body {
@@ -51,564 +47,351 @@ body {
 }
 .back-btn:hover { background: var(--surface); color: var(--text); }
 .sound-btn {
-  background: none; border: 1px solid var(--surface2); color: var(--text-dim);
-  font-size: 18px; cursor: pointer; padding: 6px 10px; border-radius: 8px;
+  background: none; border: 1px solid rgba(255,255,255,0.1); color: var(--text-dim);
+  width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
   transition: all 0.2s;
 }
-.sound-btn:hover { background: var(--surface); }
+.sound-btn:hover { background: var(--surface); border-color: rgba(255,255,255,0.2); }
 
 /* Title Screen */
-.title-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-.game-icon {
-  width: 120px; height: 120px; border-radius: 28px;
-  background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3)),
-              var(--surface);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 56px; margin-bottom: 24px;
-  box-shadow: 0 0 40px rgba(var(--accent-rgb), 0.2), inset 0 0 30px rgba(var(--accent-rgb), 0.1);
-  animation: iconPulse 3s ease-in-out infinite;
+.title-area {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 20px; text-align: center;
 }
-@keyframes iconPulse {
-  0%, 100% { box-shadow: 0 0 40px rgba(var(--accent-rgb), 0.2), inset 0 0 30px rgba(var(--accent-rgb), 0.1); }
-  50% { box-shadow: 0 0 60px rgba(var(--accent-rgb), 0.35), inset 0 0 40px rgba(var(--accent-rgb), 0.2); }
-}
-.game-title { font-size: 32px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
-.game-title span {
-  background: var(--accent-gradient);
+.game-logo {
+  font-size: 3rem; font-weight: 800; margin-bottom: 4px;
+  background: linear-gradient(135deg, #667eea, #a855f7, #ec4899);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-.game-subtitle { font-size: 15px; color: var(--text-dim); margin-bottom: 40px; text-align: center; }
-
-.main-btn {
-  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.2), rgba(118,75,162,0.15));
-  border: 1px solid rgba(var(--accent-rgb), 0.4);
-  color: var(--accent1); font-family: 'Outfit', sans-serif;
-  font-size: 16px; font-weight: 600; padding: 14px 48px;
-  border-radius: 14px; cursor: pointer; margin-bottom: 12px;
-  transition: all 0.25s; min-width: 200px;
+.game-tagline {
+  font-size: 1rem; color: var(--text-dim); margin-bottom: 40px; font-weight: 400;
 }
-.main-btn:hover {
-  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.3), rgba(118,75,162,0.2));
-  box-shadow: 0 0 25px rgba(var(--accent-rgb), 0.2);
-  transform: translateY(-1px);
+.menu-btn {
+  width: 240px; padding: 14px 0; border-radius: 14px; border: none;
+  font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 600;
+  cursor: pointer; transition: all 0.25s; margin-bottom: 12px;
 }
-.secondary-btn {
-  background: var(--surface); border: 1px solid var(--surface2);
-  color: var(--text); font-family: 'Outfit', sans-serif;
-  font-size: 14px; font-weight: 500; padding: 12px 36px;
-  border-radius: 12px; cursor: pointer; transition: all 0.2s; min-width: 200px;
+.menu-btn.primary {
+  background: linear-gradient(135deg, #667eea, #a855f7);
+  color: #fff; box-shadow: 0 4px 20px rgba(102,126,234,0.3);
 }
-.secondary-btn:hover { background: var(--surface2); }
+.menu-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(102,126,234,0.45); }
+.menu-btn.secondary {
+  background: var(--surface); color: var(--text); border: 1px solid rgba(255,255,255,0.08);
+}
+.menu-btn.secondary:hover { background: var(--surface2); }
 
 /* Level Select */
-.level-screen { padding: 0 16px 100px; }
-.level-grid-title {
-  font-size: 14px; font-weight: 600; color: var(--text-dim);
-  text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 12px;
-  width: 100%; max-width: 400px; text-align: left;
+.level-select-area {
+  width: 100%; max-width: 500px; padding: 16px; flex: 1; overflow-y: auto;
+}
+.level-select-title {
+  font-size: 1.3rem; font-weight: 700; text-align: center; margin-bottom: 20px;
+  background: linear-gradient(135deg, #667eea, #a855f7);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 .level-grid {
-  display: grid; grid-template-columns: repeat(5, 1fr);
-  gap: 8px; width: 100%; max-width: 400px;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
 }
 .level-cell {
-  aspect-ratio: 1; border-radius: 12px; background: var(--surface);
-  border: 1px solid var(--surface2); display: flex; flex-direction: column;
+  aspect-ratio: 1; border-radius: 12px; display: flex; flex-direction: column;
   align-items: center; justify-content: center; cursor: pointer;
-  transition: all 0.2s; position: relative; font-size: 18px; font-weight: 600;
+  font-weight: 700; font-size: 1.1rem; transition: all 0.2s;
+  background: var(--surface); border: 1px solid rgba(255,255,255,0.06);
+  position: relative;
 }
-.level-cell:hover { background: var(--surface2); transform: scale(1.05); }
-.level-cell.locked { opacity: 0.3; cursor: default; pointer-events: none; }
-.level-cell.completed { border-color: rgba(var(--accent-rgb), 0.3); }
-.level-cell .stars-mini { font-size: 8px; margin-top: 2px; letter-spacing: 1px; }
-.level-cell.current {
-  border-color: rgba(var(--accent-rgb), 0.6);
-  box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.15);
+.level-cell:hover { background: var(--surface2); transform: translateY(-2px); }
+.level-cell.locked {
+  opacity: 0.4; cursor: not-allowed; pointer-events: none;
 }
+.level-cell.completed { border-color: rgba(102,126,234,0.3); }
+.level-stars {
+  font-size: 0.6rem; margin-top: 2px; letter-spacing: 1px; color: #ffd93d;
+}
+.level-stars .empty { color: #444; }
 
 /* Game Screen */
 .game-header {
-  width: 100%; max-width: 500px; padding: 8px 16px;
+  width: 100%; max-width: 600px; padding: 8px 16px;
   display: flex; align-items: center; justify-content: space-between;
 }
-.level-label { font-size: 14px; font-weight: 600; color: var(--text-dim); }
-.game-info { display: flex; gap: 16px; align-items: center; }
-.hearts { font-size: 22px; letter-spacing: 2px; display: flex; gap: 2px; }
-.heart { transition: all 0.3s; display: inline-block; }
-.heart.lost { opacity: 0.2; transform: scale(0.8); filter: grayscale(1); }
-.heart.breaking { animation: heartBreak 0.5s ease-out; }
-@keyframes heartBreak {
+.game-level-label {
+  font-size: 1rem; font-weight: 700;
+  background: linear-gradient(135deg, #667eea, #a855f7);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.hearts-display {
+  display: flex; gap: 4px; font-size: 1.2rem;
+}
+.heart { transition: all 0.3s; }
+.heart.lost { opacity: 0.2; transform: scale(0.8); }
+.arrows-left {
+  font-size: 0.85rem; color: var(--text-dim); font-weight: 500;
+}
+
+.game-canvas-wrapper {
+  width: 100%; max-width: 500px; padding: 8px 16px; flex: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+#gameCanvas {
+  border-radius: 16px; background: var(--board-bg);
+  border: 2px solid var(--board-border);
+  touch-action: none; cursor: pointer;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 0 60px rgba(0,0,0,0.3);
+}
+
+.game-actions {
+  width: 100%; max-width: 500px; padding: 12px 16px;
+  display: flex; gap: 10px; justify-content: center;
+}
+.action-btn {
+  padding: 10px 20px; border-radius: 12px; border: none;
+  font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 600;
+  cursor: pointer; transition: all 0.2s; background: var(--surface);
+  color: var(--text); border: 1px solid rgba(255,255,255,0.06);
+}
+.action-btn:hover { background: var(--surface2); transform: translateY(-1px); }
+.action-btn.hint-btn {
+  background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(168,85,247,0.15));
+  border-color: rgba(102,126,234,0.2);
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
+.modal-box {
+  background: linear-gradient(145deg, #111128, #0e0e24);
+  border: 1px solid rgba(168,85,247,0.2); border-radius: 20px;
+  padding: 32px 28px; max-width: 360px; width: 90%; text-align: center;
+  transform: translateY(20px) scale(0.95); transition: transform 0.35s cubic-bezier(0.22,1,0.36,1);
+}
+.modal-overlay.active .modal-box { transform: translateY(0) scale(1); }
+.modal-title {
+  font-size: 1.5rem; font-weight: 800; margin-bottom: 8px;
+  background: linear-gradient(135deg, #667eea, #a855f7, #ec4899);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.modal-stars { font-size: 2rem; margin: 12px 0; }
+.modal-stars .star { margin: 0 4px; transition: all 0.3s; }
+.modal-stars .star.empty { opacity: 0.2; }
+.modal-msg { color: var(--text-dim); font-size: 0.95rem; margin-bottom: 20px; }
+.modal-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.modal-btn {
+  padding: 12px 24px; border-radius: 12px; border: none;
+  font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+}
+.modal-btn.primary {
+  background: linear-gradient(135deg, #667eea, #a855f7); color: #fff;
+}
+.modal-btn.secondary {
+  background: var(--surface); color: var(--text); border: 1px solid rgba(255,255,255,0.08);
+}
+.modal-btn:hover { transform: translateY(-1px); }
+
+/* Ad area */
+.ad-area {
+  width: 100%; max-width: 500px; padding: 8px 16px; text-align: center;
+}
+
+/* Animations */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+@keyframes heartPop {
   0% { transform: scale(1); }
-  30% { transform: scale(1.3); }
+  50% { transform: scale(1.4); }
   100% { transform: scale(0.8); opacity: 0.2; }
 }
-.arrows-left { font-size: 13px; color: var(--text-dim); }
-.arrows-left strong { color: var(--text); font-size: 18px; }
-
-/* Game Board */
-.grid-wrapper {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  padding: 16px; width: 100%; position: relative; overflow: hidden;
-}
-.board-container {
-  position: relative;
-  max-width: min(90vw, 420px); max-height: min(70vh, 420px);
-  width: 100%; aspect-ratio: 1;
-}
-.game-board {
-  display: grid; gap: 4px; width: 100%; height: 100%;
-}
-.cell {
-  border-radius: 12px; cursor: pointer; position: relative;
-  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
-  background: var(--surface); border: 1px solid rgba(255,255,255,0.04);
-  display: flex; align-items: center; justify-content: center;
-  overflow: visible;
-}
-.cell:hover { background: var(--surface2); }
-.cell:active { transform: scale(0.92); }
-.cell.empty { cursor: default; pointer-events: none; }
-.cell.empty:hover { background: var(--surface); }
-
-/* Arrow in cell */
-.arrow {
-  font-size: 0; width: 60%; height: 60%;
-  position: relative; transition: transform 0.15s;
-  display: flex; align-items: center; justify-content: center;
-}
-.arrow svg {
-  width: 100%; height: 100%;
-  filter: drop-shadow(0 0 6px currentColor);
-  transition: filter 0.2s;
-}
-.cell:hover .arrow svg { filter: drop-shadow(0 0 12px currentColor); }
-
-/* Arrow colors */
-.arrow.color-red { color: var(--arrow-red); }
-.arrow.color-blue { color: var(--arrow-blue); }
-.arrow.color-yellow { color: var(--arrow-yellow); }
-.arrow.color-green { color: var(--arrow-green); }
-.arrow.color-purple { color: var(--arrow-purple); }
-
-/* Arrow directions */
-.arrow[data-dir="up"] { transform: rotate(0deg); }
-.arrow[data-dir="right"] { transform: rotate(90deg); }
-.arrow[data-dir="down"] { transform: rotate(180deg); }
-.arrow[data-dir="left"] { transform: rotate(270deg); }
-
-/* Flying animation */
-.arrow.flying {
-  position: fixed; z-index: 50; pointer-events: none;
-  transition: none;
-}
-.arrow.flying svg {
-  filter: drop-shadow(0 0 20px currentColor);
-}
-
-/* Bounce animation */
-.arrow.bouncing {
-  animation: bounceBack 0.4s ease-out;
-}
-@keyframes bounceBack {
-  0% { transform: var(--bounce-start); }
-  40% { transform: var(--bounce-mid); }
-  70% { transform: var(--bounce-end); }
-  100% { transform: var(--bounce-final); }
-}
-
-/* Cell highlight for hint */
-.cell.hint-highlight {
-  animation: hintPulse 1s ease-in-out 3;
-}
-@keyframes hintPulse {
-  0%, 100% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
-  50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.6), 0 0 50px rgba(255, 215, 0, 0.3); }
-}
-
-/* Trail effect */
-.arrow-trail {
-  position: fixed; z-index: 49; pointer-events: none;
-  border-radius: 50%;
-  animation: trailFade 0.4s ease-out forwards;
-}
-@keyframes trailFade {
-  0% { opacity: 0.6; transform: scale(1); }
-  100% { opacity: 0; transform: scale(0.3); }
-}
-
-/* Edge glow when arrow exits */
-.edge-glow {
-  position: absolute; pointer-events: none; z-index: 40;
-  animation: edgeFlash 0.6s ease-out forwards;
-}
-@keyframes edgeFlash {
-  0% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-/* Bottom bar */
-.game-bottom {
-  width: 100%; max-width: 500px; padding: 12px 16px 24px;
-  display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
-}
-.game-btn {
-  background: var(--surface); border: 1px solid var(--surface2);
-  color: var(--text); font-family: 'Outfit', sans-serif;
-  font-size: 13px; font-weight: 500; padding: 10px 16px;
-  border-radius: 10px; cursor: pointer; transition: all 0.2s;
-  display: flex; align-items: center; gap: 6px;
-}
-.game-btn:hover { background: var(--surface2); }
-.game-btn.hint-btn { color: #ffd700; border-color: rgba(255, 215, 0, 0.3); }
-.game-btn.hint-btn:disabled { opacity: 0.3; cursor: default; }
-.hint-count { font-size: 11px; background: rgba(255,215,0,0.15); padding: 1px 6px; border-radius: 6px; }
-
-/* Win Overlay */
-.win-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-  display: none; align-items: center; justify-content: center; z-index: 100;
-  backdrop-filter: blur(6px);
-}
-.win-overlay.active { display: flex; }
-.win-card {
-  background: var(--surface); border: 1px solid var(--surface2);
-  border-radius: 20px; padding: 36px 32px; text-align: center;
-  max-width: 340px; width: 90%;
-  animation: winPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-@keyframes winPop {
-  from { transform: scale(0.7); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-.win-emoji { font-size: 48px; margin-bottom: 12px; }
-.win-title { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
-.win-sub { font-size: 14px; color: var(--text-dim); margin-bottom: 20px; }
-.win-stars { font-size: 36px; margin-bottom: 20px; letter-spacing: 4px; }
-.win-star { display: inline-block; transition: all 0.3s; }
-.win-star.earned { animation: starPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; color: #ffd700; }
-.win-star.empty { opacity: 0.2; }
-.win-star:nth-child(2).earned { animation-delay: 0.15s; }
-.win-star:nth-child(3).earned { animation-delay: 0.3s; }
-@keyframes starPop {
-  from { transform: scale(0) rotate(-30deg); }
-  to { transform: scale(1) rotate(0deg); }
-}
-.win-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-
-/* Game Over Overlay */
-.gameover-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-  display: none; align-items: center; justify-content: center; z-index: 100;
-  backdrop-filter: blur(6px);
-}
-.gameover-overlay.active { display: flex; }
-
-/* Ad placeholder */
-.ad-placeholder {
-  width: 100%; max-width: 500px; height: 60px; margin: 8px auto;
-  background: var(--surface); border: 1px dashed var(--surface2);
-  border-radius: 10px; display: flex; align-items: center; justify-content: center;
-  color: var(--text-dim); font-size: 11px; letter-spacing: 0.5px;
-}
-
-/* Confetti */
-.confetti-piece {
-  position: fixed; z-index: 200; pointer-events: none;
-  width: 8px; height: 8px; border-radius: 2px;
-  animation: confettiFall 1.5s ease-out forwards;
-}
-@keyframes confettiFall {
-  0% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
-  100% { opacity: 0; transform: translateY(60vh) rotate(720deg) scale(0.3); }
-}
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 4px; }
 
 /* Responsive */
-@media (max-width: 380px) {
-  .game-title { font-size: 26px; }
-  .game-btn { font-size: 12px; padding: 8px 12px; }
-  .level-grid { gap: 6px; }
+@media (max-height: 700px) {
+  .game-header { padding: 4px 16px; }
+  .game-actions { padding: 8px 16px; }
 }
 </style>
 </head>
 <body>
 
-<!-- ===== TITLE SCREEN ===== -->
-<div id="title-screen" class="screen active">
+<!-- Title Screen -->
+<div id="titleScreen" class="screen active">
   <div class="top-bar">
-    <button class="back-btn" onclick="goToMain()" data-i18n="back"></button>
-    <button class="sound-btn" onclick="toggleSound()">🔊</button>
+    <button class="back-btn" id="backToMain"><!-- filled by i18n --></button>
+    <button class="sound-btn" id="soundToggle1">🔊</button>
   </div>
   <div class="title-area">
-    <div class="game-icon">🏹</div>
-    <div class="game-title"><span>ArrowScape</span></div>
-    <div class="game-subtitle" data-i18n-game="subtitle"></div>
-    <button class="main-btn" onclick="showLevelSelect()" data-i18n-game="play"></button>
-    <button class="secondary-btn" onclick="showHowToPlay()" data-i18n-game="how_to_play"></button>
+    <div class="game-logo">ArrowScape</div>
+    <div class="game-tagline" id="tagline">Master the Escape</div>
+    <button class="menu-btn primary" id="playBtn"><!-- filled by i18n --></button>
+    <button class="menu-btn secondary" id="levelSelectBtn"><!-- filled by i18n --></button>
   </div>
-  <div class="ad-placeholder" data-i18n="ad_area"></div>
+  <div class="ad-area" id="adArea1"></div>
 </div>
 
-<!-- ===== LEVEL SELECT SCREEN ===== -->
-<div id="level-screen" class="screen">
+<!-- Level Select Screen -->
+<div id="levelScreen" class="screen">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('title-screen')" data-i18n="back"></button>
-    <button class="sound-btn" onclick="toggleSound()">🔊</button>
+    <button class="back-btn" id="backToTitle1"><!-- filled by i18n --></button>
+    <button class="sound-btn" id="soundToggle2">🔊</button>
   </div>
-  <div class="level-screen">
-    <div class="level-grid-title" data-i18n="level_select"></div>
-    <div class="level-grid" id="level-grid"></div>
+  <div class="level-select-area">
+    <div class="level-select-title" id="levelSelectTitle"><!-- filled by i18n --></div>
+    <div class="level-grid" id="levelGrid"></div>
   </div>
-  <div class="ad-placeholder" data-i18n="ad_area"></div>
 </div>
 
-<!-- ===== GAME SCREEN ===== -->
-<div id="game-screen" class="screen">
+<!-- Game Screen -->
+<div id="gameScreen" class="screen">
   <div class="top-bar">
-    <button class="back-btn" onclick="confirmBack()" data-i18n="back"></button>
-    <button class="sound-btn" onclick="toggleSound()">🔊</button>
+    <button class="back-btn" id="backToTitle2"><!-- filled by i18n --></button>
+    <button class="sound-btn" id="soundToggle3">🔊</button>
   </div>
   <div class="game-header">
-    <div class="level-label" id="game-level-label"></div>
-    <div class="game-info">
-      <div class="hearts" id="hearts-display"></div>
-      <div class="arrows-left"><strong id="arrows-count">0</strong> <span data-i18n="remaining"></span></div>
-    </div>
+    <div class="game-level-label" id="gameLevelLabel"></div>
+    <div class="hearts-display" id="heartsDisplay"></div>
+    <div class="arrows-left" id="arrowsLeft"></div>
   </div>
-  <div class="grid-wrapper">
-    <div class="board-container" id="board-container">
-      <div class="game-board" id="game-board"></div>
-    </div>
+  <div class="game-canvas-wrapper">
+    <canvas id="gameCanvas"></canvas>
   </div>
-  <div class="game-bottom">
-    <button class="game-btn" onclick="undoMove()" id="undo-btn" data-i18n="undo"></button>
-    <button class="game-btn hint-btn" onclick="useHint()" id="hint-btn">
-      <span data-i18n="hint"></span> <span class="hint-count" id="hint-count">3</span>
-    </button>
-    <button class="game-btn" onclick="restartLevel()" data-i18n="restart"></button>
+  <div class="game-actions">
+    <button class="action-btn" id="restartBtn"><!-- filled by i18n --></button>
+    <button class="action-btn hint-btn" id="hintBtn"><!-- filled by i18n --></button>
   </div>
-  <div class="ad-placeholder" data-i18n="ad_area"></div>
+  <div class="ad-area" id="adArea2"></div>
 </div>
 
-<!-- ===== WIN OVERLAY ===== -->
-<div class="win-overlay" id="win-overlay">
-  <div class="win-card">
-    <div class="win-emoji">🎉</div>
-    <div class="win-title" id="win-title"></div>
-    <div class="win-sub" id="win-sub"></div>
-    <div class="win-stars" id="win-stars"></div>
-    <div class="win-btns">
-      <button class="secondary-btn" onclick="showLevelSelect(); closeOverlays()" data-i18n="level_select"></button>
-      <button class="main-btn" onclick="nextLevel()" id="next-level-btn" data-i18n="next_level"></button>
+<!-- Level Complete Modal -->
+<div class="modal-overlay" id="completeModal">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-stars" id="modalStars"></div>
+    <div class="modal-msg" id="modalMsg"></div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" id="modalRestart"><!-- filled --></button>
+      <button class="modal-btn primary" id="modalNext"><!-- filled --></button>
     </div>
   </div>
 </div>
 
-<!-- ===== GAME OVER OVERLAY ===== -->
-<div class="gameover-overlay" id="gameover-overlay">
-  <div class="win-card">
-    <div class="win-emoji">💔</div>
-    <div class="win-title" id="gameover-title"></div>
-    <div class="win-sub" id="gameover-sub"></div>
-    <div class="win-btns">
-      <button class="secondary-btn" onclick="showLevelSelect(); closeOverlays()" data-i18n="level_select"></button>
-      <button class="main-btn" onclick="restartLevel(); closeOverlays()" data-i18n="try_again"></button>
+<!-- Game Over Modal -->
+<div class="modal-overlay" id="gameOverModal">
+  <div class="modal-box">
+    <div class="modal-title" id="goTitle"></div>
+    <div class="modal-msg" id="goMsg"></div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" id="goBack"><!-- filled --></button>
+      <button class="modal-btn primary" id="goRetry"><!-- filled --></button>
     </div>
   </div>
 </div>
 
-<!-- ===== HOW TO PLAY OVERLAY ===== -->
-<div class="win-overlay" id="howto-overlay">
-  <div class="win-card" style="max-width: 380px;">
-    <div class="win-emoji">📖</div>
-    <div class="win-title" id="howto-title"></div>
-    <div id="howto-body" style="text-align: left; font-size: 14px; color: var(--text-dim); line-height: 1.8; margin-bottom: 20px;"></div>
-    <button class="main-btn" onclick="closeOverlays()" data-i18n-game="got_it"></button>
-  </div>
-</div>
+<script src="i18n.js"></script>
+<script src="share.js"></script>
+<script src="user-system.js"></script>
+<script src="ads.js"></script>
+<script src="recommend.js"></script>
 
 <script>
-// ===== GAME-SPECIFIC i18n =====
-const GAME_TRANSLATIONS = {
+(function() {
+'use strict';
+
+// ===== i18n =====
+const GAME_TEXT = {
   ko: {
-    subtitle: '화살표를 탈출시켜라!',
-    play: '🏹 게임 시작',
-    how_to_play: '📖 게임 방법',
-    got_it: '알겠어요!',
-    howto_title: '게임 방법',
-    howto_body: '• 화살표를 탭하면 가리키는 방향으로 날아갑니다\n• 경로에 다른 화살표가 없으면 보드에서 제거됩니다\n• 경로가 막혀있으면 튕겨서 돌아오고 하트를 잃습니다\n• 하트 3개를 모두 잃으면 게임 오버!\n• 모든 화살표를 제거하면 클리어!',
-    hearts_remaining: '남은 하트',
-    no_hints: '힌트를 모두 사용했습니다',
-    confirm_back: '진행을 중단하고 나가시겠습니까?',
+    tagline: '탈출을 마스터하세요',
+    play: '게임 시작',
+    levelSelect: '레벨 선택',
+    arrowsLeft: '남은 화살: {n}',
+    gameOver: '게임 오버',
+    noHeartsLeft: '하트를 모두 소진했습니다',
+    blocked: '막혀있어요!',
+    levelClear: '레벨 클리어!',
+    perfect: '퍼펙트!',
+    wellDone: '잘했어요!',
+    niceTry: '성공!',
   },
   en: {
-    subtitle: 'Launch arrows to escape!',
-    play: '🏹 Play',
-    how_to_play: '📖 How to Play',
-    got_it: 'Got it!',
-    howto_title: 'How to Play',
-    howto_body: '• Tap an arrow to launch it in its direction\n• If the path to the edge is clear, it flies off the board\n• If blocked by another arrow, it bounces back and you lose a heart\n• Lose all 3 hearts = Game Over!\n• Clear all arrows to win!',
-    hearts_remaining: 'Hearts left',
-    no_hints: 'No hints remaining',
-    confirm_back: 'Leave and lose progress?',
+    tagline: 'Master the Escape',
+    play: 'Play',
+    levelSelect: 'Select Level',
+    arrowsLeft: 'Arrows: {n}',
+    gameOver: 'Game Over',
+    noHeartsLeft: 'No hearts remaining',
+    blocked: 'Blocked!',
+    levelClear: 'Level Clear!',
+    perfect: 'Perfect!',
+    wellDone: 'Well Done!',
+    niceTry: 'Cleared!',
   },
   ja: {
-    subtitle: '矢印を脱出させよう！',
-    play: '🏹 プレイ',
-    how_to_play: '📖 遊び方',
-    got_it: 'わかった！',
-    howto_title: '遊び方',
-    howto_body: '• 矢印をタップすると向いている方向に飛びます\n• 端までの道が空いていればボードから消えます\n• 他の矢印に塞がれると跳ね返りハートを失います\n• ハート3つを全て失うとゲームオーバー！\n• 全ての矢印を消すとクリア！',
-    hearts_remaining: '残りハート',
-    no_hints: 'ヒントを使い切りました',
-    confirm_back: '進行を中断して戻りますか？',
+    tagline: '脱出をマスターせよ',
+    play: 'プレイ',
+    levelSelect: 'レベル選択',
+    arrowsLeft: '残り矢印: {n}',
+    gameOver: 'ゲームオーバー',
+    noHeartsLeft: 'ハートがなくなりました',
+    blocked: 'ブロックされています！',
+    levelClear: 'レベルクリア！',
+    perfect: 'パーフェクト！',
+    wellDone: 'よくできました！',
+    niceTry: 'クリア！',
   },
   zh: {
-    subtitle: '让箭头逃离棋盘！',
-    play: '🏹 开始游戏',
-    how_to_play: '📖 游戏规则',
-    got_it: '知道了！',
-    howto_title: '游戏规则',
-    howto_body: '• 点击箭头，它会朝指向的方向飞出\n• 如果路径畅通，箭头会飞出棋盘\n• 如果被其他箭头挡住，箭头会弹回并失去一颗心\n• 失去3颗心就游戏结束！\n• 清除所有箭头即可过关！',
-    hearts_remaining: '剩余红心',
-    no_hints: '提示已用完',
-    confirm_back: '中断进度并返回吗？',
+    tagline: '掌握逃脱之道',
+    play: '开始游戏',
+    levelSelect: '选择关卡',
+    arrowsLeft: '剩余箭头: {n}',
+    gameOver: '游戏结束',
+    noHeartsLeft: '没有剩余的心了',
+    blocked: '被挡住了！',
+    levelClear: '关卡通过！',
+    perfect: '完美！',
+    wellDone: '做得好！',
+    niceTry: '通关！',
   },
   es: {
-    subtitle: '¡Lanza las flechas para escapar!',
-    play: '🏹 Jugar',
-    how_to_play: '📖 Cómo jugar',
-    got_it: '¡Entendido!',
-    howto_title: 'Cómo jugar',
-    howto_body: '• Toca una flecha para lanzarla en su dirección\n• Si el camino está libre, sale del tablero\n• Si está bloqueada, rebota y pierdes un corazón\n• ¡Pierde 3 corazones = Game Over!\n• ¡Elimina todas las flechas para ganar!',
-    hearts_remaining: 'Corazones',
-    no_hints: 'Sin pistas disponibles',
-    confirm_back: '¿Salir y perder el progreso?',
+    tagline: 'Domina el Escape',
+    play: 'Jugar',
+    levelSelect: 'Elegir Nivel',
+    arrowsLeft: 'Flechas: {n}',
+    gameOver: 'Fin del Juego',
+    noHeartsLeft: 'Sin corazones',
+    blocked: '¡Bloqueado!',
+    levelClear: '¡Nivel Completado!',
+    perfect: '¡Perfecto!',
+    wellDone: '¡Bien hecho!',
+    niceTry: '¡Completado!',
   }
 };
 
-// ===== GLOBALS =====
-let currentLang = 'ko';
-let t = {}; // shared translations
-let gt = {}; // game translations
-let soundEnabled = true;
+let t, gt; // game text, general translations
+
+function initI18n() {
+  const lang = typeof getGameLang === 'function' ? getGameLang() : 'ko';
+  gt = typeof getTranslations === 'function' ? getTranslations() : {};
+  t = GAME_TEXT[lang] || GAME_TEXT.ko;
+}
+
+// ===== Audio =====
 let audioCtx = null;
+let soundEnabled = true;
 
-// Game state
-let currentLevel = 0;
-let hearts = 3;
-let hintsLeft = 3;
-let board = []; // 2D array: null or { dir, color, id }
-let boardSize = 0;
-let arrowsRemaining = 0;
-let moveHistory = [];
-let isAnimating = false;
-let solutionOrder = []; // For hints
-let solutionIndex = 0;
-
-// Progress
-const STORAGE_KEY = 'arrowscape_progress';
-let progress = { unlocked: 1, stars: {} };
-
-// ===== LEVEL DEFINITIONS =====
-// Each level: { size, arrows: [{r, c, dir, color}] }
-// Built via generateSolvableLevel to guarantee solvability
-
-const COLORS = ['red', 'blue', 'yellow', 'green', 'purple'];
-const DIRS = ['up', 'down', 'left', 'right'];
-
-const DIR_DELTA = {
-  up: [-1, 0],
-  down: [1, 0],
-  left: [0, -1],
-  right: [0, 1]
-};
-
-// Seeded RNG for deterministic levels
-function seededRNG(seed) {
-  let s = seed;
-  return function() {
-    s = (s * 1664525 + 1013904223) & 0xFFFFFFFF;
-    return (s >>> 0) / 0xFFFFFFFF;
-  };
-}
-
-function generateSolvableLevel(size, arrowCount, seed) {
-  const rng = seededRNG(seed);
-  const arrows = [];
-  const occupied = new Set();
-  // Place arrows one at a time in reverse removal order
-  // Each arrow placed must have a clear path to the edge at the time of placement
-  // This means the LAST placed arrow is the FIRST to remove (solution order is reverse of placement)
-
-  for (let i = 0; i < arrowCount; i++) {
-    let attempts = 0;
-    while (attempts < 200) {
-      attempts++;
-      const r = Math.floor(rng() * size);
-      const c = Math.floor(rng() * size);
-      const key = r + ',' + c;
-      if (occupied.has(key)) continue;
-
-      // Pick a direction that has a clear path to edge among already placed arrows
-      const validDirs = [];
-      for (const dir of DIRS) {
-        const [dr, dc] = DIR_DELTA[dir];
-        let cr = r + dr, cc = c + dc;
-        let clear = true;
-        while (cr >= 0 && cr < size && cc >= 0 && cc < size) {
-          if (occupied.has(cr + ',' + cc)) { clear = false; break; }
-          cr += dr; cc += dc;
-        }
-        if (clear) validDirs.push(dir);
-      }
-
-      if (validDirs.length === 0) continue;
-
-      const dir = validDirs[Math.floor(rng() * validDirs.length)];
-      const color = COLORS[Math.floor(rng() * COLORS.length)];
-      arrows.push({ r, c, dir, color });
-      occupied.add(key);
-      break;
-    }
-  }
-
-  // Solution order: reverse of placement (last placed = first to remove)
-  const solution = arrows.slice().reverse().map(a => ({ r: a.r, c: a.c }));
-
-  return { size, arrows, solution };
-}
-
-// Level specs: [size, arrowCount, seed]
-const LEVEL_SPECS = [
-  // 1-5: 3x3, 3-5 arrows
-  [3, 3, 1001], [3, 3, 1002], [3, 4, 1003], [3, 4, 1004], [3, 5, 1005],
-  // 6-10: 4x4, 5-8 arrows
-  [4, 5, 2001], [4, 6, 2002], [4, 6, 2003], [4, 7, 2004], [4, 8, 2005],
-  // 11-15: 4x4, 8-12 arrows
-  [4, 8, 3001], [4, 9, 3002], [4, 10, 3003], [4, 11, 3004], [4, 12, 3005],
-  // 16-20: 5x5, 10-15 arrows
-  [5, 10, 4001], [5, 11, 4002], [5, 12, 4003], [5, 13, 4004], [5, 15, 4005],
-  // 21-25: 5x5, 12-18 arrows
-  [5, 12, 5001], [5, 14, 5002], [5, 15, 5003], [5, 16, 5004], [5, 18, 5005],
-  // 26-30: 6x6, 15-20 arrows
-  [6, 15, 6001], [6, 16, 6002], [6, 17, 6003], [6, 18, 6004], [6, 20, 6005],
-];
-
-let LEVELS = [];
-
-function buildLevels() {
-  LEVELS = LEVEL_SPECS.map(([size, count, seed]) => generateSolvableLevel(size, count, seed));
-}
-
-// ===== AUDIO (Web Audio API) =====
 function getAudioCtx() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
   return audioCtx;
 }
 
@@ -616,30 +399,42 @@ function playWhoosh() {
   if (!soundEnabled) return;
   try {
     const ctx = getAudioCtx();
+    const dur = 0.35;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = 'sine';
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(3000, ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + dur);
+    osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(800, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.3);
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
-
-    // Noise component
-    const bufSize = ctx.sampleRate * 0.2;
+    osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + dur);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + dur);
+    // Add noise burst
+    const bufSize = ctx.sampleRate * dur;
     const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
     const data = buf.getChannelData(0);
-    for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
+    for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
     const noise = ctx.createBufferSource();
     noise.buffer = buf;
-    const nGain = ctx.createGain();
-    nGain.gain.setValueAtTime(0.08, ctx.currentTime);
-    nGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-    const hp = ctx.createBiquadFilter();
-    hp.type = 'highpass'; hp.frequency.value = 2000;
-    noise.connect(hp); hp.connect(nGain); nGain.connect(ctx.destination);
-    noise.start(ctx.currentTime); noise.stop(ctx.currentTime + 0.2);
+    const ng = ctx.createGain();
+    const nf = ctx.createBiquadFilter();
+    nf.type = 'bandpass';
+    nf.frequency.value = 2000;
+    nf.Q.value = 0.5;
+    ng.gain.setValueAtTime(0.08, ctx.currentTime);
+    ng.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    noise.connect(nf);
+    nf.connect(ng);
+    ng.connect(ctx.destination);
+    noise.start(ctx.currentTime);
+    noise.stop(ctx.currentTime + dur);
   } catch(e) {}
 }
 
@@ -649,714 +444,1217 @@ function playThud() {
     const ctx = getAudioCtx();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = 'triangle';
+    osc.type = 'sine';
     osc.frequency.setValueAtTime(150, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.15);
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.15);
   } catch(e) {}
 }
 
-function playCheer() {
+function playSuccess() {
   if (!soundEnabled) return;
   try {
     const ctx = getAudioCtx();
-    const notes = [523, 659, 784, 1047];
-    notes.forEach((freq, i) => {
+    [523.25, 659.25, 783.99].forEach((freq, i) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
       osc.frequency.value = freq;
       gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.12);
-      gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + i * 0.12 + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.4);
-      osc.connect(gain); gain.connect(ctx.destination);
+      gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + i * 0.12 + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
       osc.start(ctx.currentTime + i * 0.12);
-      osc.stop(ctx.currentTime + i * 0.12 + 0.4);
+      osc.stop(ctx.currentTime + i * 0.12 + 0.35);
     });
   } catch(e) {}
 }
 
-function playRemove() {
-  if (!soundEnabled) return;
-  try {
-    const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(600, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.15);
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.2);
-  } catch(e) {}
-}
-
-// ===== SAVE / LOAD =====
-function saveProgress() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); } catch(e) {}
-}
+// ===== Save/Load =====
+const SAVE_KEY = 'arrowscape_progress';
 
 function loadProgress() {
   try {
-    const d = localStorage.getItem(STORAGE_KEY);
-    if (d) {
-      const parsed = JSON.parse(d);
-      progress = { unlocked: parsed.unlocked || 1, stars: parsed.stars || {} };
-    }
+    const d = JSON.parse(localStorage.getItem(SAVE_KEY));
+    if (d && d.levels) return d;
   } catch(e) {}
+  return { levels: {} };
 }
 
-// ===== i18n =====
-function detectLang() {
-  const nav = (navigator.language || 'ko').toLowerCase();
-  if (nav.startsWith('ja')) return 'ja';
-  if (nav.startsWith('zh')) return 'zh';
-  if (nav.startsWith('es')) return 'es';
-  if (nav.startsWith('en')) return 'en';
-  return 'ko';
+function saveProgress(progress) {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(progress)); } catch(e) {}
 }
 
-function loadTranslations() {
-  currentLang = detectLang();
-  t = (typeof getTranslations === 'function') ? getTranslations() : {};
-  gt = GAME_TRANSLATIONS[currentLang] || GAME_TRANSLATIONS.en;
-
-  // Apply shared i18n
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    if (t[key]) el.textContent = t[key];
-  });
-  // Apply game-specific i18n
-  document.querySelectorAll('[data-i18n-game]').forEach(el => {
-    const key = el.getAttribute('data-i18n-game');
-    if (gt[key]) el.textContent = gt[key];
-  });
+function getLevelProgress(lvl) {
+  const p = loadProgress();
+  return p.levels[lvl] || null;
 }
 
-// ===== SCREENS =====
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-function goToMain() {
-  window.location.href = '../index.html';
-}
-
-function confirmBack() {
-  if (arrowsRemaining > 0 && arrowsRemaining < getTotalArrows()) {
-    if (!confirm(gt.confirm_back)) return;
+function saveLevelProgress(lvl, stars) {
+  const p = loadProgress();
+  const existing = p.levels[lvl];
+  if (!existing || stars > existing.stars) {
+    p.levels[lvl] = { stars, completed: true };
   }
-  showLevelSelect();
+  saveProgress(p);
 }
 
-function getTotalArrows() {
-  return LEVELS[currentLevel] ? LEVELS[currentLevel].arrows.length : 0;
+function getMaxUnlockedLevel() {
+  const p = loadProgress();
+  let max = 1;
+  for (let i = 1; i <= 30; i++) {
+    if (p.levels[i] && p.levels[i].completed) max = i + 1;
+    else break;
+  }
+  return Math.min(max, 30);
 }
 
-function toggleSound() {
-  soundEnabled = !soundEnabled;
-  document.querySelectorAll('.sound-btn').forEach(b => {
-    b.textContent = soundEnabled ? '🔊' : '🔇';
+// ===== Arrow Path Colors =====
+const COLORS = [
+  '#00e5ff', // cyan
+  '#ff6d00', // orange
+  '#ff4081', // pink
+  '#ffeb3b', // yellow
+  '#69f0ae', // green
+  '#e0e0e0', // white/light gray
+  '#ea80fc', // magenta
+  '#448aff', // blue
+  '#ff8a65', // coral
+  '#b2ff59', // lime
+];
+
+// ===== Direction helpers =====
+const DIR = {
+  UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3
+};
+const DIR_DX = [0, 1, 0, -1];
+const DIR_DY = [-1, 0, 1, 0];
+const DIR_NAMES = ['up', 'right', 'down', 'left'];
+
+function oppositeDir(d) { return (d + 2) % 4; }
+
+// ===== Level Definitions =====
+// Each arrow: { cells: [[col,row],...], dir: exit direction, color: index }
+// cells[last] is near the exit edge; dir is the direction the arrowhead points
+// The arrow slides out in dir from cells[last]
+// removalOrder: indices into arrows array, the correct order to remove them
+
+// Grid size: 8 cols x 10 rows
+
+const GRID_COLS = 8;
+const GRID_ROWS = 10;
+
+function buildLevels() {
+  const levels = [];
+
+  // Helper: create arrow definition
+  function arrow(cells, dir, colorIdx) {
+    return { cells, dir, color: colorIdx };
+  }
+
+  // Level 1: 3 arrows, very simple
+  levels.push({
+    arrows: [
+      arrow([[1,2],[2,2],[3,2],[4,2]], DIR.RIGHT, 0),
+      arrow([[3,5],[3,4],[3,3]], DIR.UP, 1),
+      arrow([[5,7],[5,6],[5,5],[5,4]], DIR.UP, 2),
+    ],
+    removalOrder: [0, 2, 1]
   });
+
+  // Level 2
+  levels.push({
+    arrows: [
+      arrow([[6,3],[6,4],[6,5],[6,6]], DIR.DOWN, 3),
+      arrow([[2,6],[3,6],[4,6],[5,6]], DIR.RIGHT, 0),
+      arrow([[1,4],[2,4],[3,4]], DIR.RIGHT, 4),
+    ],
+    removalOrder: [0, 1, 2]
+  });
+
+  // Level 3
+  levels.push({
+    arrows: [
+      arrow([[2,1],[2,2],[2,3],[2,4]], DIR.DOWN, 5),
+      arrow([[5,8],[5,7],[5,6],[5,5]], DIR.UP, 2),
+      arrow([[1,5],[2,5],[3,5],[4,5],[5,5]], DIR.RIGHT, 1),
+    ],
+    removalOrder: [0, 1, 2]
+  });
+
+  // Level 4
+  levels.push({
+    arrows: [
+      arrow([[1,3],[2,3],[3,3],[4,3]], DIR.RIGHT, 0),
+      arrow([[4,3],[4,4],[4,5],[4,6]], DIR.DOWN, 6),
+      arrow([[6,1],[6,2],[6,3]], DIR.DOWN, 3),
+      arrow([[2,7],[3,7],[4,7],[5,7]], DIR.RIGHT, 2),
+    ],
+    removalOrder: [2, 0, 1, 3]
+  });
+
+  // Level 5
+  levels.push({
+    arrows: [
+      arrow([[3,0],[3,1],[3,2],[3,3]], DIR.DOWN, 7),
+      arrow([[0,5],[1,5],[2,5],[3,5]], DIR.RIGHT, 4),
+      arrow([[5,3],[5,4],[5,5]], DIR.DOWN, 1),
+      arrow([[6,7],[6,6],[6,5]], DIR.UP, 0),
+    ],
+    removalOrder: [0, 2, 3, 1]
+  });
+
+  // Level 6: 4-5 arrows with turns
+  levels.push({
+    arrows: [
+      arrow([[1,2],[2,2],[3,2],[3,3],[3,4]], DIR.DOWN, 0),
+      arrow([[5,1],[5,2],[5,3],[5,4],[5,5]], DIR.DOWN, 3),
+      arrow([[1,6],[2,6],[3,6],[4,6]], DIR.RIGHT, 2),
+      arrow([[6,8],[6,7],[6,6]], DIR.UP, 5),
+      arrow([[0,4],[1,4],[2,4]], DIR.RIGHT, 7),
+    ],
+    removalOrder: [1, 3, 0, 2, 4]
+  });
+
+  // Level 7
+  levels.push({
+    arrows: [
+      arrow([[2,1],[2,2],[2,3],[3,3],[4,3]], DIR.RIGHT, 6),
+      arrow([[4,3],[4,4],[4,5],[4,6]], DIR.DOWN, 1),
+      arrow([[6,2],[6,3],[6,4]], DIR.DOWN, 0),
+      arrow([[1,7],[2,7],[3,7],[4,7]], DIR.RIGHT, 4),
+      arrow([[0,5],[1,5],[2,5]], DIR.RIGHT, 2),
+    ],
+    removalOrder: [2, 0, 1, 4, 3]
+  });
+
+  // Level 8
+  levels.push({
+    arrows: [
+      arrow([[1,1],[1,2],[1,3],[2,3],[3,3]], DIR.RIGHT, 0),
+      arrow([[5,0],[5,1],[5,2],[5,3]], DIR.DOWN, 5),
+      arrow([[3,5],[4,5],[5,5],[6,5]], DIR.RIGHT, 3),
+      arrow([[7,7],[7,6],[7,5]], DIR.UP, 2),
+      arrow([[2,8],[2,7],[2,6],[2,5]], DIR.UP, 7),
+    ],
+    removalOrder: [1, 3, 0, 2, 4]
+  });
+
+  // Level 9
+  levels.push({
+    arrows: [
+      arrow([[0,3],[1,3],[2,3],[3,3],[4,3]], DIR.RIGHT, 4),
+      arrow([[4,3],[4,4],[4,5]], DIR.DOWN, 6),
+      arrow([[6,1],[6,2],[6,3],[6,4]], DIR.DOWN, 0),
+      arrow([[1,6],[2,6],[3,6],[4,6],[5,6]], DIR.RIGHT, 1),
+      arrow([[2,9],[2,8],[2,7]], DIR.UP, 2),
+    ],
+    removalOrder: [2, 0, 1, 4, 3]
+  });
+
+  // Level 10
+  levels.push({
+    arrows: [
+      arrow([[3,0],[3,1],[3,2],[4,2],[5,2]], DIR.RIGHT, 7),
+      arrow([[5,2],[5,3],[5,4],[5,5]], DIR.DOWN, 3),
+      arrow([[1,4],[2,4],[3,4]], DIR.RIGHT, 0),
+      arrow([[7,6],[7,5],[7,4],[7,3]], DIR.UP, 5),
+      arrow([[0,8],[1,8],[2,8],[3,8]], DIR.RIGHT, 2),
+    ],
+    removalOrder: [0, 3, 1, 2, 4]
+  });
+
+  // Level 11: 5-7 arrows
+  levels.push({
+    arrows: [
+      arrow([[1,1],[2,1],[3,1],[4,1]], DIR.RIGHT, 0),
+      arrow([[4,1],[4,2],[4,3],[4,4]], DIR.DOWN, 6),
+      arrow([[6,0],[6,1],[6,2],[6,3]], DIR.DOWN, 3),
+      arrow([[0,5],[1,5],[2,5],[3,5]], DIR.RIGHT, 2),
+      arrow([[5,6],[5,5],[5,4]], DIR.UP, 4),
+      arrow([[2,8],[3,8],[4,8],[5,8]], DIR.RIGHT, 7),
+    ],
+    removalOrder: [2, 0, 4, 1, 3, 5]
+  });
+
+  // Level 12
+  levels.push({
+    arrows: [
+      arrow([[2,0],[2,1],[2,2],[2,3]], DIR.DOWN, 5),
+      arrow([[0,3],[1,3],[2,3],[3,3],[4,3]], DIR.RIGHT, 1),
+      arrow([[4,3],[4,4],[4,5],[4,6]], DIR.DOWN, 0),
+      arrow([[6,2],[6,3],[6,4],[6,5]], DIR.DOWN, 2),
+      arrow([[1,7],[2,7],[3,7],[4,7]], DIR.RIGHT, 3),
+      arrow([[5,9],[5,8],[5,7]], DIR.UP, 7),
+    ],
+    removalOrder: [3, 0, 5, 1, 2, 4]
+  });
+
+  // Level 13
+  levels.push({
+    arrows: [
+      arrow([[1,1],[1,2],[1,3],[2,3]], DIR.RIGHT, 0),
+      arrow([[4,0],[4,1],[4,2]], DIR.DOWN, 4),
+      arrow([[6,2],[6,3],[6,4],[6,5]], DIR.DOWN, 6),
+      arrow([[3,4],[4,4],[5,4]], DIR.RIGHT, 2),
+      arrow([[0,6],[1,6],[2,6],[3,6]], DIR.RIGHT, 3),
+      arrow([[5,8],[5,7],[5,6]], DIR.UP, 7),
+      arrow([[2,9],[3,9],[4,9]], DIR.RIGHT, 1),
+    ],
+    removalOrder: [1, 2, 0, 5, 3, 4, 6]
+  });
+
+  // Level 14
+  levels.push({
+    arrows: [
+      arrow([[3,0],[3,1],[3,2],[3,3]], DIR.DOWN, 5),
+      arrow([[0,3],[1,3],[2,3],[3,3]], DIR.RIGHT, 0),
+      arrow([[6,1],[6,2],[6,3],[6,4],[6,5]], DIR.DOWN, 2),
+      arrow([[5,5],[4,5],[3,5]], DIR.LEFT, 7),
+      arrow([[1,7],[2,7],[3,7]], DIR.RIGHT, 4),
+      arrow([[4,8],[4,7],[4,6]], DIR.UP, 3),
+      arrow([[7,8],[7,7],[7,6]], DIR.UP, 6),
+    ],
+    removalOrder: [2, 6, 0, 1, 5, 3, 4]
+  });
+
+  // Level 15
+  levels.push({
+    arrows: [
+      arrow([[2,0],[2,1],[2,2],[3,2],[4,2]], DIR.RIGHT, 0),
+      arrow([[4,2],[4,3],[4,4]], DIR.DOWN, 6),
+      arrow([[6,1],[6,2],[6,3]], DIR.DOWN, 3),
+      arrow([[0,4],[1,4],[2,4],[3,4]], DIR.RIGHT, 1),
+      arrow([[5,6],[5,5],[5,4]], DIR.UP, 5),
+      arrow([[1,7],[2,7],[3,7],[4,7],[5,7]], DIR.RIGHT, 2),
+      arrow([[7,9],[7,8],[7,7]], DIR.UP, 7),
+    ],
+    removalOrder: [2, 0, 4, 6, 1, 3, 5]
+  });
+
+  // Level 16: 6-8 arrows
+  levels.push({
+    arrows: [
+      arrow([[1,0],[1,1],[1,2],[2,2]], DIR.RIGHT, 0),
+      arrow([[4,1],[4,2],[4,3]], DIR.DOWN, 4),
+      arrow([[6,0],[6,1],[6,2],[6,3]], DIR.DOWN, 2),
+      arrow([[0,4],[1,4],[2,4],[3,4],[4,4]], DIR.RIGHT, 3),
+      arrow([[5,5],[5,4],[5,3]], DIR.UP, 7),
+      arrow([[2,6],[3,6],[4,6]], DIR.RIGHT, 5),
+      arrow([[6,7],[6,6],[6,5]], DIR.UP, 6),
+      arrow([[1,9],[1,8],[1,7]], DIR.UP, 1),
+    ],
+    removalOrder: [2, 0, 4, 6, 1, 3, 7, 5]
+  });
+
+  // Level 17
+  levels.push({
+    arrows: [
+      arrow([[3,0],[3,1],[3,2]], DIR.DOWN, 0),
+      arrow([[0,2],[1,2],[2,2],[3,2]], DIR.RIGHT, 6),
+      arrow([[5,1],[5,2],[5,3],[5,4]], DIR.DOWN, 3),
+      arrow([[7,3],[7,4],[7,5]], DIR.DOWN, 2),
+      arrow([[1,5],[2,5],[3,5],[4,5]], DIR.RIGHT, 4),
+      arrow([[4,7],[4,6],[4,5]], DIR.UP, 7),
+      arrow([[0,8],[1,8],[2,8]], DIR.RIGHT, 1),
+      arrow([[6,9],[6,8],[6,7],[6,6]], DIR.UP, 5),
+    ],
+    removalOrder: [3, 0, 2, 5, 7, 1, 4, 6]
+  });
+
+  // Level 18
+  levels.push({
+    arrows: [
+      arrow([[2,0],[2,1],[2,2],[2,3]], DIR.DOWN, 0),
+      arrow([[5,0],[5,1],[5,2]], DIR.DOWN, 5),
+      arrow([[0,3],[1,3],[2,3],[3,3]], DIR.RIGHT, 3),
+      arrow([[4,4],[5,4],[6,4]], DIR.RIGHT, 2),
+      arrow([[7,6],[7,5],[7,4]], DIR.UP, 7),
+      arrow([[3,6],[4,6],[5,6]], DIR.RIGHT, 4),
+      arrow([[1,8],[2,8],[3,8],[4,8]], DIR.RIGHT, 1),
+      arrow([[6,9],[6,8],[6,7]], DIR.UP, 6),
+    ],
+    removalOrder: [1, 4, 0, 3, 7, 2, 5, 6]
+  });
+
+  // Level 19
+  levels.push({
+    arrows: [
+      arrow([[1,1],[2,1],[3,1],[4,1],[5,1]], DIR.RIGHT, 0),
+      arrow([[5,1],[5,2],[5,3]], DIR.DOWN, 6),
+      arrow([[7,0],[7,1],[7,2],[7,3]], DIR.DOWN, 2),
+      arrow([[0,4],[1,4],[2,4]], DIR.RIGHT, 3),
+      arrow([[3,5],[3,4],[3,3]], DIR.UP, 4),
+      arrow([[6,6],[6,5],[6,4]], DIR.UP, 7),
+      arrow([[1,7],[2,7],[3,7],[4,7]], DIR.RIGHT, 1),
+      arrow([[5,9],[5,8],[5,7]], DIR.UP, 5),
+    ],
+    removalOrder: [2, 0, 5, 4, 1, 7, 3, 6]
+  });
+
+  // Level 20
+  levels.push({
+    arrows: [
+      arrow([[0,1],[1,1],[2,1],[3,1]], DIR.RIGHT, 0),
+      arrow([[3,1],[3,2],[3,3],[3,4]], DIR.DOWN, 6),
+      arrow([[5,0],[5,1],[5,2],[5,3]], DIR.DOWN, 3),
+      arrow([[7,2],[7,3],[7,4],[7,5]], DIR.DOWN, 2),
+      arrow([[1,5],[2,5],[3,5],[4,5]], DIR.RIGHT, 4),
+      arrow([[6,6],[6,5],[6,4]], DIR.UP, 7),
+      arrow([[0,8],[1,8],[2,8],[3,8]], DIR.RIGHT, 1),
+      arrow([[5,9],[5,8],[5,7],[5,6]], DIR.UP, 5),
+    ],
+    removalOrder: [2, 3, 5, 0, 7, 1, 4, 6]
+  });
+
+  // Level 21: 7-9 arrows
+  levels.push({
+    arrows: [
+      arrow([[1,0],[1,1],[1,2]], DIR.DOWN, 0),
+      arrow([[4,0],[4,1],[4,2],[4,3]], DIR.DOWN, 3),
+      arrow([[6,1],[6,2],[6,3]], DIR.DOWN, 5),
+      arrow([[0,3],[1,3],[2,3],[3,3]], DIR.RIGHT, 2),
+      arrow([[5,5],[5,4],[5,3]], DIR.UP, 7),
+      arrow([[2,5],[3,5],[4,5]], DIR.RIGHT, 4),
+      arrow([[7,7],[7,6],[7,5]], DIR.UP, 6),
+      arrow([[1,8],[2,8],[3,8]], DIR.RIGHT, 1),
+      arrow([[5,9],[5,8],[5,7]], DIR.UP, 0),
+    ],
+    removalOrder: [2, 6, 0, 4, 1, 8, 3, 5, 7]
+  });
+
+  // Level 22
+  levels.push({
+    arrows: [
+      arrow([[2,0],[2,1],[2,2],[3,2]], DIR.RIGHT, 0),
+      arrow([[5,0],[5,1],[5,2]], DIR.DOWN, 4),
+      arrow([[7,1],[7,2],[7,3],[7,4]], DIR.DOWN, 2),
+      arrow([[0,4],[1,4],[2,4],[3,4]], DIR.RIGHT, 3),
+      arrow([[4,3],[4,4],[4,5]], DIR.DOWN, 6),
+      arrow([[6,5],[6,4],[6,3]], DIR.UP, 7),
+      arrow([[1,6],[2,6],[3,6],[4,6]], DIR.RIGHT, 1),
+      arrow([[5,8],[5,7],[5,6]], DIR.UP, 5),
+      arrow([[0,9],[1,9],[2,9]], DIR.RIGHT, 0),
+    ],
+    removalOrder: [2, 1, 5, 0, 7, 4, 3, 6, 8]
+  });
+
+  // Level 23
+  levels.push({
+    arrows: [
+      arrow([[1,0],[1,1],[1,2],[1,3]], DIR.DOWN, 0),
+      arrow([[3,1],[3,2],[3,3]], DIR.DOWN, 5),
+      arrow([[5,0],[5,1],[5,2],[5,3]], DIR.DOWN, 2),
+      arrow([[7,2],[7,3],[7,4]], DIR.DOWN, 3),
+      arrow([[0,4],[1,4],[2,4],[3,4]], DIR.RIGHT, 7),
+      arrow([[4,5],[5,5],[6,5]], DIR.RIGHT, 4),
+      arrow([[2,7],[3,7],[4,7]], DIR.RIGHT, 6),
+      arrow([[6,8],[6,7],[6,6]], DIR.UP, 1),
+      arrow([[0,9],[1,9],[2,9]], DIR.RIGHT, 0),
+    ],
+    removalOrder: [3, 2, 7, 0, 1, 5, 4, 6, 8]
+  });
+
+  // Level 24
+  levels.push({
+    arrows: [
+      arrow([[0,1],[1,1],[2,1]], DIR.RIGHT, 0),
+      arrow([[4,0],[4,1],[4,2],[4,3]], DIR.DOWN, 6),
+      arrow([[6,0],[6,1],[6,2]], DIR.DOWN, 3),
+      arrow([[2,3],[3,3],[4,3]], DIR.RIGHT, 2),
+      arrow([[7,4],[7,3],[7,2]], DIR.UP, 4),
+      arrow([[1,5],[2,5],[3,5]], DIR.RIGHT, 5),
+      arrow([[5,6],[5,5],[5,4]], DIR.UP, 7),
+      arrow([[0,7],[1,7],[2,7],[3,7]], DIR.RIGHT, 1),
+      arrow([[6,9],[6,8],[6,7]], DIR.UP, 0),
+    ],
+    removalOrder: [2, 4, 0, 6, 8, 1, 3, 5, 7]
+  });
+
+  // Level 25
+  levels.push({
+    arrows: [
+      arrow([[2,0],[2,1],[2,2]], DIR.DOWN, 0),
+      arrow([[5,0],[5,1],[5,2],[5,3]], DIR.DOWN, 3),
+      arrow([[7,1],[7,2],[7,3]], DIR.DOWN, 5),
+      arrow([[0,3],[1,3],[2,3]], DIR.RIGHT, 2),
+      arrow([[3,4],[4,4],[5,4]], DIR.RIGHT, 7),
+      arrow([[6,5],[6,4],[6,3]], DIR.UP, 4),
+      arrow([[1,6],[2,6],[3,6]], DIR.RIGHT, 6),
+      arrow([[4,7],[5,7],[6,7]], DIR.RIGHT, 1),
+      arrow([[7,9],[7,8],[7,7]], DIR.UP, 0),
+    ],
+    removalOrder: [2, 5, 8, 0, 1, 4, 3, 6, 7]
+  });
+
+  // Level 26: 8-10 arrows
+  levels.push({
+    arrows: [
+      arrow([[1,0],[1,1],[1,2]], DIR.DOWN, 0),
+      arrow([[3,0],[3,1],[3,2],[3,3]], DIR.DOWN, 3),
+      arrow([[5,1],[5,2],[5,3]], DIR.DOWN, 5),
+      arrow([[7,0],[7,1],[7,2],[7,3]], DIR.DOWN, 2),
+      arrow([[0,4],[1,4],[2,4],[3,4]], DIR.RIGHT, 7),
+      arrow([[4,4],[5,4],[6,4]], DIR.RIGHT, 4),
+      arrow([[2,6],[3,6],[4,6]], DIR.RIGHT, 6),
+      arrow([[6,7],[6,6],[6,5]], DIR.UP, 1),
+      arrow([[0,8],[1,8],[2,8]], DIR.RIGHT, 0),
+      arrow([[4,9],[4,8],[4,7]], DIR.UP, 3),
+    ],
+    removalOrder: [3, 7, 0, 2, 9, 1, 5, 4, 6, 8]
+  });
+
+  // Level 27
+  levels.push({
+    arrows: [
+      arrow([[0,1],[1,1],[2,1]], DIR.RIGHT, 0),
+      arrow([[2,1],[2,2],[2,3]], DIR.DOWN, 5),
+      arrow([[4,0],[4,1],[4,2]], DIR.DOWN, 3),
+      arrow([[6,0],[6,1],[6,2],[6,3]], DIR.DOWN, 2),
+      arrow([[7,4],[7,3],[7,2]], DIR.UP, 7),
+      arrow([[0,4],[1,4],[2,4]], DIR.RIGHT, 4),
+      arrow([[3,5],[4,5],[5,5]], DIR.RIGHT, 6),
+      arrow([[5,7],[5,6],[5,5]], DIR.UP, 1),
+      arrow([[1,7],[2,7],[3,7]], DIR.RIGHT, 0),
+      arrow([[7,9],[7,8],[7,7]], DIR.UP, 3),
+    ],
+    removalOrder: [3, 4, 2, 9, 0, 7, 1, 6, 5, 8]
+  });
+
+  // Level 28
+  levels.push({
+    arrows: [
+      arrow([[1,0],[1,1],[1,2],[1,3]], DIR.DOWN, 0),
+      arrow([[3,1],[3,2],[3,3]], DIR.DOWN, 4),
+      arrow([[5,0],[5,1],[5,2]], DIR.DOWN, 3),
+      arrow([[7,1],[7,2],[7,3],[7,4]], DIR.DOWN, 2),
+      arrow([[0,4],[1,4],[2,4],[3,4]], DIR.RIGHT, 6),
+      arrow([[4,5],[5,5],[6,5]], DIR.RIGHT, 7),
+      arrow([[6,4],[6,3],[6,2]], DIR.UP, 5),
+      arrow([[2,6],[3,6],[4,6]], DIR.RIGHT, 1),
+      arrow([[0,8],[1,8],[2,8],[3,8]], DIR.RIGHT, 0),
+      arrow([[5,9],[5,8],[5,7]], DIR.UP, 4),
+    ],
+    removalOrder: [6, 2, 3, 9, 0, 1, 5, 4, 7, 8]
+  });
+
+  // Level 29
+  levels.push({
+    arrows: [
+      arrow([[0,1],[1,1],[2,1],[3,1]], DIR.RIGHT, 0),
+      arrow([[3,1],[3,2],[3,3]], DIR.DOWN, 6),
+      arrow([[5,0],[5,1],[5,2],[5,3]], DIR.DOWN, 3),
+      arrow([[7,0],[7,1],[7,2]], DIR.DOWN, 2),
+      arrow([[6,4],[6,3],[6,2]], DIR.UP, 5),
+      arrow([[1,4],[2,4],[3,4]], DIR.RIGHT, 7),
+      arrow([[4,5],[5,5],[6,5]], DIR.RIGHT, 4),
+      arrow([[0,7],[1,7],[2,7]], DIR.RIGHT, 1),
+      arrow([[3,6],[3,5],[3,4]], DIR.UP, 0),
+      arrow([[5,8],[5,7],[5,6]], DIR.UP, 3),
+      arrow([[7,9],[7,8],[7,7]], DIR.UP, 6),
+    ],
+    removalOrder: [3, 4, 10, 2, 0, 9, 8, 1, 6, 5, 7]
+  });
+
+  // Level 30
+  levels.push({
+    arrows: [
+      arrow([[1,0],[1,1],[1,2]], DIR.DOWN, 0),
+      arrow([[3,0],[3,1],[3,2],[3,3]], DIR.DOWN, 4),
+      arrow([[5,0],[5,1],[5,2]], DIR.DOWN, 3),
+      arrow([[7,1],[7,2],[7,3]], DIR.DOWN, 2),
+      arrow([[0,3],[1,3],[2,3],[3,3]], DIR.RIGHT, 5),
+      arrow([[4,4],[5,4],[6,4]], DIR.RIGHT, 7),
+      arrow([[6,3],[6,2],[6,1]], DIR.UP, 6),
+      arrow([[2,5],[3,5],[4,5]], DIR.RIGHT, 1),
+      arrow([[7,6],[7,5],[7,4]], DIR.UP, 0),
+      arrow([[0,7],[1,7],[2,7],[3,7]], DIR.RIGHT, 3),
+      arrow([[5,8],[5,7],[5,6]], DIR.UP, 4),
+    ],
+    removalOrder: [6, 3, 8, 2, 0, 10, 1, 5, 4, 7, 9]
+  });
+
+  return levels;
 }
 
-function showHowToPlay() {
-  document.getElementById('howto-title').textContent = gt.howto_title;
-  const body = document.getElementById('howto-body');
-  body.innerHTML = gt.howto_body.split('\n').map(line => `<p style="margin-bottom:6px">${line}</p>`).join('');
-  document.getElementById('howto-overlay').classList.add('active');
+const LEVELS = buildLevels();
+const TOTAL_LEVELS = LEVELS.length;
+
+// ===== Game State =====
+let currentScreen = 'title';
+let currentLevel = 1;
+let hearts = 3;
+let arrows = [];       // active arrows in current level
+let removedArrows = []; // removed arrows (for animation trail)
+let animating = false;
+let hintArrowIdx = -1;
+let hintFlashTimer = 0;
+
+// Canvas
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let cellSize = 40;
+let boardX = 0, boardY = 0;
+let canvasW = 0, canvasH = 0;
+let dpr = 1;
+
+// Animation state
+let slideAnim = null; // { arrowIdx, progress, startTime, duration, arrow }
+
+// ===== Screen Management =====
+function showScreen(name) {
+  currentScreen = name;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const map = { title: 'titleScreen', levels: 'levelScreen', game: 'gameScreen' };
+  document.getElementById(map[name]).classList.add('active');
+  if (name === 'levels') renderLevelGrid();
+  if (name === 'game') initLevel(currentLevel);
 }
 
-function closeOverlays() {
-  document.querySelectorAll('.win-overlay, .gameover-overlay').forEach(o => o.classList.remove('active'));
-}
-
-// ===== LEVEL SELECT =====
-function showLevelSelect() {
-  closeOverlays();
-  showScreen('level-screen');
-  renderLevelGrid();
-}
-
+// ===== Level Grid =====
 function renderLevelGrid() {
-  const grid = document.getElementById('level-grid');
+  const grid = document.getElementById('levelGrid');
   grid.innerHTML = '';
-  for (let i = 0; i < 30; i++) {
+  const maxUnlocked = getMaxUnlockedLevel();
+  for (let i = 1; i <= TOTAL_LEVELS; i++) {
     const cell = document.createElement('div');
     cell.className = 'level-cell';
-    const num = i + 1;
-
-    if (i >= progress.unlocked) {
+    const prog = getLevelProgress(i);
+    if (i > maxUnlocked) {
       cell.classList.add('locked');
-      cell.textContent = '🔒';
+      cell.innerHTML = `<span>🔒</span>`;
     } else {
-      cell.textContent = num;
-      if (progress.stars[i] !== undefined) {
-        cell.classList.add('completed');
-        const starsDiv = document.createElement('div');
-        starsDiv.className = 'stars-mini';
-        const s = progress.stars[i];
-        starsDiv.textContent = '★'.repeat(s) + '☆'.repeat(3 - s);
-        cell.appendChild(starsDiv);
+      if (prog && prog.completed) cell.classList.add('completed');
+      cell.innerHTML = `<span>${i}</span>`;
+      if (prog && prog.stars) {
+        let starsHtml = '';
+        for (let s = 0; s < 3; s++) {
+          starsHtml += s < prog.stars ? '★' : '<span class="empty">★</span>';
+        }
+        cell.innerHTML += `<div class="level-stars">${starsHtml}</div>`;
       }
-      if (i === progress.unlocked - 1 && !progress.stars[i]) {
-        cell.classList.add('current');
-      }
-      cell.addEventListener('click', () => startLevel(i));
+      cell.addEventListener('click', () => { currentLevel = i; showScreen('game'); });
     }
-
     grid.appendChild(cell);
   }
 }
 
-// ===== GAME LOGIC =====
-function startLevel(levelIndex) {
-  currentLevel = levelIndex;
-  const level = LEVELS[levelIndex];
-  if (!level) return;
-
-  boardSize = level.size;
+// ===== Init Level =====
+function initLevel(lvl) {
+  const levelData = LEVELS[lvl - 1];
+  if (!levelData) return;
   hearts = 3;
-  hintsLeft = 3;
-  moveHistory = [];
-  isAnimating = false;
+  hintArrowIdx = -1;
+  animating = false;
+  slideAnim = null;
+  removedArrows = [];
 
-  // Build board
-  board = [];
-  for (let r = 0; r < boardSize; r++) {
-    board[r] = [];
-    for (let c = 0; c < boardSize; c++) {
-      board[r][c] = null;
+  // Deep copy arrows
+  arrows = levelData.arrows.map((a, idx) => ({
+    cells: a.cells.map(c => [...c]),
+    dir: a.dir,
+    color: COLORS[a.color % COLORS.length],
+    colorIdx: a.color,
+    removed: false,
+    originalIdx: idx,
+  }));
+
+  updateHeartsDisplay();
+  updateArrowsLeftDisplay();
+  document.getElementById('gameLevelLabel').textContent =
+    `${gt.level || 'Level'} ${lvl}`;
+
+  resizeCanvas();
+  render();
+}
+
+// ===== Canvas Sizing =====
+function resizeCanvas() {
+  const wrapper = document.querySelector('.game-canvas-wrapper');
+  const maxW = wrapper.clientWidth - 32;
+  const maxH = wrapper.clientHeight - 16;
+
+  // Calculate cell size to fit grid
+  const fitW = Math.floor(maxW / GRID_COLS);
+  const fitH = Math.floor(maxH / GRID_ROWS);
+  cellSize = Math.min(fitW, fitH, 50);
+
+  canvasW = GRID_COLS * cellSize;
+  canvasH = GRID_ROWS * cellSize;
+
+  dpr = window.devicePixelRatio || 1;
+  canvas.width = canvasW * dpr;
+  canvas.height = canvasH * dpr;
+  canvas.style.width = canvasW + 'px';
+  canvas.style.height = canvasH + 'px';
+
+  boardX = 0;
+  boardY = 0;
+}
+
+// ===== Rendering =====
+function render() {
+  ctx.save();
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, canvasW, canvasH);
+
+  // Board background
+  ctx.fillStyle = '#141428';
+  ctx.beginPath();
+  roundRect(ctx, 0, 0, canvasW, canvasH, 14);
+  ctx.fill();
+
+  // Grid dots
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  for (let r = 0; r <= GRID_ROWS; r++) {
+    for (let c = 0; c <= GRID_COLS; c++) {
+      ctx.beginPath();
+      ctx.arc(c * cellSize, r * cellSize, 1.5, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 
-  let arrowId = 0;
-  level.arrows.forEach(a => {
-    board[a.r][a.c] = { dir: a.dir, color: a.color, id: arrowId++ };
+  // Draw removed arrow trails (faded)
+  removedArrows.forEach(ra => {
+    drawArrowPath(ra, 0.12, false);
   });
 
-  // Compute solution order for hints
-  computeSolution();
-  solutionIndex = 0;
+  // Draw active arrows
+  const activeArrows = arrows.filter(a => !a.removed);
+  activeArrows.forEach((a, i) => {
+    const isHint = hintArrowIdx >= 0 && a.originalIdx === hintArrowIdx;
+    const alpha = isHint ? 0.5 + 0.5 * Math.sin(hintFlashTimer * 5) : 1.0;
+    drawArrowPath(a, alpha, true);
+  });
 
-  arrowsRemaining = level.arrows.length;
+  // Draw slide animation
+  if (slideAnim) {
+    drawSlideAnimation();
+  }
 
-  showScreen('game-screen');
-  renderGame();
+  ctx.restore();
 }
 
-function computeSolution() {
-  // Simulate finding a valid removal order
-  const tempBoard = board.map(row => row.map(cell => cell ? { ...cell } : null));
-  solutionOrder = [];
+function drawArrowPath(arrow, alpha, drawHead) {
+  if (arrow.cells.length < 2) return;
 
-  let maxIterations = boardSize * boardSize * 10;
-  let iteration = 0;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
 
-  while (iteration < maxIterations) {
-    iteration++;
-    let found = false;
-    for (let r = 0; r < boardSize; r++) {
-      for (let c = 0; c < boardSize; c++) {
-        if (!tempBoard[r][c]) continue;
-        if (isPathClear(tempBoard, r, c, tempBoard[r][c].dir, boardSize)) {
-          solutionOrder.push({ r, c });
-          tempBoard[r][c] = null;
-          found = true;
-        }
+  const thickness = cellSize * 0.45;
+
+  // Draw path shadow
+  ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+  ctx.lineWidth = thickness + 4;
+  ctx.beginPath();
+  arrow.cells.forEach((cell, i) => {
+    const x = cell[0] * cellSize + cellSize / 2;
+    const y = cell[1] * cellSize + cellSize / 2;
+    if (i === 0) ctx.moveTo(x, y + 2);
+    else ctx.lineTo(x, y + 2);
+  });
+  ctx.stroke();
+
+  // Draw main path
+  const grad = ctx.createLinearGradient(
+    arrow.cells[0][0] * cellSize, arrow.cells[0][1] * cellSize,
+    arrow.cells[arrow.cells.length-1][0] * cellSize,
+    arrow.cells[arrow.cells.length-1][1] * cellSize
+  );
+  const baseColor = arrow.color;
+  grad.addColorStop(0, baseColor);
+  grad.addColorStop(1, adjustBrightness(baseColor, -20));
+
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = thickness;
+  ctx.beginPath();
+  arrow.cells.forEach((cell, i) => {
+    const x = cell[0] * cellSize + cellSize / 2;
+    const y = cell[1] * cellSize + cellSize / 2;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Inner highlight
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = thickness * 0.35;
+  ctx.beginPath();
+  arrow.cells.forEach((cell, i) => {
+    const x = cell[0] * cellSize + cellSize / 2;
+    const y = cell[1] * cellSize + cellSize / 2 - 1;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Draw arrowhead at the LAST cell
+  if (drawHead) {
+    const lastCell = arrow.cells[arrow.cells.length - 1];
+    const hx = lastCell[0] * cellSize + cellSize / 2;
+    const hy = lastCell[1] * cellSize + cellSize / 2;
+    drawArrowHead(hx, hy, arrow.dir, baseColor, thickness);
+  }
+
+  ctx.restore();
+}
+
+function drawArrowHead(x, y, dir, color, thickness) {
+  ctx.save();
+  ctx.fillStyle = color;
+
+  const size = thickness * 0.7;
+  const angle = dir * Math.PI / 2 - Math.PI / 2; // UP=0 -> -PI/2
+
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+
+  // Arrow triangle pointing UP (then rotated)
+  ctx.beginPath();
+  ctx.moveTo(0, -size * 1.1);
+  ctx.lineTo(-size * 0.8, size * 0.3);
+  ctx.lineTo(size * 0.8, size * 0.3);
+  ctx.closePath();
+  ctx.fill();
+
+  // Highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.beginPath();
+  ctx.moveTo(0, -size * 0.9);
+  ctx.lineTo(-size * 0.4, size * 0.0);
+  ctx.lineTo(size * 0.1, size * 0.0);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawSlideAnimation() {
+  if (!slideAnim) return;
+  const { arrow: a, progress, dir } = slideAnim;
+
+  const maxSlide = Math.max(canvasW, canvasH) + cellSize * 2;
+  const offset = progress * maxSlide;
+
+  ctx.save();
+  // Translate the entire arrow in the exit direction
+  ctx.translate(DIR_DX[dir] * offset, DIR_DY[dir] * offset);
+  ctx.globalAlpha = 1.0 - progress * 0.5;
+
+  drawArrowPath(a, 1.0, true);
+
+  ctx.restore();
+
+  // Draw trail particles
+  if (progress < 0.7) {
+    const lastCell = a.cells[a.cells.length - 1];
+    const px = lastCell[0] * cellSize + cellSize / 2 + DIR_DX[dir] * offset;
+    const py = lastCell[1] * cellSize + cellSize / 2 + DIR_DY[dir] * offset;
+    drawTrailParticles(px, py, a.color, progress);
+  }
+}
+
+function drawTrailParticles(x, y, color, progress) {
+  ctx.save();
+  const count = 6;
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.random() * cellSize * 0.8;
+    const px = x + Math.cos(angle) * dist;
+    const py = y + Math.sin(angle) * dist;
+    const size = (1 - progress) * cellSize * 0.15 * Math.random();
+    ctx.globalAlpha = (1 - progress) * 0.5;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(px, py, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function adjustBrightness(hex, amount) {
+  const num = parseInt(hex.replace('#', ''), 16);
+  let r = Math.min(255, Math.max(0, ((num >> 16) & 0xff) + amount));
+  let g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount));
+  let b = Math.min(255, Math.max(0, (num & 0xff) + amount));
+  return `rgb(${r},${g},${b})`;
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+}
+
+// ===== Game Logic =====
+function canRemoveArrow(arrowIdx) {
+  const a = arrows[arrowIdx];
+  if (!a || a.removed) return false;
+
+  // Check if the exit path is clear
+  // The arrow exits from its last cell in direction a.dir
+  // We need to check all cells in the arrow along the exit direction
+  // For each cell, check if the path from that cell to the edge in dir is clear
+
+  // Build set of all occupied cells by OTHER active arrows
+  const occupied = new Set();
+  arrows.forEach((other, oi) => {
+    if (oi === arrowIdx || other.removed) return;
+    other.cells.forEach(c => occupied.add(`${c[0]},${c[1]}`));
+  });
+
+  // For each cell of this arrow, check if the cells in the exit direction
+  // until the edge are free (from other arrows only)
+  for (const cell of a.cells) {
+    let cx = cell[0] + DIR_DX[a.dir];
+    let cy = cell[1] + DIR_DY[a.dir];
+    while (cx >= 0 && cx < GRID_COLS && cy >= 0 && cy < GRID_ROWS) {
+      // Check if this position is occupied by another arrow AND
+      // is not also occupied by this arrow (self-intersection is OK)
+      const key = `${cx},${cy}`;
+      const selfOccupied = a.cells.some(sc => sc[0] === cx && sc[1] === cy);
+      if (occupied.has(key) && !selfOccupied) {
+        return false;
       }
+      cx += DIR_DX[a.dir];
+      cy += DIR_DY[a.dir];
     }
-    // Check if all cleared
-    let remaining = 0;
-    for (let r = 0; r < boardSize; r++)
-      for (let c = 0; c < boardSize; c++)
-        if (tempBoard[r][c]) remaining++;
-    if (remaining === 0) break;
-    if (!found) break; // stuck - shouldn't happen with our generation
   }
-}
 
-function isPathClear(b, r, c, dir, size) {
-  const [dr, dc] = DIR_DELTA[dir];
-  let cr = r + dr, cc = c + dc;
-  while (cr >= 0 && cr < size && cc >= 0 && cc < size) {
-    if (b[cr][cc]) return false;
-    cr += dr; cc += dc;
-  }
   return true;
 }
 
-function renderGame() {
-  // Level label
-  const label = document.getElementById('game-level-label');
-  label.textContent = `${t.level || 'Level'} ${currentLevel + 1}`;
+function findNextRemovable() {
+  const levelData = LEVELS[currentLevel - 1];
+  if (!levelData) return -1;
 
-  // Hearts
-  renderHearts();
-
-  // Arrows count
-  updateArrowCount();
-
-  // Hints
-  document.getElementById('hint-count').textContent = hintsLeft;
-  document.getElementById('hint-btn').disabled = hintsLeft <= 0;
-
-  // Board
-  const boardEl = document.getElementById('game-board');
-  boardEl.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
-  boardEl.style.gridTemplateRows = `repeat(${boardSize}, 1fr)`;
-  boardEl.innerHTML = '';
-
-  for (let r = 0; r < boardSize; r++) {
-    for (let c = 0; c < boardSize; c++) {
-      const cell = document.createElement('div');
-      cell.className = 'cell';
-      cell.dataset.r = r;
-      cell.dataset.c = c;
-
-      if (board[r][c]) {
-        const arrow = createArrowElement(board[r][c]);
-        cell.appendChild(arrow);
-        cell.addEventListener('click', () => tapArrow(r, c));
-      } else {
-        cell.classList.add('empty');
-      }
-
-      boardEl.appendChild(cell);
+  // Find the next arrow in the removal order that hasn't been removed
+  for (const idx of levelData.removalOrder) {
+    if (!arrows[idx].removed && canRemoveArrow(idx)) {
+      return idx;
     }
   }
-}
-
-function createArrowElement(arrowData) {
-  const el = document.createElement('div');
-  el.className = `arrow color-${arrowData.color}`;
-  el.dataset.dir = arrowData.dir;
-  el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 19V5M5 12l7-7 7 7"/>
-  </svg>`;
-  return el;
-}
-
-function renderHearts() {
-  const heartsEl = document.getElementById('hearts-display');
-  heartsEl.innerHTML = '';
-  for (let i = 0; i < 3; i++) {
-    const span = document.createElement('span');
-    span.className = 'heart' + (i >= hearts ? ' lost' : '');
-    span.textContent = '❤️';
-    heartsEl.appendChild(span);
+  // Fallback: find any removable
+  for (let i = 0; i < arrows.length; i++) {
+    if (!arrows[i].removed && canRemoveArrow(i)) return i;
   }
+  return -1;
 }
 
-function updateArrowCount() {
-  document.getElementById('arrows-count').textContent = arrowsRemaining;
-}
+function attemptRemove(arrowIdx) {
+  if (animating) return;
+  if (arrows[arrowIdx].removed) return;
 
-// ===== ARROW TAP =====
-function tapArrow(r, c) {
-  if (isAnimating) return;
-  if (!board[r][c]) return;
-
-  const arrow = board[r][c];
-  const clear = isPathClear(board, r, c, arrow.dir, boardSize);
-
-  if (clear) {
-    // Fly off - success!
-    isAnimating = true;
-    moveHistory.push({ type: 'remove', r, c, arrow: { ...arrow } });
-    animateFlyOff(r, c, arrow, () => {
-      board[r][c] = null;
-      arrowsRemaining--;
-      playRemove();
-
-      // Update solution index
-      solutionIndex = findNextSolutionIndex();
-
-      renderGame();
-      isAnimating = false;
-
-      if (arrowsRemaining === 0) {
-        setTimeout(() => winLevel(), 300);
-      }
-    });
+  if (canRemoveArrow(arrowIdx)) {
+    // Success - animate removal
+    animating = true;
+    hintArrowIdx = -1;
     playWhoosh();
+
+    const a = arrows[arrowIdx];
+    slideAnim = {
+      arrowIdx,
+      arrow: { ...a, cells: a.cells.map(c => [...c]) },
+      dir: a.dir,
+      progress: 0,
+      startTime: performance.now(),
+      duration: 400,
+    };
+
+    a.removed = true;
+    removedArrows.push({ ...a, cells: a.cells.map(c => [...c]) });
+
+    animateSlide();
   } else {
-    // Blocked - bounce back, lose heart
-    isAnimating = true;
-    animateBounce(r, c, arrow, () => {
-      hearts--;
-      moveHistory.push({ type: 'fail', r, c, heartsAfter: hearts });
-
-      const heartEls = document.querySelectorAll('.heart');
-      if (heartEls[hearts]) {
-        heartEls[hearts].classList.add('breaking');
-      }
-
-      renderHearts();
-      isAnimating = false;
-
-      if (hearts <= 0) {
-        setTimeout(() => gameOver(), 400);
-      }
-    });
+    // Blocked
     playThud();
-  }
-}
+    hearts--;
+    updateHeartsDisplay();
+    shakeCanvas();
 
-function findNextSolutionIndex() {
-  // Find the next arrow in solution order that still exists
-  for (let i = 0; i < solutionOrder.length; i++) {
-    const s = solutionOrder[i];
-    if (board[s.r] && board[s.r][s.c]) return i;
-  }
-  return solutionOrder.length;
-}
-
-// ===== ANIMATIONS =====
-function getCellElement(r, c) {
-  const cells = document.querySelectorAll('#game-board .cell');
-  return cells[r * boardSize + c];
-}
-
-function animateFlyOff(r, c, arrow, callback) {
-  const cell = getCellElement(r, c);
-  if (!cell) { callback(); return; }
-
-  const arrowEl = cell.querySelector('.arrow');
-  if (!arrowEl) { callback(); return; }
-
-  const rect = arrowEl.getBoundingClientRect();
-  const clone = arrowEl.cloneNode(true);
-  clone.classList.add('flying');
-  clone.style.left = rect.left + 'px';
-  clone.style.top = rect.top + 'px';
-  clone.style.width = rect.width + 'px';
-  clone.style.height = rect.height + 'px';
-  document.body.appendChild(clone);
-
-  arrowEl.style.opacity = '0';
-
-  // Calculate target position (off screen)
-  const [dr, dc] = DIR_DELTA[arrow.dir];
-  const distance = Math.max(window.innerWidth, window.innerHeight) + 100;
-  const targetX = rect.left + dc * distance;
-  const targetY = rect.top + dr * distance;
-
-  // Create trail particles
-  const trailInterval = setInterval(() => {
-    const trail = document.createElement('div');
-    trail.className = 'arrow-trail';
-    const cr = clone.getBoundingClientRect();
-    trail.style.left = (cr.left + cr.width / 2 - 4) + 'px';
-    trail.style.top = (cr.top + cr.height / 2 - 4) + 'px';
-    trail.style.width = '8px';
-    trail.style.height = '8px';
-    const colorMap = { red: '#ff6b8a', blue: '#4ecdc4', yellow: '#ffd93d', green: '#6bcf7f', purple: '#b47ede' };
-    trail.style.background = colorMap[arrow.color] || '#667eea';
-    document.body.appendChild(trail);
-    setTimeout(() => trail.remove(), 400);
-  }, 30);
-
-  // Animate with requestAnimationFrame for smoothness
-  const startTime = performance.now();
-  const duration = 350;
-  const startX = rect.left;
-  const startY = rect.top;
-
-  function animate(now) {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    // Ease-in curve for acceleration feel
-    const eased = progress * progress;
-
-    clone.style.left = (startX + (targetX - startX) * eased) + 'px';
-    clone.style.top = (startY + (targetY - startY) * eased) + 'px';
-    clone.style.opacity = 1 - progress * 0.5;
-    clone.style.transform = `scale(${1 + progress * 0.3})`;
-
-    if (progress < 1) {
-      requestAnimationFrame(animate);
-    } else {
-      clearInterval(trailInterval);
-      clone.remove();
-      // Edge glow effect
-      showEdgeGlow(r, c, arrow.dir, arrow.color);
-      callback();
+    if (hearts <= 0) {
+      setTimeout(() => showGameOver(), 600);
     }
   }
-  requestAnimationFrame(animate);
 }
 
-function showEdgeGlow(r, c, dir, color) {
-  const container = document.getElementById('board-container');
-  const containerRect = container.getBoundingClientRect();
-  const glow = document.createElement('div');
-  glow.className = 'edge-glow';
+function animateSlide() {
+  if (!slideAnim) return;
 
-  const colorMap = { red: '#ff6b8a', blue: '#4ecdc4', yellow: '#ffd93d', green: '#6bcf7f', purple: '#b47ede' };
-  const col = colorMap[color] || '#667eea';
+  const elapsed = performance.now() - slideAnim.startTime;
+  slideAnim.progress = Math.min(1, elapsed / slideAnim.duration);
 
-  const cellSize = containerRect.width / boardSize;
-  let x, y, w, h;
+  // Ease out
+  slideAnim.progress = 1 - Math.pow(1 - slideAnim.progress, 3);
 
-  if (dir === 'up') {
-    x = c * cellSize; y = 0; w = cellSize; h = 20;
-    glow.style.background = `radial-gradient(ellipse at center bottom, ${col}88, transparent)`;
-  } else if (dir === 'down') {
-    x = c * cellSize; y = containerRect.height - 20; w = cellSize; h = 20;
-    glow.style.background = `radial-gradient(ellipse at center top, ${col}88, transparent)`;
-  } else if (dir === 'left') {
-    x = 0; y = r * cellSize; w = 20; h = cellSize;
-    glow.style.background = `radial-gradient(ellipse at right center, ${col}88, transparent)`;
+  render();
+
+  if (elapsed < slideAnim.duration) {
+    requestAnimationFrame(animateSlide);
   } else {
-    x = containerRect.width - 20; y = r * cellSize; w = 20; h = cellSize;
-    glow.style.background = `radial-gradient(ellipse at left center, ${col}88, transparent)`;
-  }
+    slideAnim = null;
+    animating = false;
+    updateArrowsLeftDisplay();
+    render();
 
-  glow.style.left = x + 'px';
-  glow.style.top = y + 'px';
-  glow.style.width = w + 'px';
-  glow.style.height = h + 'px';
-  container.appendChild(glow);
-  setTimeout(() => glow.remove(), 600);
-}
-
-function animateBounce(r, c, arrow, callback) {
-  const cell = getCellElement(r, c);
-  if (!cell) { callback(); return; }
-
-  const arrowEl = cell.querySelector('.arrow');
-  if (!arrowEl) { callback(); return; }
-
-  const [dr, dc] = DIR_DELTA[arrow.dir];
-  const moveX = dc * 15;
-  const moveY = dr * 15;
-
-  // Determine rotation for direction
-  const rotMap = { up: '0deg', right: '90deg', down: '180deg', left: '270deg' };
-  const rot = rotMap[arrow.dir];
-
-  arrowEl.style.transition = 'transform 0.1s ease-out';
-  arrowEl.style.transform = `rotate(${rot}) translate(${dc * 10}px, ${dr * 10}px)`;
-
-  setTimeout(() => {
-    arrowEl.style.transition = 'transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
-    arrowEl.style.transform = `rotate(${rot})`;
-
-    // Shake the cell
-    cell.style.animation = 'none';
-    cell.offsetHeight; // reflow
-    cell.style.animation = 'cellShake 0.3s ease-out';
-
-    setTimeout(() => {
-      cell.style.animation = '';
-      callback();
-    }, 300);
-  }, 100);
-}
-
-// Add cellShake animation dynamically
-const shakeStyle = document.createElement('style');
-shakeStyle.textContent = `
-@keyframes cellShake {
-  0%, 100% { transform: translate(0,0); }
-  20% { transform: translate(-3px, 0); }
-  40% { transform: translate(3px, 0); }
-  60% { transform: translate(-2px, 0); }
-  80% { transform: translate(2px, 0); }
-}`;
-document.head.appendChild(shakeStyle);
-
-// ===== UNDO =====
-function undoMove() {
-  if (isAnimating || moveHistory.length === 0) return;
-
-  const last = moveHistory.pop();
-  if (last.type === 'remove') {
-    // Restore arrow
-    board[last.r][last.c] = last.arrow;
-    arrowsRemaining++;
-    solutionIndex = findNextSolutionIndex();
-    renderGame();
-  } else if (last.type === 'fail') {
-    // Restore heart
-    hearts = last.heartsAfter + 1;
-    renderGame();
-  }
-}
-
-// ===== HINT =====
-function useHint() {
-  if (isAnimating || hintsLeft <= 0) return;
-
-  // Find next arrow in solution that still exists and has clear path
-  for (let i = 0; i < solutionOrder.length; i++) {
-    const s = solutionOrder[i];
-    if (board[s.r] && board[s.r][s.c] && isPathClear(board, s.r, s.c, board[s.r][s.c].dir, boardSize)) {
-      hintsLeft--;
-      document.getElementById('hint-count').textContent = hintsLeft;
-      document.getElementById('hint-btn').disabled = hintsLeft <= 0;
-
-      const cell = getCellElement(s.r, s.c);
-      if (cell) {
-        cell.classList.add('hint-highlight');
-        setTimeout(() => cell.classList.remove('hint-highlight'), 3000);
-      }
-      return;
-    }
-  }
-
-  // Fallback: find any arrow with clear path
-  for (let r = 0; r < boardSize; r++) {
-    for (let c = 0; c < boardSize; c++) {
-      if (board[r][c] && isPathClear(board, r, c, board[r][c].dir, boardSize)) {
-        hintsLeft--;
-        document.getElementById('hint-count').textContent = hintsLeft;
-        document.getElementById('hint-btn').disabled = hintsLeft <= 0;
-
-        const cell = getCellElement(r, c);
-        if (cell) {
-          cell.classList.add('hint-highlight');
-          setTimeout(() => cell.classList.remove('hint-highlight'), 3000);
-        }
-        return;
-      }
+    // Check win
+    if (arrows.every(a => a.removed)) {
+      setTimeout(() => showLevelComplete(), 300);
     }
   }
 }
 
-// ===== RESTART =====
-function restartLevel() {
-  closeOverlays();
-  startLevel(currentLevel);
+function shakeCanvas() {
+  canvas.style.animation = 'shake 0.4s ease';
+  setTimeout(() => { canvas.style.animation = ''; }, 400);
 }
 
-// ===== NEXT LEVEL =====
-function nextLevel() {
-  closeOverlays();
-  if (currentLevel + 1 < 30) {
-    startLevel(currentLevel + 1);
-  } else {
-    showLevelSelect();
-  }
-}
-
-// ===== WIN =====
-function winLevel() {
-  const stars = hearts; // 3 hearts = 3 stars, etc.
-  playCheer();
-  spawnConfetti();
-
-  // Save progress
-  if (!progress.stars[currentLevel] || progress.stars[currentLevel] < stars) {
-    progress.stars[currentLevel] = stars;
-  }
-  if (currentLevel + 1 >= progress.unlocked && currentLevel + 1 < 30) {
-    progress.unlocked = currentLevel + 2;
-  }
-  saveProgress();
-
-  // Show win overlay
-  const winOverlay = document.getElementById('win-overlay');
-  const msgKey = stars === 3 ? 'excellent' : stars === 2 ? 'amazing' : 'well_done';
-  document.getElementById('win-title').textContent = t.stage_clear || gt.clear || 'Stage Clear!';
-  document.getElementById('win-sub').textContent = t[msgKey] || gt[msgKey] || 'Well done!';
-
-  const starsEl = document.getElementById('win-stars');
-  starsEl.innerHTML = '';
+// ===== UI Updates =====
+function updateHeartsDisplay() {
+  const container = document.getElementById('heartsDisplay');
+  let html = '';
   for (let i = 0; i < 3; i++) {
-    const span = document.createElement('span');
-    span.className = 'win-star ' + (i < stars ? 'earned' : 'empty');
-    span.textContent = '★';
-    starsEl.appendChild(span);
+    html += `<span class="heart${i >= hearts ? ' lost' : ''}">❤️</span>`;
+  }
+  container.innerHTML = html;
+}
+
+function updateArrowsLeftDisplay() {
+  const remaining = arrows.filter(a => !a.removed).length;
+  document.getElementById('arrowsLeft').textContent =
+    t.arrowsLeft.replace('{n}', remaining);
+}
+
+// ===== Click/Tap Handling =====
+function getClickedArrow(x, y) {
+  // Convert canvas coordinates to grid
+  const col = Math.floor(x / cellSize);
+  const row = Math.floor(y / cellSize);
+
+  // Find which arrow contains this cell (check active arrows, prefer topmost/last)
+  for (let i = arrows.length - 1; i >= 0; i--) {
+    if (arrows[i].removed) continue;
+    for (const cell of arrows[i].cells) {
+      if (cell[0] === col && cell[1] === row) return i;
+    }
   }
 
-  const nextBtn = document.getElementById('next-level-btn');
-  nextBtn.style.display = currentLevel < 29 ? '' : 'none';
-
-  winOverlay.classList.add('active');
-
-  // External integrations
-  try {
-    if (typeof PuzzleShare !== 'undefined' && PuzzleShare.showShareModal) {
-      setTimeout(() => {
-        PuzzleShare.showShareModal({
-          title: 'ArrowScape',
-          score: currentLevel + 1,
-          stars: stars,
-          message: `Level ${currentLevel + 1} - ${'★'.repeat(stars)}`,
-          lang: currentLang,
-          gameName: 'arrowscape'
-        });
-      }, 800);
+  // Also check nearby cells (for fat-finger tolerance)
+  const nearCol = Math.round(x / cellSize - 0.5);
+  const nearRow = Math.round(y / cellSize - 0.5);
+  for (let i = arrows.length - 1; i >= 0; i--) {
+    if (arrows[i].removed) continue;
+    for (const cell of arrows[i].cells) {
+      const dx = Math.abs(cell[0] - nearCol);
+      const dy = Math.abs(cell[1] - nearRow);
+      if (dx <= 0.5 && dy <= 0.5) return i;
     }
-  } catch(e) {}
+  }
 
+  return -1;
+}
+
+canvas.addEventListener('click', (e) => {
+  if (animating) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (canvasW / rect.width);
+  const y = (e.clientY - rect.top) * (canvasH / rect.height);
+
+  const idx = getClickedArrow(x, y);
+  if (idx >= 0) attemptRemove(idx);
+});
+
+// Touch support
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (animating) return;
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const x = (touch.clientX - rect.left) * (canvasW / rect.width);
+  const y = (touch.clientY - rect.top) * (canvasH / rect.height);
+
+  const idx = getClickedArrow(x, y);
+  if (idx >= 0) attemptRemove(idx);
+}, { passive: false });
+
+// ===== Modals =====
+function showLevelComplete() {
+  playSuccess();
+  const stars = hearts; // 3 hearts = 3 stars, etc.
+  saveLevelProgress(currentLevel, stars);
+
+  const modal = document.getElementById('completeModal');
+  document.getElementById('modalTitle').textContent = t.levelClear;
+
+  let starsHtml = '';
+  for (let i = 0; i < 3; i++) {
+    starsHtml += `<span class="star${i >= stars ? ' empty' : ''}">⭐</span>`;
+  }
+  document.getElementById('modalStars').innerHTML = starsHtml;
+
+  const msg = stars === 3 ? t.perfect : stars === 2 ? t.wellDone : t.niceTry;
+  document.getElementById('modalMsg').textContent = msg;
+
+  document.getElementById('modalRestart').textContent = gt.restart || 'Restart';
+  document.getElementById('modalNext').textContent = gt.next_level || 'Next Level';
+
+  modal.classList.add('active');
+
+  // Share and record
   try {
-    if (typeof PuzzleUser !== 'undefined' && PuzzleUser.recordGame) {
-      PuzzleUser.recordGame('arrowscape', {
-        level: currentLevel + 1,
+    if (typeof PuzzleShare !== 'undefined') {
+      PuzzleShare.showShareModal({
+        gameName: 'ArrowScape',
+        title: t.levelClear,
         stars: stars,
-        hearts: hearts
+        message: `Level ${currentLevel} - ${msg}`,
       });
     }
   } catch(e) {}
+
+  try {
+    if (typeof PuzzleUser !== 'undefined') {
+      PuzzleUser.recordGame('arrowscape', { level: currentLevel, stars });
+    }
+  } catch(e) {}
 }
 
-// ===== GAME OVER =====
-function gameOver() {
-  const overlay = document.getElementById('gameover-overlay');
-  document.getElementById('gameover-title').textContent = t.game_over || 'Game Over';
-  document.getElementById('gameover-sub').textContent = t.try_again || 'Try Again';
-  overlay.classList.add('active');
+function showGameOver() {
+  const modal = document.getElementById('gameOverModal');
+  document.getElementById('goTitle').textContent = t.gameOver;
+  document.getElementById('goMsg').textContent = t.noHeartsLeft;
+  document.getElementById('goBack').textContent = gt.back || 'Back';
+  document.getElementById('goRetry').textContent = gt.try_again || 'Retry';
+  modal.classList.add('active');
 }
 
-// ===== CONFETTI =====
-function spawnConfetti() {
-  const colors = ['#ff6b8a', '#4ecdc4', '#ffd93d', '#6bcf7f', '#b47ede', '#667eea'];
-  for (let i = 0; i < 40; i++) {
-    const piece = document.createElement('div');
-    piece.className = 'confetti-piece';
-    piece.style.left = (Math.random() * 100) + 'vw';
-    piece.style.top = '-10px';
-    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-    piece.style.animationDelay = (Math.random() * 0.5) + 's';
-    piece.style.animationDuration = (1 + Math.random() * 1) + 's';
-    piece.style.width = (6 + Math.random() * 6) + 'px';
-    piece.style.height = (6 + Math.random() * 6) + 'px';
-    document.body.appendChild(piece);
-    setTimeout(() => piece.remove(), 2500);
+function hideModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+// ===== Hint =====
+function showHint() {
+  const idx = findNextRemovable();
+  if (idx >= 0) {
+    hintArrowIdx = idx;
+    hintFlashTimer = 0;
+    const startTime = performance.now();
+    function flashHint() {
+      hintFlashTimer = (performance.now() - startTime) / 1000;
+      render();
+      if (hintFlashTimer < 2.0) requestAnimationFrame(flashHint);
+      else { hintArrowIdx = -1; render(); }
+    }
+    flashHint();
   }
 }
 
-// ===== INIT =====
+// ===== Event Listeners =====
+function setupEvents() {
+  // Back buttons
+  document.getElementById('backToMain').addEventListener('click', () => {
+    window.location.href = typeof getBackLink === 'function' ? getBackLink() : '../index.html';
+  });
+  document.getElementById('backToTitle1').addEventListener('click', () => showScreen('title'));
+  document.getElementById('backToTitle2').addEventListener('click', () => showScreen('title'));
+
+  // Sound toggles
+  [document.getElementById('soundToggle1'),
+   document.getElementById('soundToggle2'),
+   document.getElementById('soundToggle3')].forEach(btn => {
+    btn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      const icon = soundEnabled ? '🔊' : '🔇';
+      document.getElementById('soundToggle1').textContent = icon;
+      document.getElementById('soundToggle2').textContent = icon;
+      document.getElementById('soundToggle3').textContent = icon;
+    });
+  });
+
+  // Menu buttons
+  document.getElementById('playBtn').addEventListener('click', () => {
+    currentLevel = getMaxUnlockedLevel();
+    // If all completed, go to level 1
+    const p = loadProgress();
+    if (p.levels[TOTAL_LEVELS] && p.levels[TOTAL_LEVELS].completed) currentLevel = 1;
+    showScreen('game');
+  });
+  document.getElementById('levelSelectBtn').addEventListener('click', () => showScreen('levels'));
+
+  // Game actions
+  document.getElementById('restartBtn').addEventListener('click', () => initLevel(currentLevel));
+  document.getElementById('hintBtn').addEventListener('click', showHint);
+
+  // Modal actions
+  document.getElementById('modalRestart').addEventListener('click', () => {
+    hideModal('completeModal');
+    initLevel(currentLevel);
+  });
+  document.getElementById('modalNext').addEventListener('click', () => {
+    hideModal('completeModal');
+    if (currentLevel < TOTAL_LEVELS) {
+      currentLevel++;
+      initLevel(currentLevel);
+    } else {
+      showScreen('levels');
+    }
+  });
+  document.getElementById('goBack').addEventListener('click', () => {
+    hideModal('gameOverModal');
+    showScreen('levels');
+  });
+  document.getElementById('goRetry').addEventListener('click', () => {
+    hideModal('gameOverModal');
+    initLevel(currentLevel);
+  });
+
+  // Resize
+  window.addEventListener('resize', () => {
+    if (currentScreen === 'game') {
+      resizeCanvas();
+      render();
+    }
+  });
+}
+
+// ===== Apply i18n to UI =====
+function applyText() {
+  document.getElementById('backToMain').textContent = gt.back || '← Back';
+  document.getElementById('backToTitle1').textContent = gt.back || '← Back';
+  document.getElementById('backToTitle2').textContent = gt.back || '← Back';
+  document.getElementById('tagline').textContent = t.tagline;
+  document.getElementById('playBtn').textContent = t.play;
+  document.getElementById('levelSelectBtn').textContent = t.levelSelect;
+  document.getElementById('levelSelectTitle').textContent = t.levelSelect;
+  document.getElementById('restartBtn').textContent = gt.restart || 'Restart';
+  document.getElementById('hintBtn').textContent = gt.hint || 'Hint';
+}
+
+// ===== Init =====
 function init() {
-  loadProgress();
-  buildLevels();
-
-  // Load translations after i18n.js is available
-  setTimeout(() => {
-    loadTranslations();
-  }, 100);
+  initI18n();
+  applyText();
+  setupEvents();
+  showScreen('title');
 }
 
-// Run on DOM ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
+init();
+
+})();
 </script>
-
-<script src="i18n.js"></script>
-<script src="share.js"></script>
-<script src="user-system.js"></script>
-<script src="ads.js"></script>
-<script src="recommend.js"></script>
 </body>
 </html>
