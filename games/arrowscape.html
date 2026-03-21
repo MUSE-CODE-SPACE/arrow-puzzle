@@ -903,14 +903,14 @@ function slideOutArrow(idx) {
   arrow.animStart = performance.now();
   arrow.animProgress = 0; // 0 = full arrow visible, 1 = fully gone
 
-  // Duration scales with path length for consistent speed feel
-  const duration = Math.max(300, arrow.cells.length * 80);
+  // Slower: 150ms per cell so you can see the path being traced
+  const duration = Math.max(600, arrow.cells.length * 150);
 
   function animateSlide(now) {
     const elapsed = now - arrow.animStart;
     const prog = Math.min(elapsed / duration, 1);
-    // ease-in-out for snake-like feel
-    const ease = prog < 0.5 ? 2 * prog * prog : 1 - Math.pow(-2 * prog + 2, 2) / 2;
+    // Nearly linear with slight ease-out at the end for smooth finish
+    const ease = 1 - Math.pow(1 - prog, 1.5);
 
     arrow.animProgress = ease;
 
@@ -1117,7 +1117,7 @@ function drawArrowPath(arrow, idx) {
   if (arrow.removed && !arrow.animating) return;
 
   const cells = arrow.cells;
-  const lineW = cellSize * 0.45;
+  const lineW = cellSize * 0.28;
   const color = arrow.color;
 
   // Snake animation: determine which cells are still visible
@@ -1223,41 +1223,40 @@ function drawArrowPath(arrow, idx) {
         ctx.lineTo(center.x, center.y);
       }
 
-      // Stop before arrowhead
+      // Stop before arrowhead (leave room for triangle)
       const adx = exitEdge.x - center.x;
       const ady = exitEdge.y - center.y;
-      const adist = Math.sqrt(adx*adx + ady*ady) || 1;
-      const stopX = center.x + adx * 0.5;
-      const stopY = center.y + ady * 0.5;
+      const stopX = center.x + adx * 0.15;
+      const stopY = center.y + ady * 0.15;
       ctx.lineTo(stopX, stopY);
       ctx.stroke();
 
-      // Draw arrowhead triangle
+      // Draw arrowhead triangle - BIG and visible
       ctx.shadowBlur = 0;
       const tipX = exitEdge.x;
       const tipY = exitEdge.y;
-      const as = lineW * 0.75;
+      const as = cellSize * 0.4; // arrow size based on cell, not line width
       ctx.beginPath();
       switch(exitDir) {
         case 'right':
-          ctx.moveTo(tipX - as, tipY - as * 0.6);
+          ctx.moveTo(tipX - as, tipY - as * 0.55);
           ctx.lineTo(tipX, tipY);
-          ctx.lineTo(tipX - as, tipY + as * 0.6);
+          ctx.lineTo(tipX - as, tipY + as * 0.55);
           break;
         case 'left':
-          ctx.moveTo(tipX + as, tipY - as * 0.6);
+          ctx.moveTo(tipX + as, tipY - as * 0.55);
           ctx.lineTo(tipX, tipY);
-          ctx.lineTo(tipX + as, tipY + as * 0.6);
+          ctx.lineTo(tipX + as, tipY + as * 0.55);
           break;
         case 'down':
-          ctx.moveTo(tipX - as * 0.6, tipY - as);
+          ctx.moveTo(tipX - as * 0.55, tipY - as);
           ctx.lineTo(tipX, tipY);
-          ctx.lineTo(tipX + as * 0.6, tipY - as);
+          ctx.lineTo(tipX + as * 0.55, tipY - as);
           break;
         case 'up':
-          ctx.moveTo(tipX - as * 0.6, tipY + as);
+          ctx.moveTo(tipX - as * 0.55, tipY + as);
           ctx.lineTo(tipX, tipY);
-          ctx.lineTo(tipX + as * 0.6, tipY + as);
+          ctx.lineTo(tipX + as * 0.55, tipY + as);
           break;
       }
       ctx.closePath();
