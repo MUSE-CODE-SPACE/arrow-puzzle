@@ -35,7 +35,6 @@ body {
 .screen { display: none; flex-direction: column; align-items: center; min-height: 100dvh; }
 .screen.active { display: flex; }
 
-/* Top Bar */
 .top-bar {
   width: 100%; max-width: 600px; padding: 12px 16px;
   display: flex; align-items: center; justify-content: space-between;
@@ -48,255 +47,206 @@ body {
 .back-btn:hover { background: var(--surface); color: var(--text); }
 .sound-btn {
   background: none; border: 1px solid rgba(255,255,255,0.1); color: var(--text-dim);
-  width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; font-size: 16px;
-  transition: all 0.2s;
+  font-size: 18px; width: 36px; height: 36px; border-radius: 50%;
+  cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;
 }
-.sound-btn:hover { background: var(--surface); border-color: rgba(255,255,255,0.2); }
+.sound-btn:hover { background: var(--surface); color: var(--text); }
 
 /* Title Screen */
-.title-area {
-  flex: 1; display: flex; flex-direction: column; align-items: center;
-  justify-content: center; padding: 20px; text-align: center;
-}
-.game-logo {
-  font-size: 3rem; font-weight: 800; margin-bottom: 4px;
+#title-screen { justify-content: center; gap: 24px; padding: 40px 20px; }
+.title-logo {
+  font-size: 56px; font-weight: 800;
   background: linear-gradient(135deg, #667eea, #a855f7, #ec4899);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
+  background-clip: text; text-align: center; line-height: 1.1;
 }
-.game-tagline {
-  font-size: 1rem; color: var(--text-dim); margin-bottom: 40px; font-weight: 400;
+.title-sub { font-size: 16px; color: var(--text-dim); text-align: center; margin-top: -8px; }
+.title-arrow-deco {
+  font-size: 80px; text-align: center; margin: 8px 0;
+  animation: float 3s ease-in-out infinite;
 }
-.menu-btn {
-  width: 240px; padding: 14px 0; border-radius: 14px; border: none;
-  font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 600;
-  cursor: pointer; transition: all 0.25s; margin-bottom: 12px;
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
 }
-.menu-btn.primary {
-  background: linear-gradient(135deg, #667eea, #a855f7);
-  color: #fff; box-shadow: 0 4px 20px rgba(102,126,234,0.3);
+.play-btn {
+  background: var(--accent-gradient); border: none; color: #fff;
+  font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700;
+  padding: 16px 64px; border-radius: 16px; cursor: pointer;
+  transition: all 0.3s; box-shadow: 0 4px 24px rgba(102,126,234,0.3);
 }
-.menu-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(102,126,234,0.45); }
-.menu-btn.secondary {
-  background: var(--surface); color: var(--text); border: 1px solid rgba(255,255,255,0.08);
-}
-.menu-btn.secondary:hover { background: var(--surface2); }
+.play-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(102,126,234,0.5); }
+.play-btn:active { transform: scale(0.97); }
 
 /* Level Select */
-.level-select-area {
-  width: 100%; max-width: 500px; padding: 16px; flex: 1; overflow-y: auto;
-}
-.level-select-title {
-  font-size: 1.3rem; font-weight: 700; text-align: center; margin-bottom: 20px;
+#level-screen { padding: 0 16px 32px; }
+.level-title {
+  font-size: 24px; font-weight: 700; margin: 16px 0;
   background: linear-gradient(135deg, #667eea, #a855f7);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; text-align: center;
 }
 .level-grid {
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 10px; max-width: 400px; width: 100%; margin: 0 auto;
 }
-.level-cell {
-  aspect-ratio: 1; border-radius: 12px; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; cursor: pointer;
-  font-weight: 700; font-size: 1.1rem; transition: all 0.2s;
-  background: var(--surface); border: 1px solid rgba(255,255,255,0.06);
-  position: relative;
+.level-btn {
+  aspect-ratio: 1; border-radius: 12px; border: 1px solid var(--board-border);
+  background: var(--surface); color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; position: relative;
 }
-.level-cell:hover { background: var(--surface2); transform: translateY(-2px); }
-.level-cell.locked {
-  opacity: 0.4; cursor: not-allowed; pointer-events: none;
-}
-.level-cell.completed { border-color: rgba(102,126,234,0.3); }
-.level-stars {
-  font-size: 0.6rem; margin-top: 2px; letter-spacing: 1px; color: #ffd93d;
-}
-.level-stars .empty { color: #444; }
+.level-btn:hover:not(.locked) { background: var(--surface2); border-color: var(--accent1); transform: translateY(-2px); }
+.level-btn.locked { opacity: 0.35; cursor: not-allowed; }
+.level-btn.current { border-color: var(--accent1); box-shadow: 0 0 12px rgba(102,126,234,0.3); }
+.level-stars { font-size: 10px; letter-spacing: 1px; color: #f9d423; }
+.level-stars .empty { color: #333; }
 
 /* Game Screen */
+#game-screen { padding: 0 8px 16px; }
 .game-header {
-  width: 100%; max-width: 600px; padding: 8px 16px;
-  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; max-width: 500px; display: flex; align-items: center;
+  justify-content: space-between; padding: 8px 8px; margin-bottom: 4px;
 }
-.game-level-label {
-  font-size: 1rem; font-weight: 700;
-  background: linear-gradient(135deg, #667eea, #a855f7);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+.hearts { font-size: 22px; letter-spacing: 2px; min-width: 80px; }
+.level-label { font-size: 16px; font-weight: 700; color: var(--text-dim); }
+.game-actions { display: flex; gap: 6px; }
+.action-btn {
+  background: var(--surface); border: 1px solid var(--board-border);
+  color: var(--text-dim); font-family: 'Outfit', sans-serif; font-size: 12px;
+  padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
 }
-.hearts-display {
-  display: flex; gap: 4px; font-size: 1.2rem;
-}
-.heart { transition: all 0.3s; }
-.heart.lost { opacity: 0.2; transform: scale(0.8); }
-.arrows-left {
-  font-size: 0.85rem; color: var(--text-dim); font-weight: 500;
-}
+.action-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--accent1); }
 
-.game-canvas-wrapper {
-  width: 100%; max-width: 500px; padding: 8px 16px; flex: 1;
-  display: flex; align-items: center; justify-content: center;
+.canvas-wrap {
+  position: relative; width: 100%; max-width: 500px;
+  display: flex; justify-content: center; align-items: center;
 }
 #gameCanvas {
-  border-radius: 16px; background: var(--board-bg);
-  border: 2px solid var(--board-border);
-  touch-action: none; cursor: pointer;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 0 60px rgba(0,0,0,0.3);
+  border-radius: 12px; touch-action: none;
+  box-shadow: 0 0 40px rgba(102,126,234,0.08);
 }
 
-.game-actions {
-  width: 100%; max-width: 500px; padding: 12px 16px;
-  display: flex; gap: 10px; justify-content: center;
-}
-.action-btn {
-  padding: 10px 20px; border-radius: 12px; border: none;
-  font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 600;
-  cursor: pointer; transition: all 0.2s; background: var(--surface);
-  color: var(--text); border: 1px solid rgba(255,255,255,0.06);
-}
-.action-btn:hover { background: var(--surface2); transform: translateY(-1px); }
-.action-btn.hint-btn {
-  background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(168,85,247,0.15));
-  border-color: rgba(102,126,234,0.2);
-}
-
-/* Modal Overlay */
+/* Modal */
 .modal-overlay {
-  position: fixed; inset: 0; z-index: 9999;
-  background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(8px); z-index: 1000;
   display: flex; align-items: center; justify-content: center;
   opacity: 0; pointer-events: none; transition: opacity 0.3s;
 }
-.modal-overlay.active { opacity: 1; pointer-events: auto; }
-.modal-box {
+.modal-overlay.active { opacity: 1; pointer-events: all; }
+.modal {
   background: linear-gradient(145deg, #111128, #0e0e24);
-  border: 1px solid rgba(168,85,247,0.2); border-radius: 20px;
-  padding: 32px 28px; max-width: 360px; width: 90%; text-align: center;
-  transform: translateY(20px) scale(0.95); transition: transform 0.35s cubic-bezier(0.22,1,0.36,1);
+  border: 1px solid rgba(102,126,234,0.2); border-radius: 20px;
+  padding: 32px 28px; max-width: 360px; width: 90%;
+  text-align: center; transform: scale(0.9); transition: transform 0.3s;
 }
-.modal-overlay.active .modal-box { transform: translateY(0) scale(1); }
+.modal-overlay.active .modal { transform: scale(1); }
 .modal-title {
-  font-size: 1.5rem; font-weight: 800; margin-bottom: 8px;
-  background: linear-gradient(135deg, #667eea, #a855f7, #ec4899);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  font-size: 28px; font-weight: 800; margin-bottom: 8px;
+  background: linear-gradient(135deg, #f9d423, #ff4e50);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
-.modal-stars { font-size: 2rem; margin: 12px 0; }
-.modal-stars .star { margin: 0 4px; transition: all 0.3s; }
-.modal-stars .star.empty { opacity: 0.2; }
-.modal-msg { color: var(--text-dim); font-size: 0.95rem; margin-bottom: 20px; }
-.modal-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.modal-stars { font-size: 40px; margin: 16px 0; letter-spacing: 8px; }
+.modal-stars .star { display: inline-block; opacity: 0; transform: scale(0); }
+.modal-stars .star.show { opacity: 1; transform: scale(1); transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.modal-msg { font-size: 15px; color: var(--text-dim); margin-bottom: 20px; }
+.modal-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .modal-btn {
-  padding: 12px 24px; border-radius: 12px; border: none;
-  font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 600;
-  cursor: pointer; transition: all 0.2s;
+  background: var(--accent-gradient); border: none; color: #fff;
+  font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600;
+  padding: 12px 28px; border-radius: 12px; cursor: pointer; transition: all 0.2s;
 }
-.modal-btn.primary {
-  background: linear-gradient(135deg, #667eea, #a855f7); color: #fff;
-}
+.modal-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(102,126,234,0.4); }
 .modal-btn.secondary {
-  background: var(--surface); color: var(--text); border: 1px solid rgba(255,255,255,0.08);
-}
-.modal-btn:hover { transform: translateY(-1px); }
-
-/* Ad area */
-.ad-area {
-  width: 100%; max-width: 500px; padding: 8px 16px; text-align: center;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
 }
 
-/* Animations */
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-6px); }
-  40% { transform: translateX(6px); }
-  60% { transform: translateX(-4px); }
-  80% { transform: translateX(4px); }
+/* Confetti */
+.confetti-piece {
+  position: fixed; width: 8px; height: 8px; z-index: 1001;
+  pointer-events: none; border-radius: 2px;
+  animation: confetti-fall 1.5s ease-out forwards;
 }
-@keyframes heartPop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.4); }
-  100% { transform: scale(0.8); opacity: 0.2; }
+@keyframes confetti-fall {
+  0% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translateY(80vh) rotate(720deg) scale(0.3); }
 }
 
-/* Responsive */
-@media (max-height: 700px) {
-  .game-header { padding: 4px 16px; }
-  .game-actions { padding: 8px 16px; }
+/* Toast notification */
+.game-toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: rgba(20,20,40,0.95); border: 1px solid rgba(102,126,234,0.3);
+  color: var(--text); padding: 10px 24px; border-radius: 12px;
+  font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600;
+  opacity: 0; transition: all 0.3s; z-index: 500; pointer-events: none;
+  backdrop-filter: blur(8px);
 }
+.game-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
 
 <!-- Title Screen -->
-<div id="titleScreen" class="screen active">
-  <div class="top-bar">
-    <button class="back-btn" id="backToMain"><!-- filled by i18n --></button>
-    <button class="sound-btn" id="soundToggle1">🔊</button>
-  </div>
-  <div class="title-area">
-    <div class="game-logo">ArrowScape</div>
-    <div class="game-tagline" id="tagline">Master the Escape</div>
-    <button class="menu-btn primary" id="playBtn"><!-- filled by i18n --></button>
-    <button class="menu-btn secondary" id="levelSelectBtn"><!-- filled by i18n --></button>
-  </div>
-  <div class="ad-area" id="adArea1"></div>
+<div id="title-screen" class="screen active">
+  <div class="title-arrow-deco">&#10140;</div>
+  <div class="title-logo">ArrowScape</div>
+  <div class="title-sub" id="title-sub"></div>
+  <button class="play-btn" id="playBtn"></button>
 </div>
 
 <!-- Level Select Screen -->
-<div id="levelScreen" class="screen">
+<div id="level-screen" class="screen">
   <div class="top-bar">
-    <button class="back-btn" id="backToTitle1"><!-- filled by i18n --></button>
-    <button class="sound-btn" id="soundToggle2">🔊</button>
+    <button class="back-btn" id="levelBackBtn" data-i18n="back"></button>
+    <button class="sound-btn" id="soundBtn1">&#128266;</button>
   </div>
-  <div class="level-select-area">
-    <div class="level-select-title" id="levelSelectTitle"><!-- filled by i18n --></div>
-    <div class="level-grid" id="levelGrid"></div>
-  </div>
+  <div class="level-title" id="levelTitle" data-i18n="level_select"></div>
+  <div class="level-grid" id="levelGrid"></div>
 </div>
 
 <!-- Game Screen -->
-<div id="gameScreen" class="screen">
+<div id="game-screen" class="screen">
   <div class="top-bar">
-    <button class="back-btn" id="backToTitle2"><!-- filled by i18n --></button>
-    <button class="sound-btn" id="soundToggle3">🔊</button>
+    <button class="back-btn" id="gameBackBtn" data-i18n="back"></button>
+    <button class="sound-btn" id="soundBtn2">&#128266;</button>
   </div>
   <div class="game-header">
-    <div class="game-level-label" id="gameLevelLabel"></div>
-    <div class="hearts-display" id="heartsDisplay"></div>
-    <div class="arrows-left" id="arrowsLeft"></div>
+    <div class="hearts" id="hearts"></div>
+    <div class="level-label" id="levelLabel"></div>
+    <div class="game-actions">
+      <button class="action-btn" id="hintBtn" data-i18n="hint"></button>
+      <button class="action-btn" id="restartBtn" data-i18n="restart"></button>
+    </div>
   </div>
-  <div class="game-canvas-wrapper">
+  <div class="canvas-wrap">
     <canvas id="gameCanvas"></canvas>
   </div>
-  <div class="game-actions">
-    <button class="action-btn" id="restartBtn"><!-- filled by i18n --></button>
-    <button class="action-btn hint-btn" id="hintBtn"><!-- filled by i18n --></button>
-  </div>
-  <div class="ad-area" id="adArea2"></div>
 </div>
 
 <!-- Level Complete Modal -->
 <div class="modal-overlay" id="completeModal">
-  <div class="modal-box">
+  <div class="modal">
     <div class="modal-title" id="modalTitle"></div>
-    <div class="modal-stars" id="modalStars"></div>
+    <div class="modal-stars" id="modalStars">
+      <span class="star">&#11088;</span>
+      <span class="star">&#11088;</span>
+      <span class="star">&#11088;</span>
+    </div>
     <div class="modal-msg" id="modalMsg"></div>
-    <div class="modal-actions">
-      <button class="modal-btn secondary" id="modalRestart"><!-- filled --></button>
-      <button class="modal-btn primary" id="modalNext"><!-- filled --></button>
+    <div class="modal-btns">
+      <button class="modal-btn secondary" id="modalLevels" data-i18n="level_select"></button>
+      <button class="modal-btn" id="modalNext" data-i18n="next_level"></button>
     </div>
   </div>
 </div>
 
-<!-- Game Over Modal -->
-<div class="modal-overlay" id="gameOverModal">
-  <div class="modal-box">
-    <div class="modal-title" id="goTitle"></div>
-    <div class="modal-msg" id="goMsg"></div>
-    <div class="modal-actions">
-      <button class="modal-btn secondary" id="goBack"><!-- filled --></button>
-      <button class="modal-btn primary" id="goRetry"><!-- filled --></button>
-    </div>
-  </div>
-</div>
+<!-- Toast -->
+<div class="game-toast" id="gameToast"></div>
 
+<!-- Shared scripts first -->
 <script src="i18n.js"></script>
 <script src="share.js"></script>
 <script src="user-system.js"></script>
@@ -304,1355 +254,1059 @@ body {
 <script src="recommend.js"></script>
 
 <script>
+// ============================================================
+//  ArrowScape - Arrow Escape Puzzle
+// ============================================================
 (function() {
 'use strict';
 
-// ===== i18n =====
-const GAME_TEXT = {
-  ko: {
-    tagline: '탈출을 마스터하세요',
-    play: '게임 시작',
-    levelSelect: '레벨 선택',
-    arrowsLeft: '남은 화살: {n}',
-    gameOver: '게임 오버',
-    noHeartsLeft: '하트를 모두 소진했습니다',
-    blocked: '막혀있어요!',
-    levelClear: '레벨 클리어!',
-    perfect: '퍼펙트!',
-    wellDone: '잘했어요!',
-    niceTry: '성공!',
-  },
-  en: {
-    tagline: 'Master the Escape',
-    play: 'Play',
-    levelSelect: 'Select Level',
-    arrowsLeft: 'Arrows: {n}',
-    gameOver: 'Game Over',
-    noHeartsLeft: 'No hearts remaining',
-    blocked: 'Blocked!',
-    levelClear: 'Level Clear!',
-    perfect: 'Perfect!',
-    wellDone: 'Well Done!',
-    niceTry: 'Cleared!',
-  },
-  ja: {
-    tagline: '脱出をマスターせよ',
-    play: 'プレイ',
-    levelSelect: 'レベル選択',
-    arrowsLeft: '残り矢印: {n}',
-    gameOver: 'ゲームオーバー',
-    noHeartsLeft: 'ハートがなくなりました',
-    blocked: 'ブロックされています！',
-    levelClear: 'レベルクリア！',
-    perfect: 'パーフェクト！',
-    wellDone: 'よくできました！',
-    niceTry: 'クリア！',
-  },
-  zh: {
-    tagline: '掌握逃脱之道',
-    play: '开始游戏',
-    levelSelect: '选择关卡',
-    arrowsLeft: '剩余箭头: {n}',
-    gameOver: '游戏结束',
-    noHeartsLeft: '没有剩余的心了',
-    blocked: '被挡住了！',
-    levelClear: '关卡通过！',
-    perfect: '完美！',
-    wellDone: '做得好！',
-    niceTry: '通关！',
-  },
-  es: {
-    tagline: 'Domina el Escape',
-    play: 'Jugar',
-    levelSelect: 'Elegir Nivel',
-    arrowsLeft: 'Flechas: {n}',
-    gameOver: 'Fin del Juego',
-    noHeartsLeft: 'Sin corazones',
-    blocked: '¡Bloqueado!',
-    levelClear: '¡Nivel Completado!',
-    perfect: '¡Perfecto!',
-    wellDone: '¡Bien hecho!',
-    niceTry: '¡Completado!',
-  }
+// ── i18n ──
+const GAME_I18N_EXT = {
+  ko: { escape: '탈출시켜라!', play: '플레이', blocked: '막혀있어요!', removed: '탈출!', hearts_label: '하트', hint_used: '힌트', game_over_msg: '하트를 모두 잃었습니다', level_clear: '레벨 클리어!', all_clear: '모든 레벨 클리어!' },
+  en: { escape: 'Escape!', play: 'Play', blocked: 'Blocked!', removed: 'Escaped!', hearts_label: 'Hearts', hint_used: 'Hint', game_over_msg: 'You ran out of hearts', level_clear: 'Level Clear!', all_clear: 'All levels cleared!' },
+  ja: { escape: '脱出せよ!', play: 'プレイ', blocked: 'ブロック中!', removed: '脱出!', hearts_label: 'ハート', hint_used: 'ヒント', game_over_msg: 'ハートがなくなりました', level_clear: 'レベルクリア!', all_clear: '全レベルクリア!' },
+  zh: { escape: '逃脱!', play: '开始', blocked: '被挡住了!', removed: '逃脱!', hearts_label: '心', hint_used: '提示', game_over_msg: '心用完了', level_clear: '通关!', all_clear: '全部通关!' },
+  es: { escape: '!Escapa!', play: 'Jugar', blocked: '!Bloqueado!', removed: '!Escapo!', hearts_label: 'Corazones', hint_used: 'Pista', game_over_msg: 'Te quedaste sin corazones', level_clear: '!Nivel completado!', all_clear: '!Todos los niveles completados!' }
 };
 
-let t, gt; // game text, general translations
+let T = {};
 
 function initI18n() {
-  const lang = typeof getGameLang === 'function' ? getGameLang() : 'ko';
-  gt = typeof getTranslations === 'function' ? getTranslations() : {};
-  t = GAME_TEXT[lang] || GAME_TEXT.ko;
+  const base = (typeof getTranslations === 'function') ? getTranslations() : {};
+  const lang = (typeof getGameLang === 'function') ? getGameLang() : 'ko';
+  const ext = GAME_I18N_EXT[lang] || GAME_I18N_EXT.ko;
+  T = Object.assign({}, base, ext);
+  if (typeof applyGameI18n === 'function') applyGameI18n();
+  document.getElementById('title-sub').textContent = T.escape || 'Escape!';
+  document.getElementById('playBtn').textContent = T.play || 'Play';
 }
 
-// ===== Audio =====
-let audioCtx = null;
+// ── Toast ──
+let toastTimer = null;
+function showToast(msg) {
+  const el = document.getElementById('gameToast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1500);
+}
+
+// ── Sound ──
 let soundEnabled = true;
+const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
 
-function getAudioCtx() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  return audioCtx;
+function ensureAudio() {
+  if (!AudioCtxClass) return;
+  if (!audioCtx) { try { audioCtx = new AudioCtxClass(); } catch(e) { return; } }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 
-function playWhoosh() {
-  if (!soundEnabled) return;
+function playSound(type) {
+  if (!soundEnabled || !audioCtx) return;
+  const now = audioCtx.currentTime;
   try {
-    const ctx = getAudioCtx();
-    const dur = 0.35;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(3000, ctx.currentTime);
-    filter.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + dur);
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(800, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + dur);
-    gain.gain.setValueAtTime(0.12, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + dur);
-    // Add noise burst
-    const bufSize = ctx.sampleRate * dur;
-    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
-    const noise = ctx.createBufferSource();
-    noise.buffer = buf;
-    const ng = ctx.createGain();
-    const nf = ctx.createBiquadFilter();
-    nf.type = 'bandpass';
-    nf.frequency.value = 2000;
-    nf.Q.value = 0.5;
-    ng.gain.setValueAtTime(0.08, ctx.currentTime);
-    ng.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
-    noise.connect(nf);
-    nf.connect(ng);
-    ng.connect(ctx.destination);
-    noise.start(ctx.currentTime);
-    noise.stop(ctx.currentTime + dur);
+    if (type === 'whoosh') {
+      const noise = audioCtx.createBufferSource();
+      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.3, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+      noise.buffer = buf;
+      const bp = audioCtx.createBiquadFilter();
+      bp.type = 'bandpass'; bp.frequency.setValueAtTime(2000, now);
+      bp.frequency.exponentialRampToValueAtTime(500, now + 0.3);
+      const g = audioCtx.createGain();
+      g.gain.setValueAtTime(0.15, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      noise.connect(bp).connect(g).connect(audioCtx.destination);
+      noise.start(now); noise.stop(now + 0.3);
+    } else if (type === 'thud') {
+      const osc = audioCtx.createOscillator();
+      osc.type = 'sine'; osc.frequency.setValueAtTime(120, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+      const g = audioCtx.createGain();
+      g.gain.setValueAtTime(0.3, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc.connect(g).connect(audioCtx.destination);
+      osc.start(now); osc.stop(now + 0.15);
+    } else if (type === 'victory') {
+      [523, 659, 784, 1047].forEach(function(freq, i) {
+        const osc = audioCtx.createOscillator();
+        osc.type = 'triangle'; osc.frequency.value = freq;
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(0, now + i * 0.12);
+        g.gain.linearRampToValueAtTime(0.15, now + i * 0.12 + 0.05);
+        g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.4);
+        osc.connect(g).connect(audioCtx.destination);
+        osc.start(now + i * 0.12); osc.stop(now + i * 0.12 + 0.4);
+      });
+    } else if (type === 'click') {
+      const osc = audioCtx.createOscillator();
+      osc.type = 'sine'; osc.frequency.value = 800;
+      const g = audioCtx.createGain();
+      g.gain.setValueAtTime(0.1, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      osc.connect(g).connect(audioCtx.destination);
+      osc.start(now); osc.stop(now + 0.06);
+    }
   } catch(e) {}
 }
 
-function playThud() {
-  if (!soundEnabled) return;
-  try {
-    const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(150, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.15);
-    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.15);
-  } catch(e) {}
-}
+// ── State ──
+const COLORS = ['#00d4ff','#ff8c00','#ff69b4','#ffdd00','#00ff88','#e0e0e0','#ff00ff','#4488ff','#ff6b6b','#88ff00'];
+const STORAGE_KEY = 'arrowscape_progress';
+const TOTAL_LEVELS = 30;
 
-function playSuccess() {
-  if (!soundEnabled) return;
-  try {
-    const ctx = getAudioCtx();
-    [523.25, 659.25, 783.99].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.12);
-      gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + i * 0.12 + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.35);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(ctx.currentTime + i * 0.12);
-      osc.stop(ctx.currentTime + i * 0.12 + 0.35);
-    });
-  } catch(e) {}
-}
-
-// ===== Save/Load =====
-const SAVE_KEY = 'arrowscape_progress';
-
-function loadProgress() {
-  try {
-    const d = JSON.parse(localStorage.getItem(SAVE_KEY));
-    if (d && d.levels) return d;
-  } catch(e) {}
-  return { levels: {} };
-}
-
-function saveProgress(progress) {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(progress)); } catch(e) {}
-}
-
-function getLevelProgress(lvl) {
-  const p = loadProgress();
-  return p.levels[lvl] || null;
-}
-
-function saveLevelProgress(lvl, stars) {
-  const p = loadProgress();
-  const existing = p.levels[lvl];
-  if (!existing || stars > existing.stars) {
-    p.levels[lvl] = { stars, completed: true };
-  }
-  saveProgress(p);
-}
-
-function getMaxUnlockedLevel() {
-  const p = loadProgress();
-  let max = 1;
-  for (let i = 1; i <= 30; i++) {
-    if (p.levels[i] && p.levels[i].completed) max = i + 1;
-    else break;
-  }
-  return Math.min(max, 30);
-}
-
-// ===== Arrow Path Colors =====
-const COLORS = [
-  '#00e5ff', // cyan
-  '#ff6d00', // orange
-  '#ff4081', // pink
-  '#ffeb3b', // yellow
-  '#69f0ae', // green
-  '#e0e0e0', // white/light gray
-  '#ea80fc', // magenta
-  '#448aff', // blue
-  '#ff8a65', // coral
-  '#b2ff59', // lime
-];
-
-// ===== Direction helpers =====
-const DIR = {
-  UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3
-};
-const DIR_DX = [0, 1, 0, -1];
-const DIR_DY = [-1, 0, 1, 0];
-const DIR_NAMES = ['up', 'right', 'down', 'left'];
-
-function oppositeDir(d) { return (d + 2) % 4; }
-
-// ===== Level Definitions =====
-// Each arrow: { cells: [[col,row],...], dir: exit direction, color: index }
-// cells[last] is near the exit edge; dir is the direction the arrowhead points
-// The arrow slides out in dir from cells[last]
-// removalOrder: indices into arrows array, the correct order to remove them
-
-// Grid size: 8 cols x 10 rows
-
-const GRID_COLS = 8;
-const GRID_ROWS = 10;
-
-function buildLevels() {
-  const levels = [];
-
-  // Helper: create arrow definition
-  function arrow(cells, dir, colorIdx) {
-    return { cells, dir, color: colorIdx };
-  }
-
-  // Level 1: 3 arrows, very simple
-  levels.push({
-    arrows: [
-      arrow([[1,2],[2,2],[3,2],[4,2]], DIR.RIGHT, 0),
-      arrow([[3,5],[3,4],[3,3]], DIR.UP, 1),
-      arrow([[5,7],[5,6],[5,5],[5,4]], DIR.UP, 2),
-    ],
-    removalOrder: [0, 2, 1]
-  });
-
-  // Level 2
-  levels.push({
-    arrows: [
-      arrow([[6,3],[6,4],[6,5],[6,6]], DIR.DOWN, 3),
-      arrow([[2,6],[3,6],[4,6],[5,6]], DIR.RIGHT, 0),
-      arrow([[1,4],[2,4],[3,4]], DIR.RIGHT, 4),
-    ],
-    removalOrder: [0, 1, 2]
-  });
-
-  // Level 3
-  levels.push({
-    arrows: [
-      arrow([[2,1],[2,2],[2,3],[2,4]], DIR.DOWN, 5),
-      arrow([[5,8],[5,7],[5,6],[5,5]], DIR.UP, 2),
-      arrow([[1,5],[2,5],[3,5],[4,5],[5,5]], DIR.RIGHT, 1),
-    ],
-    removalOrder: [0, 1, 2]
-  });
-
-  // Level 4
-  levels.push({
-    arrows: [
-      arrow([[1,3],[2,3],[3,3],[4,3]], DIR.RIGHT, 0),
-      arrow([[4,3],[4,4],[4,5],[4,6]], DIR.DOWN, 6),
-      arrow([[6,1],[6,2],[6,3]], DIR.DOWN, 3),
-      arrow([[2,7],[3,7],[4,7],[5,7]], DIR.RIGHT, 2),
-    ],
-    removalOrder: [2, 0, 1, 3]
-  });
-
-  // Level 5
-  levels.push({
-    arrows: [
-      arrow([[3,0],[3,1],[3,2],[3,3]], DIR.DOWN, 7),
-      arrow([[0,5],[1,5],[2,5],[3,5]], DIR.RIGHT, 4),
-      arrow([[5,3],[5,4],[5,5]], DIR.DOWN, 1),
-      arrow([[6,7],[6,6],[6,5]], DIR.UP, 0),
-    ],
-    removalOrder: [0, 2, 3, 1]
-  });
-
-  // Level 6: 4-5 arrows with turns
-  levels.push({
-    arrows: [
-      arrow([[1,2],[2,2],[3,2],[3,3],[3,4]], DIR.DOWN, 0),
-      arrow([[5,1],[5,2],[5,3],[5,4],[5,5]], DIR.DOWN, 3),
-      arrow([[1,6],[2,6],[3,6],[4,6]], DIR.RIGHT, 2),
-      arrow([[6,8],[6,7],[6,6]], DIR.UP, 5),
-      arrow([[0,4],[1,4],[2,4]], DIR.RIGHT, 7),
-    ],
-    removalOrder: [1, 3, 0, 2, 4]
-  });
-
-  // Level 7
-  levels.push({
-    arrows: [
-      arrow([[2,1],[2,2],[2,3],[3,3],[4,3]], DIR.RIGHT, 6),
-      arrow([[4,3],[4,4],[4,5],[4,6]], DIR.DOWN, 1),
-      arrow([[6,2],[6,3],[6,4]], DIR.DOWN, 0),
-      arrow([[1,7],[2,7],[3,7],[4,7]], DIR.RIGHT, 4),
-      arrow([[0,5],[1,5],[2,5]], DIR.RIGHT, 2),
-    ],
-    removalOrder: [2, 0, 1, 4, 3]
-  });
-
-  // Level 8
-  levels.push({
-    arrows: [
-      arrow([[1,1],[1,2],[1,3],[2,3],[3,3]], DIR.RIGHT, 0),
-      arrow([[5,0],[5,1],[5,2],[5,3]], DIR.DOWN, 5),
-      arrow([[3,5],[4,5],[5,5],[6,5]], DIR.RIGHT, 3),
-      arrow([[7,7],[7,6],[7,5]], DIR.UP, 2),
-      arrow([[2,8],[2,7],[2,6],[2,5]], DIR.UP, 7),
-    ],
-    removalOrder: [1, 3, 0, 2, 4]
-  });
-
-  // Level 9
-  levels.push({
-    arrows: [
-      arrow([[0,3],[1,3],[2,3],[3,3],[4,3]], DIR.RIGHT, 4),
-      arrow([[4,3],[4,4],[4,5]], DIR.DOWN, 6),
-      arrow([[6,1],[6,2],[6,3],[6,4]], DIR.DOWN, 0),
-      arrow([[1,6],[2,6],[3,6],[4,6],[5,6]], DIR.RIGHT, 1),
-      arrow([[2,9],[2,8],[2,7]], DIR.UP, 2),
-    ],
-    removalOrder: [2, 0, 1, 4, 3]
-  });
-
-  // Level 10
-  levels.push({
-    arrows: [
-      arrow([[3,0],[3,1],[3,2],[4,2],[5,2]], DIR.RIGHT, 7),
-      arrow([[5,2],[5,3],[5,4],[5,5]], DIR.DOWN, 3),
-      arrow([[1,4],[2,4],[3,4]], DIR.RIGHT, 0),
-      arrow([[7,6],[7,5],[7,4],[7,3]], DIR.UP, 5),
-      arrow([[0,8],[1,8],[2,8],[3,8]], DIR.RIGHT, 2),
-    ],
-    removalOrder: [0, 3, 1, 2, 4]
-  });
-
-  // Level 11: 5-7 arrows
-  levels.push({
-    arrows: [
-      arrow([[1,1],[2,1],[3,1],[4,1]], DIR.RIGHT, 0),
-      arrow([[4,1],[4,2],[4,3],[4,4]], DIR.DOWN, 6),
-      arrow([[6,0],[6,1],[6,2],[6,3]], DIR.DOWN, 3),
-      arrow([[0,5],[1,5],[2,5],[3,5]], DIR.RIGHT, 2),
-      arrow([[5,6],[5,5],[5,4]], DIR.UP, 4),
-      arrow([[2,8],[3,8],[4,8],[5,8]], DIR.RIGHT, 7),
-    ],
-    removalOrder: [2, 0, 4, 1, 3, 5]
-  });
-
-  // Level 12
-  levels.push({
-    arrows: [
-      arrow([[2,0],[2,1],[2,2],[2,3]], DIR.DOWN, 5),
-      arrow([[0,3],[1,3],[2,3],[3,3],[4,3]], DIR.RIGHT, 1),
-      arrow([[4,3],[4,4],[4,5],[4,6]], DIR.DOWN, 0),
-      arrow([[6,2],[6,3],[6,4],[6,5]], DIR.DOWN, 2),
-      arrow([[1,7],[2,7],[3,7],[4,7]], DIR.RIGHT, 3),
-      arrow([[5,9],[5,8],[5,7]], DIR.UP, 7),
-    ],
-    removalOrder: [3, 0, 5, 1, 2, 4]
-  });
-
-  // Level 13
-  levels.push({
-    arrows: [
-      arrow([[1,1],[1,2],[1,3],[2,3]], DIR.RIGHT, 0),
-      arrow([[4,0],[4,1],[4,2]], DIR.DOWN, 4),
-      arrow([[6,2],[6,3],[6,4],[6,5]], DIR.DOWN, 6),
-      arrow([[3,4],[4,4],[5,4]], DIR.RIGHT, 2),
-      arrow([[0,6],[1,6],[2,6],[3,6]], DIR.RIGHT, 3),
-      arrow([[5,8],[5,7],[5,6]], DIR.UP, 7),
-      arrow([[2,9],[3,9],[4,9]], DIR.RIGHT, 1),
-    ],
-    removalOrder: [1, 2, 0, 5, 3, 4, 6]
-  });
-
-  // Level 14
-  levels.push({
-    arrows: [
-      arrow([[3,0],[3,1],[3,2],[3,3]], DIR.DOWN, 5),
-      arrow([[0,3],[1,3],[2,3],[3,3]], DIR.RIGHT, 0),
-      arrow([[6,1],[6,2],[6,3],[6,4],[6,5]], DIR.DOWN, 2),
-      arrow([[5,5],[4,5],[3,5]], DIR.LEFT, 7),
-      arrow([[1,7],[2,7],[3,7]], DIR.RIGHT, 4),
-      arrow([[4,8],[4,7],[4,6]], DIR.UP, 3),
-      arrow([[7,8],[7,7],[7,6]], DIR.UP, 6),
-    ],
-    removalOrder: [2, 6, 0, 1, 5, 3, 4]
-  });
-
-  // Level 15
-  levels.push({
-    arrows: [
-      arrow([[2,0],[2,1],[2,2],[3,2],[4,2]], DIR.RIGHT, 0),
-      arrow([[4,2],[4,3],[4,4]], DIR.DOWN, 6),
-      arrow([[6,1],[6,2],[6,3]], DIR.DOWN, 3),
-      arrow([[0,4],[1,4],[2,4],[3,4]], DIR.RIGHT, 1),
-      arrow([[5,6],[5,5],[5,4]], DIR.UP, 5),
-      arrow([[1,7],[2,7],[3,7],[4,7],[5,7]], DIR.RIGHT, 2),
-      arrow([[7,9],[7,8],[7,7]], DIR.UP, 7),
-    ],
-    removalOrder: [2, 0, 4, 6, 1, 3, 5]
-  });
-
-  // Level 16: 6-8 arrows
-  levels.push({
-    arrows: [
-      arrow([[1,0],[1,1],[1,2],[2,2]], DIR.RIGHT, 0),
-      arrow([[4,1],[4,2],[4,3]], DIR.DOWN, 4),
-      arrow([[6,0],[6,1],[6,2],[6,3]], DIR.DOWN, 2),
-      arrow([[0,4],[1,4],[2,4],[3,4],[4,4]], DIR.RIGHT, 3),
-      arrow([[5,5],[5,4],[5,3]], DIR.UP, 7),
-      arrow([[2,6],[3,6],[4,6]], DIR.RIGHT, 5),
-      arrow([[6,7],[6,6],[6,5]], DIR.UP, 6),
-      arrow([[1,9],[1,8],[1,7]], DIR.UP, 1),
-    ],
-    removalOrder: [2, 0, 4, 6, 1, 3, 7, 5]
-  });
-
-  // Level 17
-  levels.push({
-    arrows: [
-      arrow([[3,0],[3,1],[3,2]], DIR.DOWN, 0),
-      arrow([[0,2],[1,2],[2,2],[3,2]], DIR.RIGHT, 6),
-      arrow([[5,1],[5,2],[5,3],[5,4]], DIR.DOWN, 3),
-      arrow([[7,3],[7,4],[7,5]], DIR.DOWN, 2),
-      arrow([[1,5],[2,5],[3,5],[4,5]], DIR.RIGHT, 4),
-      arrow([[4,7],[4,6],[4,5]], DIR.UP, 7),
-      arrow([[0,8],[1,8],[2,8]], DIR.RIGHT, 1),
-      arrow([[6,9],[6,8],[6,7],[6,6]], DIR.UP, 5),
-    ],
-    removalOrder: [3, 0, 2, 5, 7, 1, 4, 6]
-  });
-
-  // Level 18
-  levels.push({
-    arrows: [
-      arrow([[2,0],[2,1],[2,2],[2,3]], DIR.DOWN, 0),
-      arrow([[5,0],[5,1],[5,2]], DIR.DOWN, 5),
-      arrow([[0,3],[1,3],[2,3],[3,3]], DIR.RIGHT, 3),
-      arrow([[4,4],[5,4],[6,4]], DIR.RIGHT, 2),
-      arrow([[7,6],[7,5],[7,4]], DIR.UP, 7),
-      arrow([[3,6],[4,6],[5,6]], DIR.RIGHT, 4),
-      arrow([[1,8],[2,8],[3,8],[4,8]], DIR.RIGHT, 1),
-      arrow([[6,9],[6,8],[6,7]], DIR.UP, 6),
-    ],
-    removalOrder: [1, 4, 0, 3, 7, 2, 5, 6]
-  });
-
-  // Level 19
-  levels.push({
-    arrows: [
-      arrow([[1,1],[2,1],[3,1],[4,1],[5,1]], DIR.RIGHT, 0),
-      arrow([[5,1],[5,2],[5,3]], DIR.DOWN, 6),
-      arrow([[7,0],[7,1],[7,2],[7,3]], DIR.DOWN, 2),
-      arrow([[0,4],[1,4],[2,4]], DIR.RIGHT, 3),
-      arrow([[3,5],[3,4],[3,3]], DIR.UP, 4),
-      arrow([[6,6],[6,5],[6,4]], DIR.UP, 7),
-      arrow([[1,7],[2,7],[3,7],[4,7]], DIR.RIGHT, 1),
-      arrow([[5,9],[5,8],[5,7]], DIR.UP, 5),
-    ],
-    removalOrder: [2, 0, 5, 4, 1, 7, 3, 6]
-  });
-
-  // Level 20
-  levels.push({
-    arrows: [
-      arrow([[0,1],[1,1],[2,1],[3,1]], DIR.RIGHT, 0),
-      arrow([[3,1],[3,2],[3,3],[3,4]], DIR.DOWN, 6),
-      arrow([[5,0],[5,1],[5,2],[5,3]], DIR.DOWN, 3),
-      arrow([[7,2],[7,3],[7,4],[7,5]], DIR.DOWN, 2),
-      arrow([[1,5],[2,5],[3,5],[4,5]], DIR.RIGHT, 4),
-      arrow([[6,6],[6,5],[6,4]], DIR.UP, 7),
-      arrow([[0,8],[1,8],[2,8],[3,8]], DIR.RIGHT, 1),
-      arrow([[5,9],[5,8],[5,7],[5,6]], DIR.UP, 5),
-    ],
-    removalOrder: [2, 3, 5, 0, 7, 1, 4, 6]
-  });
-
-  // Level 21: 7-9 arrows
-  levels.push({
-    arrows: [
-      arrow([[1,0],[1,1],[1,2]], DIR.DOWN, 0),
-      arrow([[4,0],[4,1],[4,2],[4,3]], DIR.DOWN, 3),
-      arrow([[6,1],[6,2],[6,3]], DIR.DOWN, 5),
-      arrow([[0,3],[1,3],[2,3],[3,3]], DIR.RIGHT, 2),
-      arrow([[5,5],[5,4],[5,3]], DIR.UP, 7),
-      arrow([[2,5],[3,5],[4,5]], DIR.RIGHT, 4),
-      arrow([[7,7],[7,6],[7,5]], DIR.UP, 6),
-      arrow([[1,8],[2,8],[3,8]], DIR.RIGHT, 1),
-      arrow([[5,9],[5,8],[5,7]], DIR.UP, 0),
-    ],
-    removalOrder: [2, 6, 0, 4, 1, 8, 3, 5, 7]
-  });
-
-  // Level 22
-  levels.push({
-    arrows: [
-      arrow([[2,0],[2,1],[2,2],[3,2]], DIR.RIGHT, 0),
-      arrow([[5,0],[5,1],[5,2]], DIR.DOWN, 4),
-      arrow([[7,1],[7,2],[7,3],[7,4]], DIR.DOWN, 2),
-      arrow([[0,4],[1,4],[2,4],[3,4]], DIR.RIGHT, 3),
-      arrow([[4,3],[4,4],[4,5]], DIR.DOWN, 6),
-      arrow([[6,5],[6,4],[6,3]], DIR.UP, 7),
-      arrow([[1,6],[2,6],[3,6],[4,6]], DIR.RIGHT, 1),
-      arrow([[5,8],[5,7],[5,6]], DIR.UP, 5),
-      arrow([[0,9],[1,9],[2,9]], DIR.RIGHT, 0),
-    ],
-    removalOrder: [2, 1, 5, 0, 7, 4, 3, 6, 8]
-  });
-
-  // Level 23
-  levels.push({
-    arrows: [
-      arrow([[1,0],[1,1],[1,2],[1,3]], DIR.DOWN, 0),
-      arrow([[3,1],[3,2],[3,3]], DIR.DOWN, 5),
-      arrow([[5,0],[5,1],[5,2],[5,3]], DIR.DOWN, 2),
-      arrow([[7,2],[7,3],[7,4]], DIR.DOWN, 3),
-      arrow([[0,4],[1,4],[2,4],[3,4]], DIR.RIGHT, 7),
-      arrow([[4,5],[5,5],[6,5]], DIR.RIGHT, 4),
-      arrow([[2,7],[3,7],[4,7]], DIR.RIGHT, 6),
-      arrow([[6,8],[6,7],[6,6]], DIR.UP, 1),
-      arrow([[0,9],[1,9],[2,9]], DIR.RIGHT, 0),
-    ],
-    removalOrder: [3, 2, 7, 0, 1, 5, 4, 6, 8]
-  });
-
-  // Level 24
-  levels.push({
-    arrows: [
-      arrow([[0,1],[1,1],[2,1]], DIR.RIGHT, 0),
-      arrow([[4,0],[4,1],[4,2],[4,3]], DIR.DOWN, 6),
-      arrow([[6,0],[6,1],[6,2]], DIR.DOWN, 3),
-      arrow([[2,3],[3,3],[4,3]], DIR.RIGHT, 2),
-      arrow([[7,4],[7,3],[7,2]], DIR.UP, 4),
-      arrow([[1,5],[2,5],[3,5]], DIR.RIGHT, 5),
-      arrow([[5,6],[5,5],[5,4]], DIR.UP, 7),
-      arrow([[0,7],[1,7],[2,7],[3,7]], DIR.RIGHT, 1),
-      arrow([[6,9],[6,8],[6,7]], DIR.UP, 0),
-    ],
-    removalOrder: [2, 4, 0, 6, 8, 1, 3, 5, 7]
-  });
-
-  // Level 25
-  levels.push({
-    arrows: [
-      arrow([[2,0],[2,1],[2,2]], DIR.DOWN, 0),
-      arrow([[5,0],[5,1],[5,2],[5,3]], DIR.DOWN, 3),
-      arrow([[7,1],[7,2],[7,3]], DIR.DOWN, 5),
-      arrow([[0,3],[1,3],[2,3]], DIR.RIGHT, 2),
-      arrow([[3,4],[4,4],[5,4]], DIR.RIGHT, 7),
-      arrow([[6,5],[6,4],[6,3]], DIR.UP, 4),
-      arrow([[1,6],[2,6],[3,6]], DIR.RIGHT, 6),
-      arrow([[4,7],[5,7],[6,7]], DIR.RIGHT, 1),
-      arrow([[7,9],[7,8],[7,7]], DIR.UP, 0),
-    ],
-    removalOrder: [2, 5, 8, 0, 1, 4, 3, 6, 7]
-  });
-
-  // Level 26: 8-10 arrows
-  levels.push({
-    arrows: [
-      arrow([[1,0],[1,1],[1,2]], DIR.DOWN, 0),
-      arrow([[3,0],[3,1],[3,2],[3,3]], DIR.DOWN, 3),
-      arrow([[5,1],[5,2],[5,3]], DIR.DOWN, 5),
-      arrow([[7,0],[7,1],[7,2],[7,3]], DIR.DOWN, 2),
-      arrow([[0,4],[1,4],[2,4],[3,4]], DIR.RIGHT, 7),
-      arrow([[4,4],[5,4],[6,4]], DIR.RIGHT, 4),
-      arrow([[2,6],[3,6],[4,6]], DIR.RIGHT, 6),
-      arrow([[6,7],[6,6],[6,5]], DIR.UP, 1),
-      arrow([[0,8],[1,8],[2,8]], DIR.RIGHT, 0),
-      arrow([[4,9],[4,8],[4,7]], DIR.UP, 3),
-    ],
-    removalOrder: [3, 7, 0, 2, 9, 1, 5, 4, 6, 8]
-  });
-
-  // Level 27
-  levels.push({
-    arrows: [
-      arrow([[0,1],[1,1],[2,1]], DIR.RIGHT, 0),
-      arrow([[2,1],[2,2],[2,3]], DIR.DOWN, 5),
-      arrow([[4,0],[4,1],[4,2]], DIR.DOWN, 3),
-      arrow([[6,0],[6,1],[6,2],[6,3]], DIR.DOWN, 2),
-      arrow([[7,4],[7,3],[7,2]], DIR.UP, 7),
-      arrow([[0,4],[1,4],[2,4]], DIR.RIGHT, 4),
-      arrow([[3,5],[4,5],[5,5]], DIR.RIGHT, 6),
-      arrow([[5,7],[5,6],[5,5]], DIR.UP, 1),
-      arrow([[1,7],[2,7],[3,7]], DIR.RIGHT, 0),
-      arrow([[7,9],[7,8],[7,7]], DIR.UP, 3),
-    ],
-    removalOrder: [3, 4, 2, 9, 0, 7, 1, 6, 5, 8]
-  });
-
-  // Level 28
-  levels.push({
-    arrows: [
-      arrow([[1,0],[1,1],[1,2],[1,3]], DIR.DOWN, 0),
-      arrow([[3,1],[3,2],[3,3]], DIR.DOWN, 4),
-      arrow([[5,0],[5,1],[5,2]], DIR.DOWN, 3),
-      arrow([[7,1],[7,2],[7,3],[7,4]], DIR.DOWN, 2),
-      arrow([[0,4],[1,4],[2,4],[3,4]], DIR.RIGHT, 6),
-      arrow([[4,5],[5,5],[6,5]], DIR.RIGHT, 7),
-      arrow([[6,4],[6,3],[6,2]], DIR.UP, 5),
-      arrow([[2,6],[3,6],[4,6]], DIR.RIGHT, 1),
-      arrow([[0,8],[1,8],[2,8],[3,8]], DIR.RIGHT, 0),
-      arrow([[5,9],[5,8],[5,7]], DIR.UP, 4),
-    ],
-    removalOrder: [6, 2, 3, 9, 0, 1, 5, 4, 7, 8]
-  });
-
-  // Level 29
-  levels.push({
-    arrows: [
-      arrow([[0,1],[1,1],[2,1],[3,1]], DIR.RIGHT, 0),
-      arrow([[3,1],[3,2],[3,3]], DIR.DOWN, 6),
-      arrow([[5,0],[5,1],[5,2],[5,3]], DIR.DOWN, 3),
-      arrow([[7,0],[7,1],[7,2]], DIR.DOWN, 2),
-      arrow([[6,4],[6,3],[6,2]], DIR.UP, 5),
-      arrow([[1,4],[2,4],[3,4]], DIR.RIGHT, 7),
-      arrow([[4,5],[5,5],[6,5]], DIR.RIGHT, 4),
-      arrow([[0,7],[1,7],[2,7]], DIR.RIGHT, 1),
-      arrow([[3,6],[3,5],[3,4]], DIR.UP, 0),
-      arrow([[5,8],[5,7],[5,6]], DIR.UP, 3),
-      arrow([[7,9],[7,8],[7,7]], DIR.UP, 6),
-    ],
-    removalOrder: [3, 4, 10, 2, 0, 9, 8, 1, 6, 5, 7]
-  });
-
-  // Level 30
-  levels.push({
-    arrows: [
-      arrow([[1,0],[1,1],[1,2]], DIR.DOWN, 0),
-      arrow([[3,0],[3,1],[3,2],[3,3]], DIR.DOWN, 4),
-      arrow([[5,0],[5,1],[5,2]], DIR.DOWN, 3),
-      arrow([[7,1],[7,2],[7,3]], DIR.DOWN, 2),
-      arrow([[0,3],[1,3],[2,3],[3,3]], DIR.RIGHT, 5),
-      arrow([[4,4],[5,4],[6,4]], DIR.RIGHT, 7),
-      arrow([[6,3],[6,2],[6,1]], DIR.UP, 6),
-      arrow([[2,5],[3,5],[4,5]], DIR.RIGHT, 1),
-      arrow([[7,6],[7,5],[7,4]], DIR.UP, 0),
-      arrow([[0,7],[1,7],[2,7],[3,7]], DIR.RIGHT, 3),
-      arrow([[5,8],[5,7],[5,6]], DIR.UP, 4),
-    ],
-    removalOrder: [6, 3, 8, 2, 0, 10, 1, 5, 4, 7, 9]
-  });
-
-  return levels;
-}
-
-const LEVELS = buildLevels();
-const TOTAL_LEVELS = LEVELS.length;
-
-// ===== Game State =====
 let currentScreen = 'title';
 let currentLevel = 1;
 let hearts = 3;
-let arrows = [];       // active arrows in current level
-let removedArrows = []; // removed arrows (for animation trail)
+let arrows = [];
+let removalOrder = [];
+let gridW = 6, gridH = 8;
+let cellSize = 0;
+let boardOffsetX = 0, boardOffsetY = 0;
+let selectedArrow = -1;
 let animating = false;
-let hintArrowIdx = -1;
-let hintFlashTimer = 0;
-
-// Canvas
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-let cellSize = 40;
-let boardX = 0, boardY = 0;
-let canvasW = 0, canvasH = 0;
+let slideAnim = null;
+let shakeAnim = null;
+let hoverArrow = -1;
+let canvas, ctx;
 let dpr = 1;
+let isTouchDevice = false;
 
-// Animation state
-let slideAnim = null; // { arrowIdx, progress, startTime, duration, arrow }
-
-// ===== Screen Management =====
-function showScreen(name) {
-  currentScreen = name;
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const map = { title: 'titleScreen', levels: 'levelScreen', game: 'gameScreen' };
-  document.getElementById(map[name]).classList.add('active');
-  if (name === 'levels') renderLevelGrid();
-  if (name === 'game') initLevel(currentLevel);
+// ── Progress ──
+function loadProgress() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e) { return {}; }
+}
+function saveProgress(level, stars) {
+  const p = loadProgress();
+  const prev = p[level] || 0;
+  p[level] = Math.max(prev, stars);
+  if (!p.unlocked || level + 1 > p.unlocked) p.unlocked = level + 1;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+}
+function getUnlocked() {
+  const p = loadProgress();
+  return Math.min(p.unlocked || 1, TOTAL_LEVELS);
 }
 
-// ===== Level Grid =====
-function renderLevelGrid() {
-  const grid = document.getElementById('levelGrid');
-  grid.innerHTML = '';
-  const maxUnlocked = getMaxUnlockedLevel();
-  for (let i = 1; i <= TOTAL_LEVELS; i++) {
-    const cell = document.createElement('div');
-    cell.className = 'level-cell';
-    const prog = getLevelProgress(i);
-    if (i > maxUnlocked) {
-      cell.classList.add('locked');
-      cell.innerHTML = `<span>🔒</span>`;
-    } else {
-      if (prog && prog.completed) cell.classList.add('completed');
-      cell.innerHTML = `<span>${i}</span>`;
-      if (prog && prog.stars) {
-        let starsHtml = '';
-        for (let s = 0; s < 3; s++) {
-          starsHtml += s < prog.stars ? '★' : '<span class="empty">★</span>';
-        }
-        cell.innerHTML += `<div class="level-stars">${starsHtml}</div>`;
+// ── Level Config ──
+function getLevelConfig(lv) {
+  if (lv <= 3) return { gw: 6, gh: 8, numArrows: 3 + lv, minLen: 4, maxLen: 8 };
+  if (lv <= 6) return { gw: 6, gh: 8, numArrows: 5 + Math.floor((lv - 4) / 2), minLen: 4, maxLen: 10 };
+  if (lv <= 10) return { gw: 7, gh: 9, numArrows: 6 + Math.floor((lv - 7) / 2), minLen: 5, maxLen: 13 };
+  if (lv <= 15) return { gw: 7, gh: 10, numArrows: 7 + Math.floor((lv - 11) / 2), minLen: 5, maxLen: 16 };
+  if (lv <= 20) return { gw: 7, gh: 10, numArrows: 8 + Math.floor((lv - 16) / 2), minLen: 6, maxLen: 18 };
+  if (lv <= 25) return { gw: 8, gh: 11, numArrows: 9 + Math.floor((lv - 21) / 2), minLen: 6, maxLen: 22 };
+  return { gw: 8, gh: 12, numArrows: 10 + Math.floor((lv - 26) / 2), minLen: 7, maxLen: 25 };
+}
+
+// ── Direction helpers ──
+const DIRS = { up: [0,-1], down: [0,1], left: [-1,0], right: [1,0] };
+const DIR_NAMES = ['up','down','left','right'];
+const OPPOSITE = { up:'down', down:'up', left:'right', right:'left' };
+
+function dirVec(d) { return DIRS[d]; }
+
+// ── Seeded RNG ──
+function createRNG(seed) {
+  let s = seed;
+  return {
+    next: function() { s = (s * 16807 + 0) % 2147483647; return (s - 1) / 2147483646; },
+    nextInt: function(a, b) { return a + Math.floor(this.next() * (b - a + 1)); },
+    shuffle: function(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(this.next() * (i + 1));
+        const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
       }
-      cell.addEventListener('click', () => { currentLevel = i; showScreen('game'); });
+      return a;
     }
-    grid.appendChild(cell);
+  };
+}
+
+// ── Level Generation ──
+function generateLevel(lv) {
+  const cfg = getLevelConfig(lv);
+  gridW = cfg.gw; gridH = cfg.gh;
+  const rng = createRNG(lv * 7919 + 31337);
+
+  function cellKey(c, r) { return c + ',' + r; }
+
+  // Track occupancy with z-levels
+  const occupancy = {};
+  function addOccupancy(c, r, arrowIdx, zLevel) {
+    const k = cellKey(c, r);
+    if (!occupancy[k]) occupancy[k] = [];
+    occupancy[k].push({ arrowIdx: arrowIdx, zLevel: zLevel });
+  }
+
+  const arrowList = [];
+  const colorPool = rng.shuffle(COLORS.slice());
+
+  for (let i = 0; i < cfg.numArrows; i++) {
+    const zLevel = i;
+    const color = colorPool[i % colorPool.length];
+    let bestPath = null;
+
+    // Try multiple attempts to generate a good path
+    for (let attempt = 0; attempt < 50; attempt++) {
+      // Pick a random edge for exit
+      const edgeIdx = Math.floor(rng.next() * 4);
+      const edge = DIR_NAMES[edgeIdx];
+      var ec, er;
+      if (edge === 'up')    { ec = rng.nextInt(0, gridW - 1); er = 0; }
+      else if (edge === 'down')  { ec = rng.nextInt(0, gridW - 1); er = gridH - 1; }
+      else if (edge === 'left')  { ec = 0; er = rng.nextInt(0, gridH - 1); }
+      else                       { ec = gridW - 1; er = rng.nextInt(0, gridH - 1); }
+
+      const exitDir = edge;
+      const inwardDir = OPPOSITE[exitDir];
+
+      // Build winding path from exit cell inward
+      const path = [[ec, er]];
+      let cc = ec, cr = er;
+      const targetLen = rng.nextInt(cfg.minLen, cfg.maxLen);
+      const visited = {};
+      visited[cellKey(cc, cr)] = true;
+      let prevDir = inwardDir;
+
+      let pathOk = true;
+      for (let step = 0; step < targetLen - 1; step++) {
+        // Gather candidate directions
+        const candidates = [];
+        const dirs = rng.shuffle(DIR_NAMES.slice());
+
+        for (let di = 0; di < dirs.length; di++) {
+          const d = dirs[di];
+          if (d === OPPOSITE[prevDir]) continue; // no u-turns
+          const dv = DIRS[d];
+          const nc = cc + dv[0], nr = cr + dv[1];
+          if (nc < 0 || nc >= gridW || nr < 0 || nr >= gridH) continue;
+
+          // Strongly prefer unvisited cells, but allow revisiting for overlap
+          const isNew = !visited[cellKey(nc, nr)];
+          const isTurn = (d !== prevDir);
+          // Weight: new cells + turns get priority
+          const w = (isNew ? 5 : 1) + (isTurn ? 3 : 0);
+          candidates.push({ d: d, nc: nc, nr: nr, w: w });
+        }
+
+        if (candidates.length === 0) { pathOk = false; break; }
+
+        // Weighted random pick
+        const totalW = candidates.reduce(function(s, c) { return s + c.w; }, 0);
+        let pick = rng.next() * totalW;
+        var chosen = candidates[0];
+        for (let ci = 0; ci < candidates.length; ci++) {
+          pick -= candidates[ci].w;
+          if (pick <= 0) { chosen = candidates[ci]; break; }
+        }
+
+        cc = chosen.nc; cr = chosen.nr;
+        prevDir = chosen.d;
+        path.push([cc, cr]);
+        visited[cellKey(cc, cr)] = true;
+      }
+
+      if (!pathOk || path.length < cfg.minLen) continue;
+
+      if (!bestPath || path.length > bestPath.path.length) {
+        bestPath = { path: path, exitDir: exitDir };
+      }
+      if (path.length >= targetLen) break;
+    }
+
+    // Fallback: generate a simple straight path
+    if (!bestPath) {
+      const edge = DIR_NAMES[Math.floor(rng.next() * 4)];
+      var ec2, er2;
+      if (edge === 'up')    { ec2 = rng.nextInt(0, gridW - 1); er2 = 0; }
+      else if (edge === 'down')  { ec2 = rng.nextInt(0, gridW - 1); er2 = gridH - 1; }
+      else if (edge === 'left')  { ec2 = 0; er2 = rng.nextInt(0, gridH - 1); }
+      else                       { ec2 = gridW - 1; er2 = rng.nextInt(0, gridH - 1); }
+      const inDir = OPPOSITE[edge];
+      const dv = DIRS[inDir];
+      const fallbackPath = [[ec2, er2]];
+      var fc = ec2, fr = er2;
+      for (let s = 0; s < 3; s++) {
+        var nc = fc + dv[0], nr = fr + dv[1];
+        if (nc >= 0 && nc < gridW && nr >= 0 && nr < gridH) {
+          fc = nc; fr = nr; fallbackPath.push([fc, fr]);
+        }
+      }
+      bestPath = { path: fallbackPath, exitDir: edge };
+    }
+
+    const arrow = {
+      path: bestPath.path,
+      zLevel: zLevel,
+      exitDir: bestPath.exitDir,
+      color: color,
+      removed: false,
+      ghostAlpha: 0
+    };
+    arrowList.push(arrow);
+
+    for (let pi = 0; pi < bestPath.path.length; pi++) {
+      addOccupancy(bestPath.path[pi][0], bestPath.path[pi][1], i, zLevel);
+    }
+  }
+
+  // Removal order: highest z first
+  arrows = arrowList;
+  removalOrder = [];
+  for (let ri = 0; ri < arrows.length; ri++) removalOrder.push(ri);
+  removalOrder.sort(function(a, b) { return arrows[b].zLevel - arrows[a].zLevel; });
+}
+
+// ── Blocking Logic ──
+function isArrowBlocked(arrowIdx) {
+  const arrow = arrows[arrowIdx];
+  if (arrow.removed) return false;
+  const dv = dirVec(arrow.exitDir);
+  const dx = dv[0], dy = dv[1];
+
+  for (let pi = 0; pi < arrow.path.length; pi++) {
+    const ac = arrow.path[pi][0], ar = arrow.path[pi][1];
+    var checkC = ac + dx, checkR = ar + dy;
+    while (checkC >= 0 && checkC < gridW && checkR >= 0 && checkR < gridH) {
+      for (let oi = 0; oi < arrows.length; oi++) {
+        if (oi === arrowIdx || arrows[oi].removed || arrows[oi].zLevel <= arrow.zLevel) continue;
+        const oPath = arrows[oi].path;
+        for (let op = 0; op < oPath.length; op++) {
+          if (oPath[op][0] === checkC && oPath[op][1] === checkR) return true;
+        }
+      }
+      checkC += dx;
+      checkR += dy;
+    }
+  }
+  return false;
+}
+
+function getBlockingArrow(arrowIdx) {
+  const arrow = arrows[arrowIdx];
+  if (arrow.removed) return -1;
+  const dv = dirVec(arrow.exitDir);
+  const dx = dv[0], dy = dv[1];
+
+  for (let pi = 0; pi < arrow.path.length; pi++) {
+    const ac = arrow.path[pi][0], ar = arrow.path[pi][1];
+    var checkC = ac + dx, checkR = ar + dy;
+    while (checkC >= 0 && checkC < gridW && checkR >= 0 && checkR < gridH) {
+      for (let oi = 0; oi < arrows.length; oi++) {
+        if (oi === arrowIdx || arrows[oi].removed || arrows[oi].zLevel <= arrow.zLevel) continue;
+        const oPath = arrows[oi].path;
+        for (let op = 0; op < oPath.length; op++) {
+          if (oPath[op][0] === checkC && oPath[op][1] === checkR) return oi;
+        }
+      }
+      checkC += dx;
+      checkR += dy;
+    }
+  }
+  return -1;
+}
+
+// ── Canvas Setup ──
+function setupCanvas() {
+  canvas = document.getElementById('gameCanvas');
+  ctx = canvas.getContext('2d');
+  dpr = Math.min(window.devicePixelRatio || 1, 3);
+}
+
+function resizeCanvas() {
+  // Calculate available space
+  const maxContainerW = Math.min(window.innerWidth - 16, 500);
+  const padding = 16;
+  const availW = maxContainerW - padding * 2;
+  const availH = window.innerHeight - 220;
+
+  cellSize = Math.min(Math.floor(availW / gridW), Math.floor(availH / gridH));
+  cellSize = Math.max(cellSize, 24);
+  cellSize = Math.min(cellSize, 56);
+
+  const cw = cellSize * gridW + padding * 2;
+  const ch = cellSize * gridH + padding * 2;
+
+  canvas.width = Math.round(cw * dpr);
+  canvas.height = Math.round(ch * dpr);
+  canvas.style.width = cw + 'px';
+  canvas.style.height = ch + 'px';
+
+  boardOffsetX = padding;
+  boardOffsetY = padding;
+}
+
+// ── Drawing helpers ──
+function roundRect(ctx, x, y, w, h, r) {
+  if (typeof ctx.roundRect === 'function') {
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, r);
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
   }
 }
 
-// ===== Init Level =====
-function initLevel(lvl) {
-  const levelData = LEVELS[lvl - 1];
-  if (!levelData) return;
-  hearts = 3;
-  hintArrowIdx = -1;
-  animating = false;
-  slideAnim = null;
-  removedArrows = [];
-
-  // Deep copy arrows
-  arrows = levelData.arrows.map((a, idx) => ({
-    cells: a.cells.map(c => [...c]),
-    dir: a.dir,
-    color: COLORS[a.color % COLORS.length],
-    colorIdx: a.color,
-    removed: false,
-    originalIdx: idx,
-  }));
-
-  updateHeartsDisplay();
-  updateArrowsLeftDisplay();
-  document.getElementById('gameLevelLabel').textContent =
-    `${gt.level || 'Level'} ${lvl}`;
-
-  resizeCanvas();
-  render();
+function cellCenter(c, r) {
+  return [boardOffsetX + c * cellSize + cellSize * 0.5, boardOffsetY + r * cellSize + cellSize * 0.5];
 }
 
-// ===== Canvas Sizing =====
-function resizeCanvas() {
-  const wrapper = document.querySelector('.game-canvas-wrapper');
-  const maxW = wrapper.clientWidth - 32;
-  const maxH = wrapper.clientHeight - 16;
-
-  // Calculate cell size to fit grid
-  const fitW = Math.floor(maxW / GRID_COLS);
-  const fitH = Math.floor(maxH / GRID_ROWS);
-  cellSize = Math.min(fitW, fitH, 50);
-
-  canvasW = GRID_COLS * cellSize;
-  canvasH = GRID_ROWS * cellSize;
-
-  dpr = window.devicePixelRatio || 1;
-  canvas.width = canvasW * dpr;
-  canvas.height = canvasH * dpr;
-  canvas.style.width = canvasW + 'px';
-  canvas.style.height = canvasH + 'px';
-
-  boardX = 0;
-  boardY = 0;
-}
-
-// ===== Rendering =====
-function render() {
+// ── Main draw ──
+function drawBoard() {
   ctx.save();
   ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, canvasW, canvasH);
+
+  const cw = canvas.width / dpr;
+  const ch = canvas.height / dpr;
 
   // Board background
   ctx.fillStyle = '#141428';
-  ctx.beginPath();
-  roundRect(ctx, 0, 0, canvasW, canvasH, 14);
+  roundRect(ctx, 0, 0, cw, ch, 12);
   ctx.fill();
 
-  // Grid dots
-  ctx.fillStyle = 'rgba(255,255,255,0.03)';
-  for (let r = 0; r <= GRID_ROWS; r++) {
-    for (let c = 0; c <= GRID_COLS; c++) {
+  // Subtle grid dots
+  ctx.fillStyle = 'rgba(255,255,255,0.035)';
+  for (let c = 0; c <= gridW; c++) {
+    for (let r = 0; r <= gridH; r++) {
       ctx.beginPath();
-      ctx.arc(c * cellSize, r * cellSize, 1.5, 0, Math.PI * 2);
+      ctx.arc(boardOffsetX + c * cellSize, boardOffsetY + r * cellSize, 1.5, 0, Math.PI * 2);
       ctx.fill();
     }
   }
 
-  // Draw removed arrow trails (faded)
-  removedArrows.forEach(ra => {
-    drawArrowPath(ra, 0.12, false);
-  });
+  // Cell background hints (very subtle)
+  ctx.fillStyle = 'rgba(255,255,255,0.012)';
+  for (let c = 0; c < gridW; c++) {
+    for (let r = 0; r < gridH; r++) {
+      if ((c + r) % 2 === 0) {
+        ctx.fillRect(boardOffsetX + c * cellSize + 1, boardOffsetY + r * cellSize + 1, cellSize - 2, cellSize - 2);
+      }
+    }
+  }
 
-  // Draw active arrows
-  const activeArrows = arrows.filter(a => !a.removed);
-  activeArrows.forEach((a, i) => {
-    const isHint = hintArrowIdx >= 0 && a.originalIdx === hintArrowIdx;
-    const alpha = isHint ? 0.5 + 0.5 * Math.sin(hintFlashTimer * 5) : 1.0;
-    drawArrowPath(a, alpha, true);
-  });
+  // Draw arrows bottom-to-top by z-level
+  const drawOrder = [];
+  for (let i = 0; i < arrows.length; i++) {
+    if (!arrows[i].removed || arrows[i].ghostAlpha > 0.01) drawOrder.push(i);
+  }
+  drawOrder.sort(function(a, b) { return arrows[a].zLevel - arrows[b].zLevel; });
 
-  // Draw slide animation
-  if (slideAnim) {
-    drawSlideAnimation();
+  // Draw shadows first (all at once, beneath everything)
+  for (let di = 0; di < drawOrder.length; di++) {
+    drawArrowShadow(drawOrder[di]);
+  }
+  // Then draw paths
+  for (let di = 0; di < drawOrder.length; di++) {
+    drawArrowPath(drawOrder[di]);
   }
 
   ctx.restore();
 }
 
-function drawArrowPath(arrow, alpha, drawHead) {
-  if (arrow.cells.length < 2) return;
+function getArrowOffsets(idx) {
+  let offX = 0, offY = 0, shakeOff = 0;
+  if (slideAnim && slideAnim.arrowIdx === idx) {
+    offX = slideAnim.offsetX || 0;
+    offY = slideAnim.offsetY || 0;
+  }
+  if (shakeAnim && shakeAnim.arrowIdx === idx) {
+    shakeOff = Math.sin(shakeAnim.phase * Math.PI * 8) * 5 * (1 - shakeAnim.phase);
+  }
+  return { offX: offX, offY: offY, shakeOff: shakeOff };
+}
+
+function drawArrowShadow(idx) {
+  const arrow = arrows[idx];
+  if (arrow.removed) return;
+  const path = arrow.path;
+  if (path.length < 2) return;
+  const off = getArrowOffsets(idx);
+  const lineW = cellSize * 0.55;
+
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = lineW + 3;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  for (let i = 0; i < path.length; i++) {
+    const cc = cellCenter(path[i][0], path[i][1]);
+    var px = cc[0] + off.offX + off.shakeOff + 2;
+    var py = cc[1] + off.offY + 2;
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawArrowPath(idx) {
+  const arrow = arrows[idx];
+  const path = arrow.path;
+  if (path.length < 2) return;
+
+  const off = getArrowOffsets(idx);
+  const alpha = arrow.removed ? arrow.ghostAlpha : 1;
+  if (alpha <= 0.01) return;
+
+  const lineW = cellSize * 0.55;
+  const isSelected = (selectedArrow === idx && !arrow.removed);
+  const isHovered = (hoverArrow === idx && !arrow.removed);
+  const isShaking = (shakeAnim && shakeAnim.arrowIdx === idx);
 
   ctx.save();
   ctx.globalAlpha = alpha;
+
+  // Main colored path
+  ctx.strokeStyle = arrow.color;
+  ctx.lineWidth = lineW;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  const thickness = cellSize * 0.45;
+  if (isSelected || isHovered) {
+    ctx.shadowColor = arrow.color;
+    ctx.shadowBlur = isSelected ? 20 : 10;
+  }
 
-  // Draw path shadow
-  ctx.strokeStyle = 'rgba(0,0,0,0.4)';
-  ctx.lineWidth = thickness + 4;
   ctx.beginPath();
-  arrow.cells.forEach((cell, i) => {
-    const x = cell[0] * cellSize + cellSize / 2;
-    const y = cell[1] * cellSize + cellSize / 2;
-    if (i === 0) ctx.moveTo(x, y + 2);
-    else ctx.lineTo(x, y + 2);
-  });
+  for (let i = 0; i < path.length; i++) {
+    const cc = cellCenter(path[i][0], path[i][1]);
+    var px = cc[0] + off.offX + off.shakeOff;
+    var py = cc[1] + off.offY;
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
   ctx.stroke();
 
-  // Draw main path
-  const grad = ctx.createLinearGradient(
-    arrow.cells[0][0] * cellSize, arrow.cells[0][1] * cellSize,
-    arrow.cells[arrow.cells.length-1][0] * cellSize,
-    arrow.cells[arrow.cells.length-1][1] * cellSize
-  );
-  const baseColor = arrow.color;
-  grad.addColorStop(0, baseColor);
-  grad.addColorStop(1, adjustBrightness(baseColor, -20));
-
-  ctx.strokeStyle = grad;
-  ctx.lineWidth = thickness;
+  // Inner specular highlight
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = lineW * 0.25;
   ctx.beginPath();
-  arrow.cells.forEach((cell, i) => {
-    const x = cell[0] * cellSize + cellSize / 2;
-    const y = cell[1] * cellSize + cellSize / 2;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  });
+  for (let i = 0; i < path.length; i++) {
+    const cc = cellCenter(path[i][0], path[i][1]);
+    var px = cc[0] + off.offX + off.shakeOff;
+    var py = cc[1] + off.offY - lineW * 0.12;
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
   ctx.stroke();
 
-  // Inner highlight
-  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-  ctx.lineWidth = thickness * 0.35;
-  ctx.beginPath();
-  arrow.cells.forEach((cell, i) => {
-    const x = cell[0] * cellSize + cellSize / 2;
-    const y = cell[1] * cellSize + cellSize / 2 - 1;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  });
-  ctx.stroke();
+  // Direction chevrons
+  if (!arrow.removed) {
+    const chevronStep = Math.max(2, Math.floor(path.length / 5));
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    for (let i = chevronStep; i < path.length; i += chevronStep) {
+      const cc1 = cellCenter(path[i][0], path[i][1]);
+      const cc0 = cellCenter(path[i - 1][0], path[i - 1][1]);
+      // Direction from previous to current (flow direction: tail to head is path[end] to path[0])
+      // But chevrons show flow TOWARD the arrowhead (path[0]), so reverse:
+      const angle = Math.atan2(cc0[1] - cc1[1], cc0[0] - cc1[0]);
+      drawChevron(cc1[0] + off.offX + off.shakeOff, cc1[1] + off.offY, angle, cellSize * 0.14);
+    }
+  }
 
-  // Draw arrowhead at the LAST cell
-  if (drawHead) {
-    const lastCell = arrow.cells[arrow.cells.length - 1];
-    const hx = lastCell[0] * cellSize + cellSize / 2;
-    const hy = lastCell[1] * cellSize + cellSize / 2;
-    drawArrowHead(hx, hy, arrow.dir, baseColor, thickness);
+  // Arrowhead triangle at path[0] (the exit end)
+  if (!arrow.removed || arrow.ghostAlpha > 0.15) {
+    const hc = cellCenter(path[0][0], path[0][1]);
+    const dv = dirVec(arrow.exitDir);
+    const angle = Math.atan2(dv[1], dv[0]);
+    const hx = hc[0] + off.offX + off.shakeOff;
+    const hy = hc[1] + off.offY;
+    const sz = cellSize * 0.38;
+
+    ctx.fillStyle = arrow.color;
+    if (isSelected) { ctx.shadowColor = arrow.color; ctx.shadowBlur = 16; }
+    ctx.beginPath();
+    ctx.moveTo(hx + Math.cos(angle) * sz, hy + Math.sin(angle) * sz);
+    ctx.lineTo(hx + Math.cos(angle + 2.5) * sz * 0.65, hy + Math.sin(angle + 2.5) * sz * 0.65);
+    ctx.lineTo(hx + Math.cos(angle - 2.5) * sz * 0.65, hy + Math.sin(angle - 2.5) * sz * 0.65);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  // Shake red flash overlay
+  if (isShaking) {
+    const flashAlpha = 0.5 * (1 - shakeAnim.phase);
+    ctx.strokeStyle = 'rgba(255,50,50,' + flashAlpha + ')';
+    ctx.lineWidth = lineW + 4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (let i = 0; i < path.length; i++) {
+      const cc = cellCenter(path[i][0], path[i][1]);
+      if (i === 0) ctx.moveTo(cc[0] + off.shakeOff, cc[1]);
+      else ctx.lineTo(cc[0] + off.shakeOff, cc[1]);
+    }
+    ctx.stroke();
   }
 
   ctx.restore();
 }
 
-function drawArrowHead(x, y, dir, color, thickness) {
+function drawChevron(x, y, angle, size) {
   ctx.save();
-  ctx.fillStyle = color;
-
-  const size = thickness * 0.7;
-  const angle = dir * Math.PI / 2 - Math.PI / 2; // UP=0 -> -PI/2
-
   ctx.translate(x, y);
   ctx.rotate(angle);
-
-  // Arrow triangle pointing UP (then rotated)
   ctx.beginPath();
-  ctx.moveTo(0, -size * 1.1);
-  ctx.lineTo(-size * 0.8, size * 0.3);
-  ctx.lineTo(size * 0.8, size * 0.3);
-  ctx.closePath();
+  ctx.moveTo(-size, -size * 0.6);
+  ctx.lineTo(size * 0.4, 0);
+  ctx.lineTo(-size, size * 0.6);
   ctx.fill();
-
-  // Highlight
-  ctx.fillStyle = 'rgba(255,255,255,0.2)';
-  ctx.beginPath();
-  ctx.moveTo(0, -size * 0.9);
-  ctx.lineTo(-size * 0.4, size * 0.0);
-  ctx.lineTo(size * 0.1, size * 0.0);
-  ctx.closePath();
-  ctx.fill();
-
   ctx.restore();
 }
 
-function drawSlideAnimation() {
-  if (!slideAnim) return;
-  const { arrow: a, progress, dir } = slideAnim;
-
-  const maxSlide = Math.max(canvasW, canvasH) + cellSize * 2;
-  const offset = progress * maxSlide;
-
-  ctx.save();
-  // Translate the entire arrow in the exit direction
-  ctx.translate(DIR_DX[dir] * offset, DIR_DY[dir] * offset);
-  ctx.globalAlpha = 1.0 - progress * 0.5;
-
-  drawArrowPath(a, 1.0, true);
-
-  ctx.restore();
-
-  // Draw trail particles
-  if (progress < 0.7) {
-    const lastCell = a.cells[a.cells.length - 1];
-    const px = lastCell[0] * cellSize + cellSize / 2 + DIR_DX[dir] * offset;
-    const py = lastCell[1] * cellSize + cellSize / 2 + DIR_DY[dir] * offset;
-    drawTrailParticles(px, py, a.color, progress);
-  }
-}
-
-function drawTrailParticles(x, y, color, progress) {
-  ctx.save();
-  const count = 6;
-  for (let i = 0; i < count; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const dist = Math.random() * cellSize * 0.8;
-    const px = x + Math.cos(angle) * dist;
-    const py = y + Math.sin(angle) * dist;
-    const size = (1 - progress) * cellSize * 0.15 * Math.random();
-    ctx.globalAlpha = (1 - progress) * 0.5;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(px, py, size, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
-function adjustBrightness(hex, amount) {
-  const num = parseInt(hex.replace('#', ''), 16);
-  let r = Math.min(255, Math.max(0, ((num >> 16) & 0xff) + amount));
-  let g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount));
-  let b = Math.min(255, Math.max(0, (num & 0xff) + amount));
-  return `rgb(${r},${g},${b})`;
-}
-
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-}
-
-// ===== Game Logic =====
-function canRemoveArrow(arrowIdx) {
-  const a = arrows[arrowIdx];
-  if (!a || a.removed) return false;
-
-  // Check if the exit path is clear
-  // The arrow exits from its last cell in direction a.dir
-  // We need to check all cells in the arrow along the exit direction
-  // For each cell, check if the path from that cell to the edge in dir is clear
-
-  // Build set of all occupied cells by OTHER active arrows
-  const occupied = new Set();
-  arrows.forEach((other, oi) => {
-    if (oi === arrowIdx || other.removed) return;
-    other.cells.forEach(c => occupied.add(`${c[0]},${c[1]}`));
-  });
-
-  // For each cell of this arrow, check if the cells in the exit direction
-  // until the edge are free (from other arrows only)
-  for (const cell of a.cells) {
-    let cx = cell[0] + DIR_DX[a.dir];
-    let cy = cell[1] + DIR_DY[a.dir];
-    while (cx >= 0 && cx < GRID_COLS && cy >= 0 && cy < GRID_ROWS) {
-      // Check if this position is occupied by another arrow AND
-      // is not also occupied by this arrow (self-intersection is OK)
-      const key = `${cx},${cy}`;
-      const selfOccupied = a.cells.some(sc => sc[0] === cx && sc[1] === cy);
-      if (occupied.has(key) && !selfOccupied) {
-        return false;
-      }
-      cx += DIR_DX[a.dir];
-      cy += DIR_DY[a.dir];
-    }
-  }
-
-  return true;
-}
-
-function findNextRemovable() {
-  const levelData = LEVELS[currentLevel - 1];
-  if (!levelData) return -1;
-
-  // Find the next arrow in the removal order that hasn't been removed
-  for (const idx of levelData.removalOrder) {
-    if (!arrows[idx].removed && canRemoveArrow(idx)) {
-      return idx;
-    }
-  }
-  // Fallback: find any removable
+// ── Hit Testing ──
+function hitTestArrow(px, py) {
+  // Check arrows from top z-level down
+  const sorted = [];
   for (let i = 0; i < arrows.length; i++) {
-    if (!arrows[i].removed && canRemoveArrow(i)) return i;
+    if (!arrows[i].removed) sorted.push(i);
+  }
+  sorted.sort(function(a, b) { return arrows[b].zLevel - arrows[a].zLevel; });
+
+  var hitRadius = cellSize * 0.45;
+  for (let si = 0; si < sorted.length; si++) {
+    const idx = sorted[si];
+    const path = arrows[idx].path;
+    for (let pi = 0; pi < path.length; pi++) {
+      const cc = cellCenter(path[pi][0], path[pi][1]);
+      const dx = px - cc[0], dy = py - cc[1];
+      if (dx * dx + dy * dy < hitRadius * hitRadius) return idx;
+    }
   }
   return -1;
 }
 
-function attemptRemove(arrowIdx) {
-  if (animating) return;
-  if (arrows[arrowIdx].removed) return;
-
-  if (canRemoveArrow(arrowIdx)) {
-    // Success - animate removal
-    animating = true;
-    hintArrowIdx = -1;
-    playWhoosh();
-
-    const a = arrows[arrowIdx];
-    slideAnim = {
-      arrowIdx,
-      arrow: { ...a, cells: a.cells.map(c => [...c]) },
-      dir: a.dir,
-      progress: 0,
-      startTime: performance.now(),
-      duration: 400,
-    };
-
-    a.removed = true;
-    removedArrows.push({ ...a, cells: a.cells.map(c => [...c]) });
-
-    animateSlide();
+// ── Input ──
+function getCanvasCoords(e) {
+  const rect = canvas.getBoundingClientRect();
+  var clientX, clientY;
+  if (e.touches && e.touches.length > 0) {
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
   } else {
-    // Blocked
-    playThud();
-    hearts--;
-    updateHeartsDisplay();
-    shakeCanvas();
+    clientX = e.clientX;
+    clientY = e.clientY;
+  }
+  return [clientX - rect.left, clientY - rect.top];
+}
 
-    if (hearts <= 0) {
-      setTimeout(() => showGameOver(), 600);
-    }
+function handlePointerDown(e) {
+  if (animating) return;
+  e.preventDefault();
+  ensureAudio();
+
+  if (e.type === 'touchstart') isTouchDevice = true;
+  // Skip click events on touch devices (touchstart already handled)
+  if (e.type === 'click' && isTouchDevice) return;
+
+  const coords = getCanvasCoords(e);
+  const hit = hitTestArrow(coords[0], coords[1]);
+
+  if (hit < 0) {
+    selectedArrow = -1;
+    render();
+    return;
+  }
+
+  playSound('click');
+  selectedArrow = hit;
+  render();
+  tryRemoveArrow(hit);
+}
+
+function handlePointerMove(e) {
+  if (animating || isTouchDevice) return;
+  const coords = getCanvasCoords(e);
+  const hit = hitTestArrow(coords[0], coords[1]);
+  if (hit !== hoverArrow) {
+    hoverArrow = hit;
+    render();
   }
 }
 
-function animateSlide() {
+function tryRemoveArrow(idx) {
+  if (arrows[idx].removed) return;
+
+  if (isArrowBlocked(idx)) {
+    hearts--;
+    updateHeartsDisplay();
+    playSound('thud');
+    showToast(T.blocked || 'Blocked!');
+
+    shakeAnim = { arrowIdx: idx, phase: 0, startTime: performance.now(), duration: 500, blockingIdx: getBlockingArrow(idx) };
+    animating = true;
+    requestAnimationFrame(animateShake);
+
+    if (hearts <= 0) {
+      setTimeout(showGameOver, 600);
+    }
+    return;
+  }
+
+  // Slide out animation
+  animating = true;
+  selectedArrow = -1;
+  const dv = dirVec(arrows[idx].exitDir);
+  const maxDist = Math.max(gridW, gridH) * cellSize + cellSize * 4;
+
+  slideAnim = {
+    arrowIdx: idx,
+    dx: dv[0], dy: dv[1],
+    offsetX: 0, offsetY: 0,
+    maxDist: maxDist,
+    startTime: performance.now(),
+    duration: 420
+  };
+
+  playSound('whoosh');
+  requestAnimationFrame(animateSlide);
+}
+
+// ── Animations ──
+function animateSlide(ts) {
   if (!slideAnim) return;
+  const elapsed = ts - slideAnim.startTime;
+  const t = Math.min(elapsed / slideAnim.duration, 1);
+  const ease = 1 - Math.pow(1 - t, 3); // ease-out cubic
+  const dist = ease * slideAnim.maxDist;
 
-  const elapsed = performance.now() - slideAnim.startTime;
-  slideAnim.progress = Math.min(1, elapsed / slideAnim.duration);
-
-  // Ease out
-  slideAnim.progress = 1 - Math.pow(1 - slideAnim.progress, 3);
+  slideAnim.offsetX = slideAnim.dx * dist;
+  slideAnim.offsetY = slideAnim.dy * dist;
 
   render();
 
-  if (elapsed < slideAnim.duration) {
+  if (t < 1) {
     requestAnimationFrame(animateSlide);
   } else {
+    const idx = slideAnim.arrowIdx;
+    arrows[idx].removed = true;
+    arrows[idx].ghostAlpha = 0.25;
     slideAnim = null;
-    animating = false;
-    updateArrowsLeftDisplay();
+
+    fadeGhost(idx);
+
+    var allRemoved = true;
+    for (let i = 0; i < arrows.length; i++) {
+      if (!arrows[i].removed) { allRemoved = false; break; }
+    }
+
+    if (allRemoved) {
+      animating = false;
+      setTimeout(showLevelComplete, 350);
+    } else {
+      animating = false;
+      render();
+    }
+  }
+}
+
+function fadeGhost(idx) {
+  const startTime = performance.now();
+  const dur = 350;
+  function tick(ts) {
+    const t = Math.min((ts - startTime) / dur, 1);
+    arrows[idx].ghostAlpha = 0.25 * (1 - t);
     render();
+    if (t < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
 
-    // Check win
-    if (arrows.every(a => a.removed)) {
-      setTimeout(() => showLevelComplete(), 300);
-    }
+function animateShake(ts) {
+  if (!shakeAnim) return;
+  const elapsed = ts - shakeAnim.startTime;
+  shakeAnim.phase = Math.min(elapsed / shakeAnim.duration, 1);
+  render();
+  if (shakeAnim.phase < 1) {
+    requestAnimationFrame(animateShake);
+  } else {
+    shakeAnim = null;
+    animating = false;
+    render();
   }
 }
 
-function shakeCanvas() {
-  canvas.style.animation = 'shake 0.4s ease';
-  setTimeout(() => { canvas.style.animation = ''; }, 400);
+// ── Render ──
+function render() {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBoard();
 }
 
-// ===== UI Updates =====
+// ── UI Updates ──
 function updateHeartsDisplay() {
-  const container = document.getElementById('heartsDisplay');
-  let html = '';
-  for (let i = 0; i < 3; i++) {
-    html += `<span class="heart${i >= hearts ? ' lost' : ''}">❤️</span>`;
+  var s = '';
+  for (var i = 0; i < 3; i++) {
+    s += i < hearts ? '\u2764\uFE0F' : '\uD83D\uDDA4';
   }
-  container.innerHTML = html;
+  document.getElementById('hearts').textContent = s;
 }
 
-function updateArrowsLeftDisplay() {
-  const remaining = arrows.filter(a => !a.removed).length;
-  document.getElementById('arrowsLeft').textContent =
-    t.arrowsLeft.replace('{n}', remaining);
+// ── Screens ──
+function showScreen(name) {
+  var screens = document.querySelectorAll('.screen');
+  for (var i = 0; i < screens.length; i++) screens[i].classList.remove('active');
+  document.getElementById(name + '-screen').classList.add('active');
+  currentScreen = name;
 }
 
-// ===== Click/Tap Handling =====
-function getClickedArrow(x, y) {
-  // Convert canvas coordinates to grid
-  const col = Math.floor(x / cellSize);
-  const row = Math.floor(y / cellSize);
+function buildLevelGrid() {
+  var grid = document.getElementById('levelGrid');
+  grid.innerHTML = '';
+  var unlocked = getUnlocked();
+  var progress = loadProgress();
 
-  // Find which arrow contains this cell (check active arrows, prefer topmost/last)
-  for (let i = arrows.length - 1; i >= 0; i--) {
-    if (arrows[i].removed) continue;
-    for (const cell of arrows[i].cells) {
-      if (cell[0] === col && cell[1] === row) return i;
+  for (var i = 1; i <= TOTAL_LEVELS; i++) {
+    var btn = document.createElement('button');
+    btn.className = 'level-btn';
+    if (i > unlocked) btn.classList.add('locked');
+    if (i === unlocked) btn.classList.add('current');
+
+    var num = document.createElement('div');
+    num.textContent = i;
+    btn.appendChild(num);
+
+    var starsDiv = document.createElement('div');
+    starsDiv.className = 'level-stars';
+    var earned = progress[i] || 0;
+    for (var s = 0; s < 3; s++) {
+      var span = document.createElement('span');
+      span.textContent = '\u2605';
+      if (s >= earned) span.className = 'empty';
+      starsDiv.appendChild(span);
     }
-  }
+    btn.appendChild(starsDiv);
 
-  // Also check nearby cells (for fat-finger tolerance)
-  const nearCol = Math.round(x / cellSize - 0.5);
-  const nearRow = Math.round(y / cellSize - 0.5);
-  for (let i = arrows.length - 1; i >= 0; i--) {
-    if (arrows[i].removed) continue;
-    for (const cell of arrows[i].cells) {
-      const dx = Math.abs(cell[0] - nearCol);
-      const dy = Math.abs(cell[1] - nearRow);
-      if (dx <= 0.5 && dy <= 0.5) return i;
+    if (i <= unlocked) {
+      (function(lv) {
+        btn.addEventListener('click', function() { startLevel(lv); });
+      })(i);
     }
+    grid.appendChild(btn);
   }
-
-  return -1;
 }
 
-canvas.addEventListener('click', (e) => {
-  if (animating) return;
-  const rect = canvas.getBoundingClientRect();
-  const x = (e.clientX - rect.left) * (canvasW / rect.width);
-  const y = (e.clientY - rect.top) * (canvasH / rect.height);
+function startLevel(lv) {
+  currentLevel = lv;
+  hearts = 3;
+  selectedArrow = -1;
+  hoverArrow = -1;
+  animating = false;
+  slideAnim = null;
+  shakeAnim = null;
 
-  const idx = getClickedArrow(x, y);
-  if (idx >= 0) attemptRemove(idx);
-});
+  generateLevel(lv);
 
-// Touch support
-canvas.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  if (animating) return;
-  const touch = e.touches[0];
-  const rect = canvas.getBoundingClientRect();
-  const x = (touch.clientX - rect.left) * (canvasW / rect.width);
-  const y = (touch.clientY - rect.top) * (canvasH / rect.height);
+  document.getElementById('levelLabel').textContent = (T.level || 'Level') + ' ' + lv;
+  document.getElementById('modalNext').textContent = T.next_level || 'Next Level';
+  updateHeartsDisplay();
 
-  const idx = getClickedArrow(x, y);
-  if (idx >= 0) attemptRemove(idx);
-}, { passive: false });
+  showScreen('game');
 
-// ===== Modals =====
+  // Need to defer resize until the screen is visible
+  requestAnimationFrame(function() {
+    resizeCanvas();
+    render();
+  });
+}
+
 function showLevelComplete() {
-  playSuccess();
-  const stars = hearts; // 3 hearts = 3 stars, etc.
-  saveLevelProgress(currentLevel, stars);
+  var starCount = Math.max(hearts, 1);
+  saveProgress(currentLevel, starCount);
 
-  const modal = document.getElementById('completeModal');
-  document.getElementById('modalTitle').textContent = t.levelClear;
+  playSound('victory');
+  spawnConfetti();
 
-  let starsHtml = '';
-  for (let i = 0; i < 3; i++) {
-    starsHtml += `<span class="star${i >= stars ? ' empty' : ''}">⭐</span>`;
+  document.getElementById('modalTitle').textContent = T.level_clear || 'Level Clear!';
+
+  var msgs = [T.well_done || 'Well done!', T.amazing || 'Amazing!', T.excellent || 'Excellent!'];
+  document.getElementById('modalMsg').textContent = msgs[Math.min(starCount - 1, 2)];
+
+  document.getElementById('modalNext').textContent = (currentLevel < TOTAL_LEVELS) ? (T.next_level || 'Next Level') : (T.all_clear || 'All cleared!');
+
+  var starEls = document.querySelectorAll('#modalStars .star');
+  for (var i = 0; i < starEls.length; i++) starEls[i].classList.remove('show');
+  for (var i = 0; i < starEls.length; i++) {
+    if (i < starCount) {
+      (function(el, delay) {
+        setTimeout(function() { el.classList.add('show'); }, delay);
+      })(starEls[i], 300 + i * 300);
+    }
   }
-  document.getElementById('modalStars').innerHTML = starsHtml;
 
-  const msg = stars === 3 ? t.perfect : stars === 2 ? t.wellDone : t.niceTry;
-  document.getElementById('modalMsg').textContent = msg;
+  document.getElementById('completeModal').classList.add('active');
 
-  document.getElementById('modalRestart').textContent = gt.restart || 'Restart';
-  document.getElementById('modalNext').textContent = gt.next_level || 'Next Level';
-
-  modal.classList.add('active');
-
-  // Share and record
+  // Integration
   try {
-    if (typeof PuzzleShare !== 'undefined') {
+    if (window.PuzzleShare) {
       PuzzleShare.showShareModal({
-        gameName: 'ArrowScape',
-        title: t.levelClear,
-        stars: stars,
-        message: `Level ${currentLevel} - ${msg}`,
+        title: 'ArrowScape', gameName: 'ArrowScape',
+        score: currentLevel, stars: starCount,
+        message: (T.level || 'Level') + ' ' + currentLevel + ' ' + (T.clear || 'Cleared!'),
+        lang: (typeof getGameLang === 'function') ? getGameLang() : 'ko'
       });
     }
-  } catch(e) {}
-
-  try {
-    if (typeof PuzzleUser !== 'undefined') {
-      PuzzleUser.recordGame('arrowscape', { level: currentLevel, stars });
+    if (window.PuzzleUser) {
+      PuzzleUser.recordGame('arrowscape', currentLevel * 100 + starCount * 10, { level: currentLevel, stars: starCount });
+    }
+    if (window.PuzzleAds) {
+      PuzzleAds.onLevelComplete('arrowscape', currentLevel);
     }
   } catch(e) {}
 }
 
 function showGameOver() {
-  const modal = document.getElementById('gameOverModal');
-  document.getElementById('goTitle').textContent = t.gameOver;
-  document.getElementById('goMsg').textContent = t.noHeartsLeft;
-  document.getElementById('goBack').textContent = gt.back || 'Back';
-  document.getElementById('goRetry').textContent = gt.try_again || 'Retry';
-  modal.classList.add('active');
+  document.getElementById('modalTitle').textContent = T.game_over || 'Game Over';
+  document.getElementById('modalMsg').textContent = T.game_over_msg || 'You ran out of hearts';
+  var starEls = document.querySelectorAll('#modalStars .star');
+  for (var i = 0; i < starEls.length; i++) starEls[i].classList.remove('show');
+  document.getElementById('modalNext').textContent = T.try_again || 'Try Again';
+  document.getElementById('completeModal').classList.add('active');
 }
 
-function hideModal(id) {
-  document.getElementById(id).classList.remove('active');
-}
-
-// ===== Hint =====
-function showHint() {
-  const idx = findNextRemovable();
-  if (idx >= 0) {
-    hintArrowIdx = idx;
-    hintFlashTimer = 0;
-    const startTime = performance.now();
-    function flashHint() {
-      hintFlashTimer = (performance.now() - startTime) / 1000;
-      render();
-      if (hintFlashTimer < 2.0) requestAnimationFrame(flashHint);
-      else { hintArrowIdx = -1; render(); }
-    }
-    flashHint();
+function spawnConfetti() {
+  var colors = ['#667eea','#a855f7','#ec4899','#f9d423','#00d4ff','#00ff88','#ff6b6b'];
+  for (var i = 0; i < 60; i++) {
+    var piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = (Math.random() * 100) + 'vw';
+    piece.style.top = (Math.random() * 30 - 10) + 'vh';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDelay = (Math.random() * 0.6) + 's';
+    piece.style.animationDuration = (1 + Math.random() * 1.5) + 's';
+    piece.style.width = (5 + Math.random() * 8) + 'px';
+    piece.style.height = (5 + Math.random() * 8) + 'px';
+    document.body.appendChild(piece);
+    (function(el) {
+      setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 3000);
+    })(piece);
   }
 }
 
-// ===== Event Listeners =====
-function setupEvents() {
-  // Back buttons
-  document.getElementById('backToMain').addEventListener('click', () => {
-    window.location.href = typeof getBackLink === 'function' ? getBackLink() : '../index.html';
-  });
-  document.getElementById('backToTitle1').addEventListener('click', () => showScreen('title'));
-  document.getElementById('backToTitle2').addEventListener('click', () => showScreen('title'));
-
-  // Sound toggles
-  [document.getElementById('soundToggle1'),
-   document.getElementById('soundToggle2'),
-   document.getElementById('soundToggle3')].forEach(btn => {
-    btn.addEventListener('click', () => {
-      soundEnabled = !soundEnabled;
-      const icon = soundEnabled ? '🔊' : '🔇';
-      document.getElementById('soundToggle1').textContent = icon;
-      document.getElementById('soundToggle2').textContent = icon;
-      document.getElementById('soundToggle3').textContent = icon;
-    });
-  });
-
-  // Menu buttons
-  document.getElementById('playBtn').addEventListener('click', () => {
-    currentLevel = getMaxUnlockedLevel();
-    // If all completed, go to level 1
-    const p = loadProgress();
-    if (p.levels[TOTAL_LEVELS] && p.levels[TOTAL_LEVELS].completed) currentLevel = 1;
-    showScreen('game');
-  });
-  document.getElementById('levelSelectBtn').addEventListener('click', () => showScreen('levels'));
-
-  // Game actions
-  document.getElementById('restartBtn').addEventListener('click', () => initLevel(currentLevel));
-  document.getElementById('hintBtn').addEventListener('click', showHint);
-
-  // Modal actions
-  document.getElementById('modalRestart').addEventListener('click', () => {
-    hideModal('completeModal');
-    initLevel(currentLevel);
-  });
-  document.getElementById('modalNext').addEventListener('click', () => {
-    hideModal('completeModal');
-    if (currentLevel < TOTAL_LEVELS) {
-      currentLevel++;
-      initLevel(currentLevel);
-    } else {
-      showScreen('levels');
+// ── Hint ──
+function useHint() {
+  if (animating) return;
+  for (var ri = 0; ri < removalOrder.length; ri++) {
+    var idx = removalOrder[ri];
+    if (!arrows[idx].removed && !isArrowBlocked(idx)) {
+      selectedArrow = idx;
+      var flashCount = 0;
+      var flashIdx = idx;
+      var interval = setInterval(function() {
+        selectedArrow = (flashCount % 2 === 0) ? flashIdx : -1;
+        render();
+        flashCount++;
+        if (flashCount >= 6) {
+          clearInterval(interval);
+          selectedArrow = flashIdx;
+          render();
+        }
+      }, 180);
+      playSound('click');
+      showToast(T.hint_used || 'Hint');
+      return;
     }
+  }
+}
+
+// ── Init ──
+function init() {
+  initI18n();
+  setupCanvas();
+
+  // Title play button
+  document.getElementById('playBtn').addEventListener('click', function() {
+    ensureAudio();
+    playSound('click');
+    buildLevelGrid();
+    showScreen('level');
   });
-  document.getElementById('goBack').addEventListener('click', () => {
-    hideModal('gameOverModal');
-    showScreen('levels');
+
+  // Back buttons
+  document.getElementById('levelBackBtn').addEventListener('click', function() {
+    playSound('click');
+    showScreen('title');
   });
-  document.getElementById('goRetry').addEventListener('click', () => {
-    hideModal('gameOverModal');
-    initLevel(currentLevel);
+  document.getElementById('gameBackBtn').addEventListener('click', function() {
+    playSound('click');
+    buildLevelGrid();
+    showScreen('level');
+  });
+
+  // Sound toggle
+  var soundBtns = document.querySelectorAll('.sound-btn');
+  for (var si = 0; si < soundBtns.length; si++) {
+    soundBtns[si].addEventListener('click', function() {
+      soundEnabled = !soundEnabled;
+      var icon = soundEnabled ? '\uD83D\uDD0A' : '\uD83D\uDD07';
+      var all = document.querySelectorAll('.sound-btn');
+      for (var j = 0; j < all.length; j++) all[j].textContent = icon;
+    });
+  }
+
+  // Hint & restart
+  document.getElementById('hintBtn').addEventListener('click', useHint);
+  document.getElementById('restartBtn').addEventListener('click', function() {
+    playSound('click');
+    startLevel(currentLevel);
+  });
+
+  // Canvas input
+  canvas.addEventListener('click', handlePointerDown);
+  canvas.addEventListener('touchstart', handlePointerDown, { passive: false });
+  canvas.addEventListener('mousemove', handlePointerMove);
+
+  // Modal buttons
+  document.getElementById('modalLevels').addEventListener('click', function() {
+    document.getElementById('completeModal').classList.remove('active');
+    buildLevelGrid();
+    showScreen('level');
+  });
+  document.getElementById('modalNext').addEventListener('click', function() {
+    document.getElementById('completeModal').classList.remove('active');
+    if (hearts <= 0) {
+      startLevel(currentLevel);
+    } else if (currentLevel < TOTAL_LEVELS) {
+      startLevel(currentLevel + 1);
+    } else {
+      buildLevelGrid();
+      showScreen('level');
+    }
   });
 
   // Resize
-  window.addEventListener('resize', () => {
+  window.addEventListener('resize', function() {
     if (currentScreen === 'game') {
       resizeCanvas();
       render();
     }
   });
+
+  // Initialize ads
+  if (window.PuzzleAds) {
+    try { PuzzleAds.init(); } catch(e) {}
+  }
 }
 
-// ===== Apply i18n to UI =====
-function applyText() {
-  document.getElementById('backToMain').textContent = gt.back || '← Back';
-  document.getElementById('backToTitle1').textContent = gt.back || '← Back';
-  document.getElementById('backToTitle2').textContent = gt.back || '← Back';
-  document.getElementById('tagline').textContent = t.tagline;
-  document.getElementById('playBtn').textContent = t.play;
-  document.getElementById('levelSelectBtn').textContent = t.levelSelect;
-  document.getElementById('levelSelectTitle').textContent = t.levelSelect;
-  document.getElementById('restartBtn').textContent = gt.restart || 'Restart';
-  document.getElementById('hintBtn').textContent = gt.hint || 'Hint';
+// Boot
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
 }
-
-// ===== Init =====
-function init() {
-  initI18n();
-  applyText();
-  setupEvents();
-  showScreen('title');
-}
-
-init();
 
 })();
 </script>
