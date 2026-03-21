@@ -76,7 +76,7 @@
 
   // ─── State ──────────────────────────────────────────────
   var _config = {
-    adsenseClient: '', // e.g. 'ca-pub-XXXXXXXXXXXXXXXX'
+    adsenseClient: 'ca-pub-9533955857777562',
     bannerSlot: '',
     rectangleSlot: '',
     nativeSlot: '',
