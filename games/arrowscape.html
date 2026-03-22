@@ -894,53 +894,45 @@ function onPointerDown(e) {
   }
 }
 
-// ── Slide out animation ──
-// The ENTIRE arrow path moves together in the arrow direction (like a snake slithering out)
-// All cells translate together until the whole path is off the board
+// ── Snake-style path-following slide out ──
+// Each cell follows the PATH toward the head, like a snake slithering through a maze.
+// Head exits first via the arrowhead direction, body follows the winding path, tail last.
 function slideOutArrow(idx) {
   const arrow = arrows[idx];
   arrow.animating = true;
   arrow.animStart = performance.now();
-  arrow.animOffset = { x: 0, y: 0 };
+  arrow.animOffset = { x: 0, y: 0 }; // not used, kept for compat
 
+  // Build extended path: original path + exit cells beyond the head going off-board
+  const cells = arrow.cells;
+  const head = cells[cells.length - 1];
   const d = DIRS[arrow.dir];
-
-  // Find the max distance any cell needs to travel to exit the board
-  let maxDist = 0;
-  for (let i = 0; i < arrow.cells.length; i++) {
-    const cell = arrow.cells[i];
-    let dist;
-    if (arrow.dir === 'right') dist = (gridCols - cell.x) * cellSize;
-    else if (arrow.dir === 'left') dist = (cell.x + 1) * cellSize;
-    else if (arrow.dir === 'down') dist = (gridRows - cell.y) * cellSize;
-    else dist = (cell.y + 1) * cellSize;
-    if (dist > maxDist) maxDist = dist;
+  const exitCells = [];
+  for (let i = 1; i <= cells.length + 2; i++) {
+    exitCells.push({ x: head.x + d.dx * i, y: head.y + d.dy * i });
   }
-  maxDist += cellSize; // extra margin to fully exit
+  arrow._extPath = cells.concat(exitCells);
 
-  // Slow enough to see the whole path sliding: ~120ms per cell of travel distance
-  const cellsToTravel = Math.ceil(maxDist / cellSize);
-  const duration = Math.max(800, cellsToTravel * 120);
+  // animSnakeOffset: 0 = original positions, N = each cell shifted N positions toward head
+  arrow._snakeOffset = 0;
+  const totalSteps = cells.length + 2; // enough for all cells to exit
 
-  function animateSlide(now) {
+  // 150ms per step - slow enough to watch the snake slither out
+  const duration = totalSteps * 150;
+
+  function animate(now) {
     const elapsed = now - arrow.animStart;
     const prog = Math.min(elapsed / duration, 1);
-    // Smooth ease: start gentle, linear middle, gentle end
-    const ease = prog < 0.1 ? prog * prog * 50 : // ease-in start
-                 prog > 0.9 ? 1 - Math.pow(1 - prog, 2) * 10 + 0.9 : // ease-out end
-                 prog; // linear middle
-
-    arrow.animOffset.x = d.dx * maxDist * ease;
-    arrow.animOffset.y = d.dy * maxDist * ease;
+    // Nearly linear for consistent snake speed
+    arrow._snakeOffset = prog * totalSteps;
 
     if (prog < 1) {
-      requestAnimationFrame(animateSlide);
+      requestAnimationFrame(animate);
     } else {
       arrow.removed = true;
       arrow.animating = false;
       removedCount++;
 
-      // Check win
       const allRemoved = arrows.every(a => a.removed);
       if (allRemoved) {
         setTimeout(() => showVictoryModal(), 300);
@@ -949,7 +941,7 @@ function slideOutArrow(idx) {
     }
   }
 
-  requestAnimationFrame(animateSlide);
+  requestAnimationFrame(animate);
 }
 
 // ── Hint ──
@@ -1176,70 +1168,75 @@ function drawArrowPath(arrow, idx) {
   ctx.fillStyle = color;
   ctx.lineWidth = lineW;
 
-  // Draw all segments (whole path moves together via animOffset in getCellCenter)
-  for (let i = 0; i < cells.length; i++) {
-    const cell = cells[i];
-    const center = getCellCenter(cell, arrow);
-    const prevCell = i > 0 ? cells[i-1] : null;
-    const nextCell = i < cells.length - 1 ? cells[i+1] : null;
+  // Snake animation: each cell's position shifts along the extended path
+  const extPath = arrow._extPath || cells;
+  const offset = arrow.animating ? (arrow._snakeOffset || 0) : 0;
 
-    const fromDir = prevCell ? getDirBetween(cell, prevCell) : null;
-    const toDir = nextCell ? getDirBetween(cell, nextCell) : null;
-
-    const isHead = (i === cells.length - 1);
-    const isTail = (i === 0);
-
-    ctx.beginPath();
-
-    if (isTail && isHead) {
-      // Single cell arrow
-      ctx.arc(center.x, center.y, lineW / 2, 0, Math.PI * 2);
-      ctx.fill();
-      // Draw arrowhead
-      const exitEdge = getCellEdge(cell, arrow.dir, arrow);
-      _drawArrowTriangle(exitEdge, arrow.dir, color);
-    } else if (isTail) {
-      // Tail: rounded end → connect to next
-      const edgeToNext = getCellEdge(cell, toDir, arrow);
-      ctx.moveTo(center.x, center.y);
-      ctx.lineTo(edgeToNext.x, edgeToNext.y);
-      ctx.stroke();
-    } else if (isHead) {
-      // Head: connect from prev → arrowhead
-      const edgeFromPrev = getCellEdge(cell, fromDir, arrow);
-      const exitDir = arrow.dir;
-      const exitEdge = getCellEdge(cell, exitDir, arrow);
-
-      ctx.moveTo(edgeFromPrev.x, edgeFromPrev.y);
-
-      if (fromDir && fromDir !== OPPOSITE[exitDir]) {
-        ctx.lineTo(center.x, center.y);
-      }
-
-      // Line stops short - leave room for arrowhead
-      const adx = exitEdge.x - center.x;
-      const ady = exitEdge.y - center.y;
-      ctx.lineTo(center.x + adx * 0.15, center.y + ady * 0.15);
-      ctx.stroke();
-
-      // Arrowhead triangle
-      _drawArrowTriangle(exitEdge, exitDir, color);
-    } else {
-      // Middle: prev → next
-      const edgeFromPrev = getCellEdge(cell, fromDir, arrow);
-      const edgeToNext = getCellEdge(cell, toDir, arrow);
-
-      ctx.moveTo(edgeFromPrev.x, edgeFromPrev.y);
-      if (fromDir !== OPPOSITE[toDir]) {
-        ctx.lineTo(center.x, center.y);
-      }
-      ctx.lineTo(edgeToNext.x, edgeToNext.y);
-      ctx.stroke();
-    }
+  // Helper: get interpolated pixel position for a cell index shifted by offset
+  function getSnakePos(cellIdx) {
+    const shifted = cellIdx + offset;
+    const fi = Math.floor(shifted);
+    const frac = shifted - fi;
+    if (fi < 0 || fi >= extPath.length - 1) return null;
+    const p1 = extPath[Math.min(fi, extPath.length - 1)];
+    const p2 = extPath[Math.min(fi + 1, extPath.length - 1)];
+    return {
+      x: boardX + (p1.x + (p2.x - p1.x) * frac) * cellSize + cellSize / 2,
+      y: boardY + (p1.y + (p2.y - p1.y) * frac) * cellSize + cellSize / 2
+    };
   }
 
-  // Chevrons
-  drawChevronsVisible(arrow, 0, cells.length - 1);
+  // Draw a continuous polyline through all visible shifted positions
+  const positions = [];
+  for (let i = 0; i < cells.length; i++) {
+    const pos = getSnakePos(i);
+    if (pos) positions.push({ pos, idx: i });
+  }
+
+  if (positions.length === 0) return; // fully off-screen
+
+  // Draw the path as connected line segments
+  ctx.beginPath();
+  ctx.moveTo(positions[0].pos.x, positions[0].pos.y);
+  for (let i = 1; i < positions.length; i++) {
+    ctx.lineTo(positions[i].pos.x, positions[i].pos.y);
+  }
+  ctx.stroke();
+
+  // Draw arrowhead on the last visible cell (head)
+  if (positions.length >= 1) {
+    const headPos = positions[positions.length - 1].pos;
+    const headIdx = positions[positions.length - 1].idx;
+    // Determine arrow direction at head
+    let headDir = arrow.dir;
+    if (positions.length >= 2) {
+      const prevPos = positions[positions.length - 2].pos;
+      const dx = headPos.x - prevPos.x;
+      const dy = headPos.y - prevPos.y;
+      if (Math.abs(dx) > Math.abs(dy)) {
+        headDir = dx > 0 ? 'right' : 'left';
+      } else {
+        headDir = dy > 0 ? 'down' : 'up';
+      }
+    }
+    const tipOffset = cellSize / 2;
+    const tipPos = {
+      x: headPos.x + (headDir === 'right' ? tipOffset : headDir === 'left' ? -tipOffset : 0),
+      y: headPos.y + (headDir === 'down' ? tipOffset : headDir === 'up' ? -tipOffset : 0)
+    };
+    _drawArrowTriangle(tipPos, headDir, color);
+  }
+
+  // Draw rounded tail cap
+  if (positions.length >= 1) {
+    const tailPos = positions[0].pos;
+    ctx.beginPath();
+    ctx.arc(tailPos.x, tailPos.y, lineW / 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Chevrons (static only)
+  if (!arrow.animating) drawChevronsStatic(arrow);
 
   ctx.restore();
 }
@@ -1277,18 +1274,18 @@ function _drawArrowTriangle(pos, direction, color) {
   ctx.restore();
 }
 
-function drawChevronsVisible(arrow, visStart, visEnd) {
+// Chevrons are only drawn on non-animating arrows for simplicity
+function drawChevronsStatic(arrow) {
   const cells = arrow.cells;
-  if (visEnd - visStart < 3) return;
+  if (cells.length < 4 || arrow.animating) return;
 
   const chevSize = cellSize * 0.15;
 
-  for (let i = visStart + 2; i <= visEnd - 1; i += 2) {
+  for (let i = 2; i < cells.length - 1; i += 2) {
     const cell = cells[i];
-    const nextCell = i < cells.length - 1 ? cells[i + 1] : cells[i];
+    const nextCell = cells[i + 1] || cells[i];
     const dir = getDirBetween(cell, nextCell) || arrow.dir;
-
-    const center = getCellCenter(cell, arrow);
+    const center = getCellCenter(cell);
 
     ctx.save();
     ctx.strokeStyle = arrow.color;
