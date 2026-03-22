@@ -1168,72 +1168,77 @@ function drawArrowPath(arrow, idx) {
   ctx.fillStyle = color;
   ctx.lineWidth = lineW;
 
-  // Snake animation: each cell's position shifts along the extended path
+  // Snake animation: each cell shifts forward along the extended path.
+  // extPath = [...original cells, ...exit cells off board]
+  // At offset S, cell[i] is displayed at extPath[i + S] position.
+  // The tail (cell[0]) traces the entire original path, then exits.
+  // The head (cell[N-1]) exits first.
+
   const extPath = arrow._extPath || cells;
   const offset = arrow.animating ? (arrow._snakeOffset || 0) : 0;
+  const floorOff = Math.floor(offset);
+  const fracOff = offset - floorOff;
 
-  // Helper: get interpolated pixel position for a cell index shifted by offset
-  function getSnakePos(cellIdx) {
-    const shifted = cellIdx + offset;
-    const fi = Math.floor(shifted);
-    const frac = shifted - fi;
-    if (fi < 0 || fi >= extPath.length - 1) return null;
-    const p1 = extPath[Math.min(fi, extPath.length - 1)];
-    const p2 = extPath[Math.min(fi + 1, extPath.length - 1)];
-    return {
-      x: boardX + (p1.x + (p2.x - p1.x) * frac) * cellSize + cellSize / 2,
-      y: boardY + (p1.y + (p2.y - p1.y) * frac) * cellSize + cellSize / 2
-    };
-  }
-
-  // Draw a continuous polyline through all visible shifted positions
-  const positions = [];
+  // Compute shifted positions for each cell
+  // Cell i -> position interpolated between extPath[i+floorOff] and extPath[i+floorOff+1]
+  const shiftedPos = [];
   for (let i = 0; i < cells.length; i++) {
-    const pos = getSnakePos(i);
-    if (pos) positions.push({ pos, idx: i });
+    const idx = i + floorOff;
+    if (idx >= extPath.length) { shiftedPos.push(null); continue; }
+    const p1 = extPath[idx];
+    const p2 = (idx + 1 < extPath.length) ? extPath[idx + 1] : p1;
+    shiftedPos.push({
+      x: boardX + (p1.x + (p2.x - p1.x) * fracOff) * cellSize + cellSize / 2,
+      y: boardY + (p1.y + (p2.y - p1.y) * fracOff) * cellSize + cellSize / 2
+    });
   }
 
-  if (positions.length === 0) return; // fully off-screen
+  // Filter to only on-screen positions
+  const bx1 = boardX - cellSize;
+  const by1 = boardY - cellSize;
+  const bx2 = boardX + gridCols * cellSize + cellSize;
+  const by2 = boardY + gridRows * cellSize + cellSize;
 
-  // Draw the path as connected line segments
+  const visible = [];
+  for (let i = 0; i < shiftedPos.length; i++) {
+    const p = shiftedPos[i];
+    if (p && p.x >= bx1 && p.x <= bx2 && p.y >= by1 && p.y <= by2) {
+      visible.push({ pos: p, idx: i });
+    }
+  }
+
+  if (visible.length === 0) return;
+
+  // Draw path as connected line segments through shifted positions
   ctx.beginPath();
-  ctx.moveTo(positions[0].pos.x, positions[0].pos.y);
-  for (let i = 1; i < positions.length; i++) {
-    ctx.lineTo(positions[i].pos.x, positions[i].pos.y);
+  ctx.moveTo(visible[0].pos.x, visible[0].pos.y);
+  for (let i = 1; i < visible.length; i++) {
+    ctx.lineTo(visible[i].pos.x, visible[i].pos.y);
   }
   ctx.stroke();
 
-  // Draw arrowhead on the last visible cell (head)
-  if (positions.length >= 1) {
-    const headPos = positions[positions.length - 1].pos;
-    const headIdx = positions[positions.length - 1].idx;
-    // Determine arrow direction at head
-    let headDir = arrow.dir;
-    if (positions.length >= 2) {
-      const prevPos = positions[positions.length - 2].pos;
-      const dx = headPos.x - prevPos.x;
-      const dy = headPos.y - prevPos.y;
-      if (Math.abs(dx) > Math.abs(dy)) {
-        headDir = dx > 0 ? 'right' : 'left';
-      } else {
-        headDir = dy > 0 ? 'down' : 'up';
-      }
-    }
-    const tipOffset = cellSize / 2;
-    const tipPos = {
-      x: headPos.x + (headDir === 'right' ? tipOffset : headDir === 'left' ? -tipOffset : 0),
-      y: headPos.y + (headDir === 'down' ? tipOffset : headDir === 'up' ? -tipOffset : 0)
-    };
-    _drawArrowTriangle(tipPos, headDir, color);
+  // Arrowhead at the last visible position (head end)
+  const headEntry = visible[visible.length - 1];
+  let headDir = arrow.dir;
+  if (visible.length >= 2) {
+    const prev = visible[visible.length - 2].pos;
+    const head = headEntry.pos;
+    const ddx = head.x - prev.x;
+    const ddy = head.y - prev.y;
+    if (Math.abs(ddx) > Math.abs(ddy)) headDir = ddx > 0 ? 'right' : 'left';
+    else headDir = ddy > 0 ? 'down' : 'up';
   }
+  const tipOff = cellSize * 0.4;
+  _drawArrowTriangle({
+    x: headEntry.pos.x + (headDir === 'right' ? tipOff : headDir === 'left' ? -tipOff : 0),
+    y: headEntry.pos.y + (headDir === 'down' ? tipOff : headDir === 'up' ? -tipOff : 0)
+  }, headDir, color);
 
-  // Draw rounded tail cap
-  if (positions.length >= 1) {
-    const tailPos = positions[0].pos;
-    ctx.beginPath();
-    ctx.arc(tailPos.x, tailPos.y, lineW / 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  // Rounded tail cap
+  const tailPos = visible[0].pos;
+  ctx.beginPath();
+  ctx.arc(tailPos.x, tailPos.y, lineW / 2, 0, Math.PI * 2);
+  ctx.fill();
 
   // Chevrons (static only)
   if (!arrow.animating) drawChevronsStatic(arrow);
