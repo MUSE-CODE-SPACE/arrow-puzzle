@@ -498,32 +498,29 @@ function generateLevel(levelNum) {
 
   for (let a = 0; a < numArrows; a++) {
     const color = COLORS[a % COLORS.length];
-    // Pick exit direction
-    const exitDir = DIR_NAMES[Math.floor(rng() * 4)];
 
-    // Try to place an arrow with a winding path
     let placed = false;
-    for (let attempt = 0; attempt < 80; attempt++) {
-      // Pick start cell near the opposite edge of exitDir
-      let startX, startY;
-      if (exitDir === 'right') { startX = Math.floor(rng() * Math.ceil(cols/2)); startY = Math.floor(rng() * rows); }
-      else if (exitDir === 'left') { startX = Math.floor(cols/2) + Math.floor(rng() * Math.ceil(cols/2)); startY = Math.floor(rng() * rows); }
-      else if (exitDir === 'down') { startX = Math.floor(rng() * cols); startY = Math.floor(rng() * Math.ceil(rows/2)); }
-      else { startX = Math.floor(rng() * cols); startY = Math.floor(rows/2) + Math.floor(rng() * Math.ceil(rows/2)); }
+    for (let attempt = 0; attempt < 100; attempt++) {
+      // Pick a random edge and a random cell ON that edge for the arrowhead
+      const exitDir = DIR_NAMES[Math.floor(rng() * 4)];
+      let headX, headY;
+      if (exitDir === 'right') { headX = cols - 1; headY = Math.floor(rng() * rows); }
+      else if (exitDir === 'left') { headX = 0; headY = Math.floor(rng() * rows); }
+      else if (exitDir === 'down') { headX = Math.floor(rng() * cols); headY = rows - 1; }
+      else { headX = Math.floor(rng() * cols); headY = 0; }
 
-      if (grid[startY][startX] !== -1) continue;
+      if (grid[headY][headX] !== -1) continue;
 
-      // Random walk path
-      let cells = [{x: startX, y: startY}];
-      let pathLen = 3 + Math.floor(rng() * 6); // 3-8 cells
-      let cx = startX, cy = startY;
-      let lastDir = null;
-      let ok = true;
+      // Build path INWARD from the head cell
+      let cells = [{x: headX, y: headY}];
+      let pathLen = 3 + Math.floor(rng() * 6);
+      let cx = headX, cy = headY;
+      let lastDir = OPPOSITE[exitDir]; // start by going inward
 
       for (let step = 0; step < pathLen; step++) {
-        // Prefer turning with 50-60% probability
         let possibleDirs = [];
         for (const dn of DIR_NAMES) {
+          if (dn === OPPOSITE[lastDir]) continue; // no U-turns
           const d = DIRS[dn];
           const nx = cx + d.dx, ny = cy + d.dy;
           if (nx < 0 || nx >= cols || ny < 0 || ny >= rows) continue;
@@ -533,7 +530,7 @@ function generateLevel(levelNum) {
         }
         if (possibleDirs.length === 0) break;
 
-        // Prefer turning
+        // Prefer turning for winding paths
         let chosen;
         const turnDirs = possibleDirs.filter(d => d !== lastDir);
         if (turnDirs.length > 0 && rng() < 0.55) {
@@ -550,23 +547,11 @@ function generateLevel(levelNum) {
 
       if (cells.length < 3) continue;
 
-      // The last cell must be able to exit in exitDir toward the board edge
-      // Rearrange so last cell's exit direction is exitDir
-      // Find which end can reach the board edge in exitDir
-      const lastCell = cells[cells.length - 1];
-      const firstCell = cells[0];
+      // cells[0] = head (on edge), cells[last] = tail (interior)
+      // We want cells order: tail first, head last
+      // So reverse: cells[0]=tail, cells[last]=head(on edge)
+      cells.reverse();
 
-      // Check if last cell can exit in exitDir
-      let canExitLast = canReachEdge(lastCell.x, lastCell.y, exitDir, cols, rows);
-      let canExitFirst = canReachEdge(firstCell.x, firstCell.y, exitDir, cols, rows);
-
-      if (!canExitLast && canExitFirst) {
-        cells.reverse();
-      } else if (!canExitLast && !canExitFirst) {
-        continue; // Neither end can exit
-      }
-
-      // Mark grid
       for (const c of cells) {
         grid[c.y][c.x] = arrowList.length;
       }
@@ -589,11 +574,12 @@ function generateLevel(levelNum) {
 }
 
 function canReachEdge(x, y, dir, cols, rows) {
+  // The head cell must be ON the edge for the given exit direction
   switch(dir) {
-    case 'right': return true;  // always can go right to edge
-    case 'left': return true;
-    case 'down': return true;
-    case 'up': return true;
+    case 'right': return x === cols - 1;
+    case 'left':  return x === 0;
+    case 'down':  return y === rows - 1;
+    case 'up':    return y === 0;
   }
   return false;
 }
@@ -678,25 +664,23 @@ function generateLevelWithSeed(levelNum, seed) {
 
   for (let a = 0; a < numArrows; a++) {
     const color = COLORS[a % COLORS.length];
-    const exitDir = DIR_NAMES[Math.floor(rng() * 4)];
 
     let placed = false;
     for (let attempt = 0; attempt < 100; attempt++) {
-      let startX, startY;
-      // Start from opposite side of exit
-      if (exitDir === 'right') { startX = Math.floor(rng() * Math.max(1, cols - 2)); startY = Math.floor(rng() * rows); }
-      else if (exitDir === 'left') { startX = 2 + Math.floor(rng() * Math.max(1, cols - 2)); startY = Math.floor(rng() * rows); }
-      else if (exitDir === 'down') { startX = Math.floor(rng() * cols); startY = Math.floor(rng() * Math.max(1, rows - 2)); }
-      else { startX = Math.floor(rng() * cols); startY = 2 + Math.floor(rng() * Math.max(1, rows - 2)); }
+      // Pick a random exit direction and start HEAD on that edge
+      const exitDir = DIR_NAMES[Math.floor(rng() * 4)];
+      let headX, headY;
+      if (exitDir === 'right') { headX = cols - 1; headY = Math.floor(rng() * rows); }
+      else if (exitDir === 'left') { headX = 0; headY = Math.floor(rng() * rows); }
+      else if (exitDir === 'down') { headX = Math.floor(rng() * cols); headY = rows - 1; }
+      else { headX = Math.floor(rng() * cols); headY = 0; }
 
-      startX = Math.min(startX, cols - 1);
-      startY = Math.min(startY, rows - 1);
+      if (grid[headY][headX] !== -1) continue;
 
-      if (grid[startY][startX] !== -1) continue;
-
-      let cells = [{x: startX, y: startY}];
+      // Build path INWARD from head
+      let cells = [{x: headX, y: headY}];
       let pathLen = 3 + Math.floor(rng() * 6);
-      let cx = startX, cy = startY;
+      let cx = headX, cy = headY;
       let lastDir = null;
 
       for (let step = 0; step < pathLen; step++) {
@@ -727,28 +711,8 @@ function generateLevelWithSeed(levelNum, seed) {
 
       if (cells.length < 3) continue;
 
-      // Determine arrow direction: head at last cell, exit in exitDir
-      // Check both ends for valid exit
-      const lastCell = cells[cells.length - 1];
-      const firstCell = cells[0];
-
-      // We need the HEAD (arrowhead) to be at the end that faces exitDir toward the edge
-      // The arrowhead points in exitDir and is at the exit end
-      let useReverse = false;
-
-      // Check which end, when looking in exitDir, hits the edge first (shortest blocking distance)
-      // Actually we just need the head cell to be closer to the exit edge
-      if (exitDir === 'right') {
-        if (firstCell.x > lastCell.x) useReverse = true;
-      } else if (exitDir === 'left') {
-        if (firstCell.x < lastCell.x) useReverse = true;
-      } else if (exitDir === 'down') {
-        if (firstCell.y > lastCell.y) useReverse = true;
-      } else {
-        if (firstCell.y < lastCell.y) useReverse = true;
-      }
-
-      if (useReverse) cells.reverse();
+      // Reverse so cells[0]=tail, cells[last]=head (on edge)
+      cells.reverse();
 
       // Mark grid
       for (const c of cells) {
